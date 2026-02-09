@@ -34,7 +34,7 @@ export async function syncToSupabase() {
       .toArray();
 
     for (const record of pendingDeletions) {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from(record.table_name)
         .delete()
         .eq('id', record.id);
@@ -52,9 +52,9 @@ export async function syncToSupabase() {
       let query = (db as any)[tableName]
         .where('sync_status')
         .equals('pendiente');
-      
+
       // Special case for accounts: sync by level to avoid parent_id constraints
-      const pendingItems = tableName === 'accounts' 
+      const pendingItems = tableName === 'accounts'
         ? await query.sortBy('level')
         : await query.toArray();
 
@@ -64,15 +64,15 @@ export async function syncToSupabase() {
 
       for (const item of pendingItems) {
         const { sync_status, ...dataToSync } = item;
-        
+
         // Sanitize data: convert empty strings to null for UUID compatibility
         Object.keys(dataToSync).forEach(key => {
           if (dataToSync[key] === "") {
             dataToSync[key] = null;
           }
         });
-        
-        const { error } = await supabase
+
+        const { error } = await (supabase as any)
           .from(tableName)
           .upsert(dataToSync);
 
@@ -80,7 +80,7 @@ export async function syncToSupabase() {
           await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
         } else {
           // console.error(`Error syncing item ${item.id} in ${tableName}:`, error);
-          
+
           // Check for RLS error (42501)
           if (error.code === '42501') {
             console.warn(`RLS Permission denied for table ${tableName}. Stopping sync for this table.`);

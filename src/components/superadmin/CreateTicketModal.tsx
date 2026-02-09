@@ -27,10 +27,10 @@ export function CreateTicketModal({ isOpen, onClose, onSuccess }: CreateTicketMo
 
     try {
       const { data: userData } = await supabase.auth.getUser();
-      
+
       // 1. Create the ticket in Supabase
-      const { error: dbError } = await (supabase
-        .from('tickets') as any)
+      const { error: dbError } = await (supabase as any)
+        .from('tickets')
         .insert([{
           subject: formData.subject,
           description: formData.description,
@@ -66,9 +66,9 @@ export function CreateTicketModal({ isOpen, onClose, onSuccess }: CreateTicketMo
       console.error('Error creating ticket:', err);
       // Fallback for demo if table doesn't exist
       if (err.message?.includes('relation "tickets" does not exist')) {
-         alert('La tabla "tickets" no existe en la base de datos. Se ha simulado la creación.');
-         onSuccess();
-         onClose();
+        alert('La tabla "tickets" no existe en la base de datos. Se ha simulado la creación.');
+        onSuccess();
+        onClose();
       } else {
         setError(err.message || 'Error al crear el ticket');
       }
@@ -95,8 +95,8 @@ export function CreateTicketModal({ isOpen, onClose, onSuccess }: CreateTicketMo
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all active:scale-90"
           >
             <X size={24} />
@@ -121,7 +121,7 @@ export function CreateTicketModal({ isOpen, onClose, onSuccess }: CreateTicketMo
               className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none font-bold transition-all"
               placeholder="Ej. Error en facturación"
               value={formData.subject}
-              onChange={e => setFormData({...formData, subject: e.target.value})}
+              onChange={e => setFormData({ ...formData, subject: e.target.value })}
             />
           </div>
 
@@ -132,7 +132,7 @@ export function CreateTicketModal({ isOpen, onClose, onSuccess }: CreateTicketMo
             <select
               className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none font-bold transition-all appearance-none cursor-pointer"
               value={formData.priority}
-              onChange={e => setFormData({...formData, priority: e.target.value})}
+              onChange={e => setFormData({ ...formData, priority: e.target.value })}
             >
               <option value="low">Baja - Consulta general</option>
               <option value="medium">Media - Incidencia normal</option>
@@ -151,7 +151,7 @@ export function CreateTicketModal({ isOpen, onClose, onSuccess }: CreateTicketMo
               className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none font-bold transition-all resize-none"
               placeholder="Detalla el problema o solicitud..."
               value={formData.description}
-              onChange={e => setFormData({...formData, description: e.target.value})}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 

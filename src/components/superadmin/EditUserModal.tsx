@@ -148,8 +148,8 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
 
       } else {
         // Update user_invites (Legacy)
-        const { error } = await (supabase
-          .from('user_invites') as any)
+        const { error } = await (supabase as any)
+          .from('user_invites')
           .update({
             role: formData.role,
             organization_id: formData.organization_id || null

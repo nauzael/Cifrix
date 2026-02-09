@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { CreateTicketModal } from '../../components/superadmin/CreateTicketModal';
-import { 
-  MessageSquare, 
-  Clock, 
-  CheckCircle, 
-  AlertTriangle, 
+import {
+  MessageSquare,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
   Search,
   Filter,
   MoreVertical
@@ -24,11 +24,11 @@ export function Support() {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('tickets')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) {
         console.warn('Error fetching tickets (table might not exist yet):', error);
         setTickets([]);
@@ -43,7 +43,7 @@ export function Support() {
     }
   };
 
-  const filteredTickets = tickets.filter(ticket => 
+  const filteredTickets = tickets.filter(ticket =>
     ticket.id?.toString().includes(searchTerm) ||
     ticket.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.org?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -51,7 +51,7 @@ export function Support() {
 
   return (
     <div className="p-8">
-      <CreateTicketModal 
+      <CreateTicketModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={fetchTickets}
@@ -61,7 +61,7 @@ export function Support() {
           <h1 className="text-2xl font-black text-slate-800 dark:text-white">Soporte y Tickets</h1>
           <p className="text-slate-500 text-sm">Gestiona las solicitudes de ayuda de todas las organizaciones.</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsCreateModalOpen(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors"
         >
@@ -119,9 +119,9 @@ export function Support() {
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-            <input 
-              type="text" 
-              placeholder="Buscar tickets por ID, asunto o cliente..." 
+            <input
+              type="text"
+              placeholder="Buscar tickets por ID, asunto o cliente..."
               className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -162,30 +162,30 @@ export function Support() {
                 </tr>
               ) : (
                 filteredTickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{ticket.id}</td>
-                  <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">{ticket.subject}</td>
-                  <td className="px-6 py-4 text-slate-500">{ticket.org || 'N/A'}</td>
-                  <td className="px-6 py-4">
-                    {ticket.priority === 'critical' && <span className="text-red-600 bg-red-50 px-2 py-1 rounded text-xs font-bold uppercase">Crítica</span>}
-                    {ticket.priority === 'high' && <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded text-xs font-bold uppercase">Alta</span>}
-                    {ticket.priority === 'medium' && <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs font-bold uppercase">Media</span>}
-                    {ticket.priority === 'low' && <span className="text-slate-600 bg-slate-100 px-2 py-1 rounded text-xs font-bold uppercase">Baja</span>}
-                  </td>
-                  <td className="px-6 py-4">
-                    {ticket.status === 'open' && <span className="flex items-center gap-1 text-green-600 font-bold text-xs"><div className="size-2 rounded-full bg-green-500"></div> Abierto</span>}
-                    {ticket.status === 'in_progress' && <span className="flex items-center gap-1 text-blue-600 font-bold text-xs"><div className="size-2 rounded-full bg-blue-500"></div> En Proceso</span>}
-                    {ticket.status === 'closed' && <span className="flex items-center gap-1 text-slate-400 font-bold text-xs"><div className="size-2 rounded-full bg-slate-300"></div> Cerrado</span>}
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">{ticket.agent || 'Sin asignar'}</td>
-                  <td className="px-6 py-4 text-slate-400 text-xs">{new Date(ticket.created_at || Date.now()).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
-                      <MoreVertical size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))
+                  <tr key={ticket.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{ticket.id}</td>
+                    <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">{ticket.subject}</td>
+                    <td className="px-6 py-4 text-slate-500">{ticket.org || 'N/A'}</td>
+                    <td className="px-6 py-4">
+                      {ticket.priority === 'critical' && <span className="text-red-600 bg-red-50 px-2 py-1 rounded text-xs font-bold uppercase">Crítica</span>}
+                      {ticket.priority === 'high' && <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded text-xs font-bold uppercase">Alta</span>}
+                      {ticket.priority === 'medium' && <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs font-bold uppercase">Media</span>}
+                      {ticket.priority === 'low' && <span className="text-slate-600 bg-slate-100 px-2 py-1 rounded text-xs font-bold uppercase">Baja</span>}
+                    </td>
+                    <td className="px-6 py-4">
+                      {ticket.status === 'open' && <span className="flex items-center gap-1 text-green-600 font-bold text-xs"><div className="size-2 rounded-full bg-green-500"></div> Abierto</span>}
+                      {ticket.status === 'in_progress' && <span className="flex items-center gap-1 text-blue-600 font-bold text-xs"><div className="size-2 rounded-full bg-blue-500"></div> En Proceso</span>}
+                      {ticket.status === 'closed' && <span className="flex items-center gap-1 text-slate-400 font-bold text-xs"><div className="size-2 rounded-full bg-slate-300"></div> Cerrado</span>}
+                    </td>
+                    <td className="px-6 py-4 text-slate-500">{ticket.agent || 'Sin asignar'}</td>
+                    <td className="px-6 py-4 text-slate-400 text-xs">{new Date(ticket.created_at || Date.now()).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
+                        <MoreVertical size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

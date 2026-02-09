@@ -243,7 +243,7 @@ export function SuperAdminDashboard() {
                   <tr>
                     <th className="px-6 py-4">Organización</th>
                     <th className="px-6 py-4">Estado</th>
-                    <th className="px-6 py-4">Plan</th>
+
                     <th className="px-6 py-4">Registro</th>
                     <th className="px-6 py-4 text-right">Acción</th>
                   </tr>
@@ -284,9 +284,7 @@ export function SuperAdminDashboard() {
                             Activo
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs font-black text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg">PRO</span>
-                        </td>
+
                         <td className="px-6 py-4">
                           <p className="text-xs font-bold text-slate-500">{new Date(org.created_at).toLocaleDateString()}</p>
                           <p className="text-[10px] text-slate-400 uppercase font-black">{new Date(org.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>

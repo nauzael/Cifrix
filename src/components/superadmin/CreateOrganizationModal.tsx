@@ -51,25 +51,31 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
       console.log('✅ Organización creada:', newOrg);
 
       // Vincular al usuario creador como ADMIN
-      try {
+      // Buscar Rol ADMIN para vincular
+      const { data: adminRole } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('code', 'ADMIN')
+        .maybeSingle();
+
+      if (adminRole) {
         const { error: linkError } = await supabase
           .from('user_organizations')
           .insert({
             user_id: user.id,
             organization_id: newOrg.id,
-            role: 'ADMIN'
+            role_id: adminRole.id,
+            is_primary: true
           });
 
         if (linkError) {
-          console.warn('⚠️ Advertencia: Organización creada pero no se pudo vincular al usuario:', linkError);
-          alert(`Organización "${formData.name}" creada exitosamente, pero necesitas asignarla manualmente a un usuario.`);
-        } else {
-          console.log('✅ Usuario vinculado a la organización');
-          alert(`Organización "${formData.name}" creada y vinculada exitosamente.`);
+          console.warn('⚠️ Error linking user:', linkError);
         }
-      } catch (linkErr) {
-        console.warn('Error al vincular usuario:', linkErr);
+      } else {
+        console.warn('⚠️ No se encontró rol ADMIN, vinculación omitida.');
       }
+
+
 
       onSuccess();
       onClose();

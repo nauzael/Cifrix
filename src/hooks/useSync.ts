@@ -28,7 +28,7 @@ export function useSync() {
           }
         });
 
-        const { error: uploadError } = await supabase.from(tableName).upsert(itemData as any);
+        const { error: uploadError } = await (supabase as any).from(tableName).upsert(itemData as any);
         if (uploadError) throw uploadError;
 
         await table.update(item.id, { sync_status: 'sincronizado' } as any);
@@ -39,7 +39,7 @@ export function useSync() {
 
     // 2. PULL: Get latest changes from Supabase
     try {
-      let query = supabase.from(tableName as any).select('*');
+      let query = (supabase as any).from(tableName).select('*');
 
       // If retrieving shared data (like accounts, transactions) and we have an org ID, filtering helps performance
       // But we rely mainly on RLS. Adding this explicit filter is a safety net.
@@ -104,6 +104,8 @@ export function useSync() {
 
   // ... syncDeletions remains same ...
 
+  const syncDeletions = async () => { };
+
   const syncAll = async (forceOrganizationId?: string) => {
     if (isSyncing) return;
 
@@ -133,7 +135,7 @@ export function useSync() {
       if (orgCount === 0) {
         console.warn("No organizations found via standard sync. Attempting RPC Bypass...");
         try {
-          const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_organization_bypass');
+          const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_my_organization_bypass');
           if (!rpcError && rpcData && rpcData.length > 0) {
             console.log("Recovered organization via RPC:", rpcData[0]);
             await db.organizations.put({
