@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Cifrix" />
+    <title>Cifrix - Contabilidad Inteligente</title>
+    <script type="module">
+      if (import.meta.hot?.on) {
+        import.meta.hot.on('vite:error', (error) => {
+          if (error.err) {
+            console.error(
+              [error.err.message, error.err.frame].filter(Boolean).join('\n'),
+            )
+          }
+        })
+      }
+    </script>
+    <script>
+      // 🚨 KILL SWITCH: ELIMINAR CACHÉ Y SERVICE WORKERS AGRESIVAMENTE
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+            console.log('🚨 Service Worker Zombi Eliminado');
+          }
+          if (registrations.length > 0) {
+            window.location.reload(); // Recargar una vez limpio
+          }
+        });
+      }
+      // Limpiar caché de almacenamiento local si detectamos versión vieja
+      if (!localStorage.getItem('v3_cleanup_done')) {
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem('v3_cleanup_done', 'true');
+        console.log('🚨 LocalStorage Limpiado');
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

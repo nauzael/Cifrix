@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configuración Maestral Superadmin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #137fec15;
+            color: #137fec;
+            border-left: 4px solid #137fec;
+        }
+        .tab-active {
+            @apply border-primary text-primary border-b-2;
+        }
+        .tab-inactive {
+            @apply border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 border-b-2 transition-colors;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex">
+<aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed h-full z-20">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight">SuperAdmin</h1>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">hub</span>
+<span class="text-sm font-medium">Gestión de Instancias</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">view_module</span>
+<span class="text-sm font-medium">Control de Módulos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">public</span>
+<span class="text-sm font-medium">Usuarios Globales</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav" href="#">
+<span class="material-symbols-outlined">settings_suggest</span>
+<span class="text-sm font-semibold">Configuración Maestral</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 mb-4 p-2">
+<div class="size-10 rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD8j52Vm7u3s3XRTSp2sMhxmL1wX69aRoiC9FnUMbCNFHYKGuUUQohIoibNrZ4xLCMcFXCQOgvGqZD9SWncE8PY7Zp98tDoONj2yfrjN45ZuJEWgBUOYsBFtYadlSHOMqj_O_EjAJlnLjP8Et4RmbgSPHYkO-7iSZzIbO0TszjIUPz_mKqJKW80eVF271EY2evkRsjRASCC6NnHhEsNo3kq-p8fEsu9wL-W8OnrqmFHpL12-5RQ9_Q6Y4HaZV2jZI6YzP12uZHIDA')"></div>
+<div class="flex flex-col">
+<p class="text-sm font-bold truncate">Super Administrador</p>
+<p class="text-xs text-slate-500">Master Access</p>
+</div>
+</div>
+<button class="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 py-2 rounded-lg transition-colors text-sm font-bold">
+<span class="material-symbols-outlined text-sm">logout</span>
+                Cerrar Sesión
+            </button>
+</div>
+</aside>
+<main class="flex-1 ml-64 min-h-screen">
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
+<div class="flex items-center gap-4 flex-1">
+<h2 class="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest text-xs">Configuración Maestral</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-64 pl-10 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/50" placeholder="Buscar ajuste..." type="text"/>
+</div>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+</button>
+</div>
+</header>
+<div class="p-8">
+<div class="mb-6">
+<h1 class="text-2xl font-black text-slate-800 dark:text-white">Ajustes del Sistema</h1>
+<p class="text-slate-500 text-sm">Administra la configuración global, planes, infraestructura y seguridad de la plataforma.</p>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="border-b border-slate-200 dark:border-slate-800">
+<nav class="flex px-6 -mb-px space-x-8 overflow-x-auto">
+<button class="tab-active py-4 px-1 text-sm font-bold flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">branding_watermark</span> General
+                        </button>
+<button class="tab-inactive py-4 px-1 text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">payments</span> Planes y Precios
+                        </button>
+<button class="tab-inactive py-4 px-1 text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">storage</span> Infraestructura
+                        </button>
+<button class="tab-inactive py-4 px-1 text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">shield_lock</span> Seguridad
+                        </button>
+</nav>
+</div>
+<div class="p-8">
+<div class="max-w-4xl space-y-10">
+<section>
+<h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+<span class="text-primary material-symbols-outlined">info</span>
+                                Branding e Identidad
+                            </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="text-xs font-bold text-slate-500 uppercase">Nombre del Sistema</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" type="text" value="Maestral Accounting"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold text-slate-500 uppercase">Email de Soporte Global</label>
+<input class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" type="email" value="soporte@maestral.com"/>
+</div>
+<div class="md:col-span-2 space-y-2">
+<label class="text-xs font-bold text-slate-500 uppercase">Logotipo del Sistema (URL)</label>
+<div class="flex gap-2">
+<input class="flex-1 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" placeholder="https://cdn.maestral.com/logo.png" type="text"/>
+<button class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-bold border border-slate-200 dark:border-slate-700">Subir</button>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-slate-100 dark:border-slate-800"/>
+<section>
+<h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+<span class="text-primary material-symbols-outlined">analytics</span>
+                                Estado de Infraestructura
+                            </h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold text-slate-400">DB CLUSTER</span>
+<span class="size-2 bg-green-500 rounded-full"></span>
+</div>
+<p class="text-xl font-bold">Saludable</p>
+<p class="text-[10px] text-slate-500 mt-1">Latencia: 14ms</p>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold text-slate-400">STORAGE S3</span>
+<span class="text-green-600 text-[10px] font-bold">94% Libre</span>
+</div>
+<p class="text-xl font-bold">2.4 TB</p>
+<p class="text-[10px] text-slate-500 mt-1">Región: us-east-1</p>
+</div>
+<div class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex items-center justify-between mb-2">
+<span class="text-xs font-bold text-slate-400">API UPTIME</span>
+<span class="text-primary text-[10px] font-bold">Últimos 30d</span>
+</div>
+<p class="text-xl font-bold">99.98%</p>
+<p class="text-[10px] text-slate-500 mt-1">Sin incidentes hoy</p>
+</div>
+</div>
+</section>
+<hr class="border-slate-100 dark:border-slate-800"/>
+<section>
+<h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+<span class="text-primary material-symbols-outlined">gpp_maybe</span>
+                                Políticas de Seguridad Globales
+                            </h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+<div>
+<p class="text-sm font-bold">Doble Factor de Autenticación (2FA)</p>
+<p class="text-xs text-slate-500">Requerir 2FA para todos los administradores de instancias.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+<div class="flex-1">
+<p class="text-sm font-bold">Tiempo de Expiración de Sesión</p>
+<p class="text-xs text-slate-500">Minutos de inactividad antes de cerrar sesión automáticamente.</p>
+</div>
+<div class="flex items-center gap-2">
+<input class="w-20 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" type="number" value="60"/>
+<span class="text-xs font-bold text-slate-400">MIN</span>
+</div>
+</div>
+</div>
+</section>
+<div class="flex justify-end gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
+<button class="px-6 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Descartar</button>
+<button class="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors">Guardar Cambios</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

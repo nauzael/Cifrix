@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Centro de Reportes - IglesiaContable</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #137fec15;
+            color: #137fec;
+            border-left: 4px solid #137fec;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen flex">
+<aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed h-full z-20">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<h1 class="text-lg font-bold tracking-tight">IglesiaContable</h1>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Miembros</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">volunteer_activism</span>
+<span class="text-sm font-medium">Diezmos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">calculate</span>
+<span class="text-sm font-medium">Contabilidad</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav" href="#">
+<span class="material-symbols-outlined text-[fill:1]">analytics</span>
+<span class="text-sm font-semibold">Reportes</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Configuración</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 mb-4 p-2">
+<div class="size-10 rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD8j52Vm7u3s3XRTSp2sMhxmL1wX69aRoiC9FnUMbCNFHYKGuUUQohIoibNrZ4xLCMcFXCQOgvGqZD9SWncE8PY7Zp98tDoONj2yfrjN45ZuJEWgBUOYsBFtYadlSHOMqj_O_EjAJlnLjP8Et4RmbgSPHYkO-7iSZzIbO0TszjIUPz_mKqJKW80eVF271EY2evkRsjRASCC6NnHhEsNo3kq-p8fEsu9wL-W8OnrqmFHpL12-5RQ9_Q6Y4HaZV2jZI6YzP12uZHIDA')"></div>
+<div class="flex flex-col">
+<p class="text-sm font-bold truncate">Tesorero General</p>
+<p class="text-xs text-slate-500">Admin</p>
+</div>
+</div>
+<button class="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 py-2 rounded-lg transition-colors text-sm font-bold">
+<span class="material-symbols-outlined text-sm">logout</span>
+                Cerrar Sesión
+            </button>
+</div>
+</aside>
+<main class="flex-1 ml-64 min-h-screen">
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-10">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/50" placeholder="Buscar reportes..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</header>
+<div class="p-8">
+<div class="flex flex-wrap items-end justify-between gap-6 mb-8">
+<div>
+<h2 class="text-3xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Centro de Reportes</h2>
+<p class="text-slate-500 dark:text-slate-400">Analice el estado financiero detallado de su congregación</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-lg shadow-sm">
+<span class="text-sm font-bold px-3">Año Fiscal 2023</span>
+<div class="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+<button class="flex items-center gap-2 text-sm font-bold text-primary px-3 py-1 hover:bg-primary/5 rounded">
+<span class="material-symbols-outlined text-base">filter_list</span>
+                            Filtros Avanzados
+                        </button>
+</div>
+<button class="bg-primary text-white px-4 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/20 hover:opacity-90">
+<span class="material-symbols-outlined text-sm">download</span>
+                        Exportar Todo
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Ingresos YTD</p>
+<h3 class="text-xl font-black">$ 84.250.000</h3>
+<div class="mt-2 flex items-center gap-1 text-green-600 text-xs font-bold">
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+                        +12% vs año anterior
+                    </div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Egresos YTD</p>
+<h3 class="text-xl font-black">$ 32.100.000</h3>
+<div class="mt-2 flex items-center gap-1 text-red-600 text-xs font-bold">
+<span class="material-symbols-outlined text-sm">arrow_downward</span>
+                        -4% vs presupuesto
+                    </div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Margen Neto</p>
+<h3 class="text-xl font-black text-primary">$ 52.150.000</h3>
+<div class="mt-2 flex items-center gap-1 text-slate-400 text-xs font-bold">
+<span class="material-symbols-outlined text-sm">info</span>
+                        62% de eficiencia
+                    </div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<p class="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-2">Reportes Generados</p>
+<h3 class="text-xl font-black">124</h3>
+<div class="mt-2 flex items-center gap-1 text-slate-400 text-xs font-bold">
+<span class="material-symbols-outlined text-sm">history</span>
+                        Último hace 2h
+                    </div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/40 transition-all flex flex-col group">
+<div class="flex items-start justify-between mb-6">
+<div class="size-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">account_balance</span>
+</div>
+<div class="flex -space-x-2">
+<div class="size-6 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 flex items-center justify-center text-[8px] font-bold">PDF</div>
+<div class="size-6 rounded-full border-2 border-white dark:border-slate-900 bg-green-100 text-green-700 flex items-center justify-center text-[8px] font-bold">XLS</div>
+</div>
+</div>
+<h4 class="text-lg font-bold mb-2">Balance General</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-1">Estado detallado de activos, pasivos y patrimonio de la organización a una fecha específica.</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 rounded-lg font-bold text-sm transition-all hover:bg-primary/90">Generar Reporte</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/40 transition-all flex flex-col group">
+<div class="flex items-start justify-between mb-6">
+<div class="size-12 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">query_stats</span>
+</div>
+</div>
+<h4 class="text-lg font-bold mb-2">Estado de Resultados (P&amp;L)</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-1">Resumen de ingresos y gastos durante un período de tiempo para determinar la utilidad o pérdida.</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 rounded-lg font-bold text-sm transition-all hover:bg-primary/90">Generar Reporte</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/40 transition-all flex flex-col group">
+<div class="flex items-start justify-between mb-6">
+<div class="size-12 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">payments</span>
+</div>
+</div>
+<h4 class="text-lg font-bold mb-2">Flujo de Caja</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-1">Seguimiento de las entradas y salidas reales de efectivo. Vital para la liquidez diaria.</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 rounded-lg font-bold text-sm transition-all hover:bg-primary/90">Generar Reporte</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/40 transition-all flex flex-col group">
+<div class="flex items-start justify-between mb-6">
+<div class="size-12 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">volunteer_activism</span>
+</div>
+</div>
+<h4 class="text-lg font-bold mb-2">Diezmos y Ofrendas</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-1">Desglose detallado por miembro, categoría y proyectos especiales de recaudación.</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 rounded-lg font-bold text-sm transition-all hover:bg-primary/90">Generar Reporte</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/40 transition-all flex flex-col group">
+<div class="flex items-start justify-between mb-6">
+<div class="size-12 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">assignment_turned_in</span>
+</div>
+</div>
+<h4 class="text-lg font-bold mb-2">Ejecución Presupuestaria</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-1">Comparativa entre lo proyectado y lo ejecutado por ministerio o departamento.</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 rounded-lg font-bold text-sm transition-all hover:bg-primary/90">Generar Reporte</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/40 transition-all flex flex-col group">
+<div class="flex items-start justify-between mb-6">
+<div class="size-12 bg-slate-50 dark:bg-slate-800 text-slate-600 rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-3xl">menu_book</span>
+</div>
+</div>
+<h4 class="text-lg font-bold mb-2">Libro Auxiliar</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6 flex-1">Listado cronológico de todos los movimientos de una cuenta contable específica.</p>
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 rounded-lg font-bold text-sm transition-all hover:bg-primary/90">Generar Reporte</button>
+<button class="p-2 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-sm">visibility</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-12">
+<div class="flex items-center justify-between mb-6">
+<h4 class="text-xl font-bold">Reportes Recientes</h4>
+<button class="text-primary text-sm font-bold hover:underline">Ver historial completo</button>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 dark:bg-slate-800/50">
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Nombre del Reporte</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Fecha Generación</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Periodo</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Estado</th>
+<th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">Acción</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">picture_as_pdf</span>
+<span class="text-sm font-semibold">Balance General Consolidado</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500">Hoy, 10:45 AM</td>
+<td class="px-6 py-4 text-sm text-slate-500">Octubre 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700">Completado</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 font-bold text-sm">Descargar</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-green-600">table_view</span>
+<span class="text-sm font-semibold">Listado de Ofrendas x Miembro</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500">Ayer, 04:20 PM</td>
+<td class="px-6 py-4 text-sm text-slate-500">Septiembre 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700">Completado</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 font-bold text-sm">Descargar</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">picture_as_pdf</span>
+<span class="text-sm font-semibold">P&amp;L Comparativo Semestral</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-slate-500">22 Oct, 2023</td>
+<td class="px-6 py-4 text-sm text-slate-500">Abr - Sep 2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-green-100 text-green-700">Completado</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-blue-700 font-bold text-sm">Descargar</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>
