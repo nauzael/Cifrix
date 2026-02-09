@@ -99,7 +99,7 @@ export function Communications() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Send Form */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none p-8">
+          <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none p-8">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600 dark:text-blue-400">
                 <Mail size={20} />
@@ -212,7 +212,7 @@ export function Communications() {
 
         {/* Sidebar Info */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none p-8">
+          <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400">
                 <Clock size={18} />
@@ -236,7 +236,7 @@ export function Communications() {
             </button>
           </div>
 
-          <div className="group relative bg-blue-600 rounded-[2.5rem] shadow-xl shadow-blue-600/30 p-8 text-white overflow-hidden">
+          <div className="group relative bg-blue-600 rounded-[2rem] shadow-xl shadow-blue-600/30 p-8 text-white overflow-hidden">
             <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 size-40 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700" />
 
             <div className="relative z-10 space-y-6">

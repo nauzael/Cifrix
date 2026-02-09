@@ -11,22 +11,20 @@ export const Onboarding: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
-  
+
   // New state for creating an organization (if applicable)
   // For now, based on user request "assign to company or organization they belong to",
   // we assume they select from existing list.
-  
+
   useEffect(() => {
     fetchOrganizations();
   }, []);
 
   const fetchOrganizations = async () => {
     try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name, type')
-        .order('name');
-      
+      // Use RPC to bypass RLS restrictions for non-members
+      const { data, error } = await supabase.rpc('get_public_organizations');
+
       if (error) throw error;
       setOrganizations(data || []);
     } catch (error) {
@@ -38,7 +36,7 @@ export const Onboarding: React.FC = () => {
 
   const handleJoinOrganization = async () => {
     if (!selectedOrgId || !user) return;
-    
+
     setSubmitting(true);
     try {
       // Use RPC to join organization (bypassing RLS)
@@ -51,10 +49,10 @@ export const Onboarding: React.FC = () => {
 
       // Refresh profile
       await initialize();
-      
+
       // Redirect to dashboard
       navigate('/');
-      
+
     } catch (error: any) {
       console.error('Error joining organization:', error);
       alert('Error al unirse a la organización: ' + error.message);
@@ -139,11 +137,10 @@ export const Onboarding: React.FC = () => {
               <button
                 onClick={handleJoinOrganization}
                 disabled={!selectedOrgId || submitting}
-                className={`w-full flex items-center justify-center py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-black text-sm group ${
-                  !selectedOrgId || submitting
+                className={`w-full flex items-center justify-center py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-black text-sm group ${!selectedOrgId || submitting
                     ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700'
                     : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20 hover:shadow-blue-600/30 hover:-translate-y-0.5 active:scale-95'
-                }`}
+                  }`}
               >
                 {submitting ? (
                   <Loader2 className="animate-spin size-5 mr-2" />
@@ -152,7 +149,7 @@ export const Onboarding: React.FC = () => {
                 )}
                 Ingresar a la Organización
               </button>
-              
+
               <button
                 onClick={handleLogout}
                 className="w-full flex justify-center items-center py-4 px-6 rounded-2xl text-sm font-black text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-200 group"

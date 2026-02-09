@@ -113,7 +113,7 @@ export function Settings() {
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
-    <div className="p-3 sm:p-5 max-w-7xl mx-auto space-y-4 animate-in fade-in duration-700">
+    <div className="p-3 sm:p-5 max-w-7xl mx-auto space-y-4">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -159,7 +159,7 @@ export function Settings() {
         {/* Content Area */}
         <div className="p-4 sm:p-6">
           {activeTab === 'organization' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <section className="space-y-5">
                   <div className="flex items-center gap-4 text-slate-900 dark:text-white">
@@ -229,6 +229,85 @@ export function Settings() {
                       />
                       {errors.email && <p className="text-red-500 text-[10px] font-black mt-1 uppercase ml-1">{errors.email.message}</p>}
                     </div>
+
+                    <div className="sm:col-span-2 space-y-4 group p-6 bg-slate-50/50 dark:bg-slate-800/50 rounded-[2rem] border border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-600/20">
+                          <Globe size={18} />
+                        </div>
+                        <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">Identidad Visual (Logo)</h4>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center gap-6">
+                        <div className="size-32 rounded-[2rem] bg-white dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center overflow-hidden shadow-inner group-hover:border-blue-400/50 transition-colors">
+                          {org?.settings?.logo_url ? (
+                            <img src={org.settings.logo_url} className="w-full h-full object-contain p-2" alt="Logo" />
+                          ) : (
+                            <div className="text-center p-4">
+                              <Church className="size-8 text-slate-300 mx-auto mb-2" />
+                              <p className="text-[9px] font-bold text-slate-400 uppercase leading-tight">Sin Logo</p>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-3 w-full">
+                          <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                            Cargue el logo de su organización para personalizar los reportes PDF y certificados. Se recomienda una imagen en formato PNG con fondo transparente (Relación 1:1 o 4:3).
+                          </p>
+                          <div className="flex gap-2">
+                            <label className="cursor-pointer flex-1 sm:flex-none">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file && org) {
+                                    if (file.size > 2 * 1024 * 1024) {
+                                      alert('El archivo es demasiado grande (Máximo 2MB)');
+                                      return;
+                                    }
+                                    const reader = new FileReader();
+                                    reader.onloadend = async () => {
+                                      const base64 = reader.result as string;
+                                      await db.organizations.update(org.id, {
+                                        settings: {
+                                          ...org.settings,
+                                          logo_url: base64
+                                        },
+                                        sync_status: 'pendiente'
+                                      });
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                              <div className="px-6 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 hover:border-blue-500 hover:text-blue-600 transition-all text-center shadow-sm">
+                                Seleccionar Imagen
+                              </div>
+                            </label>
+                            {org?.settings?.logo_url && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (confirm('¿Desea eliminar el logo?')) {
+                                    await db.organizations.update(org!.id, {
+                                      settings: {
+                                        ...org!.settings,
+                                        logo_url: null
+                                      },
+                                      sync_status: 'pendiente'
+                                    });
+                                  }
+                                }}
+                                className="px-4 py-2.5 bg-red-50 dark:bg-red-500/10 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </section>
 
@@ -290,25 +369,25 @@ export function Settings() {
           )}
 
           {activeTab === 'profile' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
               <ProfileSettings />
             </div>
           )}
 
           {activeTab === 'accounting' && org && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
               <AccountingSettings organization={org} />
             </div>
           )}
 
           {activeTab === 'dian' && org && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
               <DianSettings organization={org} />
             </div>
           )}
 
           {activeTab === 'security' && org && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
               <SecuritySettings organization={org} />
             </div>
           )}

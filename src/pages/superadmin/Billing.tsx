@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { 
-  CreditCard, 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Download, 
+import {
+  CreditCard,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Download,
   Filter,
   AlertCircle,
   Check,
@@ -46,7 +46,7 @@ export function Billing() {
 
       if (error) {
         if (error.code !== 'PGRST116' && !error.message?.includes('relation "invoices" does not exist')) {
-            console.warn('Error fetching transactions:', error);
+          console.warn('Error fetching transactions:', error);
         }
         setTransactions([]);
       } else {
@@ -63,7 +63,7 @@ export function Billing() {
 
         const totalAmount = mappedTransactions.reduce((acc: number, curr: any) => acc + (curr.status === 'paid' ? curr.amount : 0), 0);
         const failed = mappedTransactions.reduce((acc: number, curr: any) => acc + (curr.status === 'failed' ? curr.amount : 0), 0);
-        
+
         setMetrics({
           mrr: totalAmount,
           transactions_count: mappedTransactions.length,
@@ -84,7 +84,7 @@ export function Billing() {
       alert('No hay datos para exportar');
       return;
     }
-    
+
     const headers = ['ID', 'Organización', 'Plan', 'Monto', 'Estado', 'Fecha', 'Método'];
     const csvContent = [
       headers.join(','),
@@ -123,7 +123,7 @@ export function Billing() {
             Monitoreo de ingresos, facturas y pasarelas de pago.
           </p>
         </div>
-        <button 
+        <button
           onClick={handleExport}
           className="group relative bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-6 py-3.5 rounded-2xl text-sm font-black flex items-center justify-center gap-3 shadow-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 active:scale-95 w-full sm:w-auto overflow-hidden"
         >
@@ -135,7 +135,7 @@ export function Billing() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none group hover:scale-[1.02] transition-all duration-300">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none group hover:scale-[1.02] transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
             <div className="size-12 rounded-2xl bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:rotate-12 transition-transform">
               <DollarSign size={24} />
@@ -208,7 +208,7 @@ export function Billing() {
       </div>
 
       {/* Transactions Table Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">

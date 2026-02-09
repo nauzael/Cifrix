@@ -42,7 +42,7 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
         type: organization.type,
         tax_id: organization.tax_id || ''
       });
-      
+
       const settings = (organization.settings as any) || {};
       if (settings.modules) {
         setSelectedModules(settings.modules);
@@ -69,7 +69,7 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
     try {
       // Get current settings to preserve other values
       const currentSettings = (organization.settings as any) || {};
-      
+
       const { error } = await (supabase
         .from('organizations') as any)
         .update({
@@ -84,7 +84,7 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
         .eq('id', organization.id);
 
       if (error) throw error;
-      
+
       onSuccess();
       onClose();
     } catch (error) {
@@ -113,8 +113,8 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all active:scale-90"
           >
             <X size={24} />
@@ -171,34 +171,29 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
             </label>
             <div className="grid grid-cols-2 gap-3">
               {AVAILABLE_MODULES.map(module => (
-                <label 
-                  key={module.id} 
-                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer active:scale-95 group ${
-                    selectedModules[module.id]
-                      ? "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-300 shadow-sm"
-                      : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 opacity-60 hover:opacity-100"
-                  }`}
+                <div
+                  key={module.id}
+                  onClick={() => {
+                    setSelectedModules(prev => ({
+                      ...prev,
+                      [module.id]: !prev[module.id]
+                    }));
+                  }}
+                  className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer active:scale-95 select-none ${selectedModules[module.id]
+                      ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-600/20"
+                      : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-500/50"
+                    }`}
                 >
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                    selectedModules[module.id]
-                      ? "bg-blue-600 border-blue-600"
-                      : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 group-hover:border-blue-400"
-                  }`}>
-                    {selectedModules[module.id] && <X size={12} className="text-white rotate-45" />}
+                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${selectedModules[module.id]
+                      ? "bg-white border-white text-blue-600"
+                      : "bg-transparent border-current"
+                    }`}>
+                    {selectedModules[module.id] && <Grid size={12} strokeWidth={4} />}
                   </div>
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={!!selectedModules[module.id]}
-                    onChange={e => setSelectedModules({
-                      ...selectedModules,
-                      [module.id]: e.target.checked
-                    })}
-                  />
                   <span className="text-xs font-black uppercase tracking-tight">
                     {module.label}
                   </span>
-                </label>
+                </div>
               ))}
             </div>
           </div>

@@ -106,10 +106,12 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
 
     setLoading(true);
 
+    // Determinar si el usuario que se está editando es el usuario actual (ANTES del try)
+    const currentUser = useAuthStore.getState().user;
+    const isSelf = currentUser?.id === user.id;
+
     try {
       if (user.type === 'user') {
-        const currentUser = useAuthStore.getState().user;
-        const isSelf = currentUser?.id === user.id;
 
         if (isSelf) {
           if (user.role === 'SUPER_ADMIN' && formData.role !== 'SUPER_ADMIN') {
@@ -157,6 +159,13 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
           .eq('id', user.id);
 
         if (error) throw error;
+      }
+
+      // Si el usuario editado es el usuario actual, refrescar el perfil inmediatamente
+      // Esto es CRÍTICO para que el Dashboard cargue la organización correcta
+      if (isSelf) {
+        console.log('🔄 Refrescando perfil del usuario actual después de auto-edición...');
+        await useAuthStore.getState().refreshProfile();
       }
 
       alert('Usuario actualizado exitosamente y de forma segura.');

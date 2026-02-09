@@ -84,19 +84,32 @@ export function Dashboard() {
     const fetchOrg = async () => {
       if (!user) return;
 
-      // Wait for profile to load. If user exists but profile is null, authStore might still be working.
-      // We shouldn't try to sync blindly if we suspect profile is coming.
-      if (!profile && !isSyncing) return;
+      // MEJORA: En lugar de retornar si no hay profile, esperamos un poco
+      // para dar tiempo al authStore a cargar el perfil desde Supabase
+      // Si después de 2 segundos no hay perfil, procedemos de todas formas
+      let waitedForProfile = false;
+      if (!profile && !isSyncing) {
+        // Esperamos un máximo de 2 segundos para el profile
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // Verificar de nuevo después del delay
+        const currentState = useAuthStore.getState();
+        if (!currentState.profile) {
+          console.log('Profile aún no cargado después de esperar, intentando sincronizar de todas formas...');
+          waitedForProfile = true;
+        }
+      }
 
       let orgs = await db.organizations.toArray();
 
-      // Check for organization mismatch if profile is loaded
-      const profileOrgId = profile?.organizationId;
+      // Obtener profile del estado más actualizado
+      const currentProfile = useAuthStore.getState().profile || profile;
+      const profileOrgId = currentProfile?.organizationId;
+
       // Use profile org if available locally, otherwise first available
       const localOrgId = orgs.find(o => o.id === profileOrgId)?.id || orgs[0]?.id;
 
       // Allow Super Admin to view other organizations without forcing a resync
-      const isSuperAdmin = profile?.role === 'SUPER_ADMIN' || user?.email === 'superadmin@cifrix.com';
+      const isSuperAdmin = currentProfile?.role === 'SUPER_ADMIN' || user?.email === 'superadmin@cifrix.com';
 
       if (!isSuperAdmin && profileOrgId && (!localOrgId || localOrgId !== profileOrgId)) {
         console.log('Organization mismatch or missing data. Forcing sync for:', profileOrgId);
@@ -118,6 +131,12 @@ export function Dashboard() {
       } else if (!isSyncing && !profileOrgId) {
         // Fallback sync - only if we truly have no profile ID after waiting
         await syncAll();
+
+        // Después de la sincronización, verificar si ahora tenemos organizaciones
+        const postSyncOrgs = await db.organizations.toArray();
+        if (postSyncOrgs.length > 0) {
+          setOrgId(postSyncOrgs[0].id);
+        }
       }
     };
     fetchOrg();
@@ -356,21 +375,23 @@ export function Dashboard() {
             </button>
           </div>
 
-          {/* DEBUG INFO PANEL - TEMPORAL */}
-          <div className="bg-black/80 text-green-400 p-4 rounded-lg font-mono text-xs overflow-auto max-h-60">
-            <p className="font-bold border-b border-green-500/30 mb-2 pb-1">DIAGNÓSTICO EN VIVO:</p>
-            <p>User ID: {user?.id || 'No user'}</p>
-            <p>Email: {user?.email || 'No email'}</p>
-            <p className={profile?.organizationId ? "text-green-400" : "text-red-400 font-bold"}>
-              Profile Org ID: {profile?.organizationId || 'NULL (Aquí está el problema)'}
-            </p>
-            <p>Profile Role: {profile?.role}</p>
-            <p>Local Orgs Count: {organization ? 1 : 0} (ID actual: {orgId})</p>
-            <div className="mt-2 pt-2 border-t border-white/10 text-white/70">
-              <p>Si Profile Org ID es NULL: El usuario no tiene vínculo en Supabase.</p>
-              <p>Verifica que el correo '{user?.email}' coincida con el script SQL ejecutado.</p>
+          {/* DEBUG INFO PANEL - Solo visible en desarrollo */}
+          {import.meta.env.DEV && (
+            <div className="bg-black/80 text-green-400 p-4 rounded-lg font-mono text-xs overflow-auto max-h-60">
+              <p className="font-bold border-b border-green-500/30 mb-2 pb-1">DIAGNÓSTICO EN VIVO (Dev Only):</p>
+              <p>User ID: {user?.id || 'No user'}</p>
+              <p>Email: {user?.email || 'No email'}</p>
+              <p className={profile?.organizationId ? "text-green-400" : "text-red-400 font-bold"}>
+                Profile Org ID: {profile?.organizationId || 'NULL (Aquí está el problema)'}
+              </p>
+              <p>Profile Role: {profile?.role}</p>
+              <p>Local Orgs Count: {organization ? 1 : 0} (ID actual: {orgId})</p>
+              <div className="mt-2 pt-2 border-t border-white/10 text-white/70">
+                <p>Si Profile Org ID es NULL: El usuario no tiene vínculo en Supabase.</p>
+                <p>Verifica que el correo '{user?.email}' coincida con el script SQL ejecutado.</p>
+              </div>
             </div>
-          </div>
+          )}
 
           <button
             onClick={() => syncAll(profile?.organizationId)}

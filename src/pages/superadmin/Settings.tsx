@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { 
-  LayoutTemplate, 
-  CreditCard, 
-  Database, 
-  Shield, 
-  Info, 
-  Activity, 
+import {
+  LayoutTemplate,
+  CreditCard,
+  Database,
+  Shield,
+  Info,
+  Activity,
   ShieldAlert,
   Save,
   X,
@@ -36,7 +36,7 @@ export function Settings() {
         .from('system_settings' as any)
         .select('*')
         .single();
-      
+
       const settingsData = data as any;
 
       if (error) {
@@ -70,7 +70,7 @@ export function Settings() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      
+
       // Upsert settings (assuming ID 1 for single row singleton pattern or similar)
       const { error } = await supabase
         .from('system_settings' as any)
@@ -133,7 +133,7 @@ export function Settings() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
         <div className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
           <nav className="flex px-8 overflow-x-auto scrollbar-hide">
             {[
@@ -141,14 +141,13 @@ export function Settings() {
               { id: 'infrastructure', label: 'Infraestructura', icon: Database },
               { id: 'security', label: 'Seguridad', icon: Shield },
             ].map((tab) => (
-              <button 
+              <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-6 px-4 text-xs font-black uppercase tracking-widest flex items-center gap-3 whitespace-nowrap transition-all relative group ${
-                  activeTab === tab.id 
-                    ? 'text-blue-600' 
+                className={`py-6 px-4 text-xs font-black uppercase tracking-widest flex items-center gap-3 whitespace-nowrap transition-all relative group ${activeTab === tab.id
+                    ? 'text-blue-600'
                     : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-                }`}
+                  }`}
               >
                 <tab.icon size={18} className={activeTab === tab.id ? 'animate-pulse' : ''} />
                 {tab.label}
@@ -180,18 +179,18 @@ export function Settings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre del Sistema</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl text-sm font-bold outline-none px-5 py-4 text-slate-900 dark:text-white transition-all placeholder:text-slate-400" 
-                      type="text" 
+                    <input
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl text-sm font-bold outline-none px-5 py-4 text-slate-900 dark:text-white transition-all placeholder:text-slate-400"
+                      type="text"
                       value={settings.system_name}
                       onChange={(e) => handleChange('system_name', e.target.value)}
                     />
                   </div>
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email de Soporte Global</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl text-sm font-bold outline-none px-5 py-4 text-slate-900 dark:text-white transition-all placeholder:text-slate-400" 
-                      type="email" 
+                    <input
+                      className="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl text-sm font-bold outline-none px-5 py-4 text-slate-900 dark:text-white transition-all placeholder:text-slate-400"
+                      type="email"
                       value={settings.support_email}
                       onChange={(e) => handleChange('support_email', e.target.value)}
                     />
@@ -199,9 +198,9 @@ export function Settings() {
                   <div className="md:col-span-2 space-y-3">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logotipo del Sistema (URL)</label>
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <input 
-                        className="flex-1 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl text-sm font-bold outline-none px-5 py-4 text-slate-900 dark:text-white transition-all placeholder:text-slate-400" 
-                        placeholder="https://cdn.cifrix.com/logo.png" 
+                      <input
+                        className="flex-1 bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl text-sm font-bold outline-none px-5 py-4 text-slate-900 dark:text-white transition-all placeholder:text-slate-400"
+                        placeholder="https://cdn.cifrix.com/logo.png"
                         type="text"
                         value={settings.logo_url}
                         onChange={(e) => handleChange('logo_url', e.target.value)}
@@ -271,9 +270,9 @@ export function Settings() {
                       <p className="text-xs text-slate-500 font-medium">Requerir verificación de dos pasos para todos los administradores.</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer group">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer" 
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
                         checked={settings.require_2fa}
                         onChange={(e) => handleChange('require_2fa', e.target.checked)}
                       />
@@ -286,9 +285,9 @@ export function Settings() {
                       <p className="text-xs text-slate-500 font-medium">Minutos de inactividad antes del cierre automático.</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <input 
-                        className="w-24 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none px-4 py-2.5 text-center font-black text-slate-900 dark:text-white transition-all" 
-                        type="number" 
+                      <input
+                        className="w-24 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none px-4 py-2.5 text-center font-black text-slate-900 dark:text-white transition-all"
+                        type="number"
                         value={settings.session_timeout}
                         onChange={(e) => handleChange('session_timeout', parseInt(e.target.value) || 60)}
                       />
@@ -304,7 +303,7 @@ export function Settings() {
                 <X size={18} />
                 <span>Descartar Cambios</span>
               </button>
-              <button 
+              <button
                 onClick={handleSave}
                 disabled={saving}
                 className="group relative px-10 py-4 bg-blue-600 text-white rounded-2xl text-sm font-black shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 overflow-hidden"

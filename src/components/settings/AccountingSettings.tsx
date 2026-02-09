@@ -5,12 +5,12 @@ import { z } from 'zod';
 import { db, Organization } from '../../lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { SearchableSelect } from '../ui/SearchableSelect';
-import { 
-  Save, 
-  Loader2, 
-  Settings2, 
-  Lock, 
-  Percent, 
+import {
+  Save,
+  Loader2,
+  Settings2,
+  Lock,
+  Percent,
   Coins
 } from 'lucide-react';
 
@@ -33,7 +33,7 @@ interface AccountingSettingsProps {
 
 export function AccountingSettings({ organization }: AccountingSettingsProps) {
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const accounts = useLiveQuery(
     () => db.accounts.where('organization_id').equals(organization.id).sortBy('code'),
     [organization.id]
@@ -52,7 +52,7 @@ export function AccountingSettings({ organization }: AccountingSettingsProps) {
       lockDate: organization.settings?.accounting?.lockDate || '',
     }
   });
-  
+
   // Update form when organization settings change
   useEffect(() => {
     if (!organization.settings?.accounting) return;
@@ -105,18 +105,18 @@ export function AccountingSettings({ organization }: AccountingSettingsProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
       {/* Moneda y Año Fiscal */}
       <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-6 text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">
           <Coins className="size-5 text-blue-600" />
           <h3 className="font-black text-lg">General y Moneda</h3>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Moneda Principal</label>
-            <select 
+            <select
               {...register('currency')}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none font-bold dark:text-white"
             >
@@ -129,7 +129,7 @@ export function AccountingSettings({ organization }: AccountingSettingsProps) {
 
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Inicio del Año Fiscal</label>
-            <select 
+            <select
               {...register('fiscalYearStart')}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none font-bold dark:text-white"
             >
@@ -196,7 +196,7 @@ export function AccountingSettings({ organization }: AccountingSettingsProps) {
           </div>
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tasa Predeterminada (%)</label>
-            <input 
+            <input
               type="number"
               step="0.01"
               {...register('defaultTaxRate')}
@@ -213,7 +213,7 @@ export function AccountingSettings({ organization }: AccountingSettingsProps) {
           </div>
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bloquear antes de:</label>
-            <input 
+            <input
               type="date"
               {...register('lockDate')}
               className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-sm focus:ring-4 focus:ring-blue-500/10 outline-none font-bold dark:text-white"
@@ -224,7 +224,7 @@ export function AccountingSettings({ organization }: AccountingSettingsProps) {
       </div>
 
       <div className="flex items-center justify-end gap-4 pt-4">
-        <button 
+        <button
           type="submit"
           disabled={isSaving}
           className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"

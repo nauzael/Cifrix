@@ -35,15 +35,6 @@ export const Login: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
-    // 1. Limpieza preventiva
-    try {
-      await supabase.auth.signOut();
-      localStorage.clear();
-    } catch { }
-
-    // Esperar a que el storage se limpie
-    await new Promise(resolve => setTimeout(resolve, 100));
-
     try {
       // 2. Intentar login
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({

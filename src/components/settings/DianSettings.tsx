@@ -3,12 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { db, Organization } from '../../lib/db';
-import { 
-  Save, 
-  Loader2, 
-  FileBadge, 
-  Key, 
-  Hash, 
+import {
+  Save,
+  Loader2,
+  FileBadge,
+  Key,
+  Hash,
   Calendar,
   Server,
   FileKey,
@@ -77,7 +77,7 @@ export function DianSettings({ organization }: DianSettingsProps) {
 
   // Watch for certificate changes to show file name (if we stored it separately, but here we just store base64)
   // We'll handle file input manually
-  
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -115,7 +115,7 @@ export function DianSettings({ organization }: DianSettingsProps) {
   const environment = watch('environment');
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -138,8 +138,8 @@ export function DianSettings({ organization }: DianSettingsProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className={`
               flex items-center p-3 sm:p-4 border rounded-xl cursor-pointer transition-all
-              ${environment === 'habilitacion' 
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-200 dark:ring-blue-900' 
+              ${environment === 'habilitacion'
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-200 dark:ring-blue-900'
                 : 'border-slate-200 dark:border-slate-800 hover:border-blue-300'}
             `}>
               <input type="radio" value="habilitacion" {...register('environment')} className="sr-only" />
@@ -151,8 +151,8 @@ export function DianSettings({ organization }: DianSettingsProps) {
 
             <label className={`
               flex items-center p-3 sm:p-4 border rounded-xl cursor-pointer transition-all
-              ${environment === 'produccion' 
-                ? 'border-green-500 bg-green-50 dark:bg-green-900/20 ring-2 ring-green-200 dark:ring-green-900' 
+              ${environment === 'produccion'
+                ? 'border-green-500 bg-green-50 dark:bg-green-900/20 ring-2 ring-green-200 dark:ring-green-900'
                 : 'border-slate-200 dark:border-slate-800 hover:border-green-300'}
             `}>
               <input type="radio" value="produccion" {...register('environment')} className="sr-only" />
@@ -170,7 +170,7 @@ export function DianSettings({ organization }: DianSettingsProps) {
             <Key size={20} className="text-yellow-500" />
             Credenciales Técnicas
           </h3>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">
@@ -266,7 +266,7 @@ export function DianSettings({ organization }: DianSettingsProps) {
               </ol>
             </div>
           )}
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">
@@ -309,7 +309,7 @@ export function DianSettings({ organization }: DianSettingsProps) {
             <Hash size={20} className="text-orange-500" />
             Resolución de Facturación
           </h3>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">

@@ -19,13 +19,13 @@ interface AuthState {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  initialized: boolean; // Añadido a la interface
   initialize: () => Promise<void>;
   setUser: (user: User | null) => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
-// Helper to fetch profile
 // Helper to fetch profile
 async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   // Perfil por defecto
@@ -38,7 +38,45 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
   };
 
   try {
-    // 1. OBTENER DEFINICIONES DE ROL Y ORG (Puede fallar si no tiene org, pero seguimos)
+    // 0. INTENTO DE BOOTSTRAP SEGURO (RPC) - La vía más rápida y segura
+    try {
+      const { data: bootstrapData, error: bootstrapError } = await (supabase as any).rpc('get_my_complete_profile');
+
+      if (!bootstrapError && bootstrapData) {
+        finalProfile.role = bootstrapData.role || 'USER';
+        finalProfile.organizationId = bootstrapData.organization_id;
+        finalProfile.organizationName = bootstrapData.organization_name;
+        finalProfile.organizationType = bootstrapData.organization_type;
+
+        const orgSettings = bootstrapData.org_settings || {};
+        const orgModules = orgSettings.modules || {};
+
+        if (bootstrapData.module_permissions) {
+          const permissions = bootstrapData.module_permissions as Record<string, any>;
+          for (const [moduleName, modulePerms] of Object.entries(permissions)) {
+            if (typeof modulePerms === 'object' && modulePerms !== null) {
+              const userHasAccess = modulePerms.read === true;
+              const orgHasModule = orgModules[moduleName] !== false;
+              if (userHasAccess && orgHasModule) {
+                finalProfile.allowedModules![moduleName] = true;
+              }
+            }
+          }
+        }
+
+        // Recuperar datos personales en paralelo sin bloquear
+        supabase.from('profiles').select('full_name, avatar_url, phone, address, job_title').eq('id', userId).maybeSingle()
+          .then(({ data }) => {
+            if (data) Object.assign(finalProfile, data);
+          });
+
+        return finalProfile;
+      }
+    } catch (e) {
+      console.warn('Bootstrap RPC failed/missing, falling back to standard query...', e);
+    }
+
+    // 1. OBTENER DEFINICIONES DE ROL Y ORG (Método Legacy / Fallback)
     try {
       const { data: userOrgData, error: userOrgError } = await supabase
         .from('user_organizations')
@@ -62,11 +100,9 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
         finalProfile.organizationName = userOrgData.organizations?.name || 'Organización';
         finalProfile.organizationType = userOrgData.organizations?.type || null;
 
-        // Obtener configuración global de módulos de la organización
         const orgSettings = (userOrgData.organizations?.settings as any) || {};
         const orgModules = orgSettings.modules || {};
 
-        // Procesar permisos combinados (Usuario + Organización)
         if (userOrgData.module_permissions) {
           const permissions = userOrgData.module_permissions as Record<string, any>;
           for (const [moduleName, modulePerms] of Object.entries(permissions)) {
@@ -82,7 +118,6 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
         }
       } else {
         // ESTRATEGIA DE RECUPERACIÓN (FALLBACK READ)
-        // Si falló el JOIN (probablemente por RLS en organizations o roles), intentamos leer simple
         console.warn('Consulta principal falló, intentando recuperación simple...');
 
         const { data: simpleLink } = await supabase
@@ -96,7 +131,6 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
         if (simpleLink) {
           finalProfile.organizationId = simpleLink.organization_id;
 
-          // Intentar recuperar nombre de org por separado
           const { data: orgData } = await supabase
             .from('organizations')
             .select('name, type')
@@ -108,7 +142,6 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
             finalProfile.organizationType = orgData.type;
           }
 
-          // Intentar recuperar rol
           const { data: roleData } = await supabase
             .from('roles')
             .select('code')
@@ -142,16 +175,13 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
     }
 
     // 3. CHECK SUPER ADMIN - LA VERIFICACIÓN DEFINITIVA
-    // Incluso si lo anterior falló, esto puede conceder acceso total
     try {
-      // Usamos la RPC segura que creamos/verificamos
       const { data: isSuperAdmin } = await supabase.rpc('is_super_admin', {
         p_user_id: userId
       });
 
       if (isSuperAdmin) {
         finalProfile.role = 'SUPER_ADMIN';
-        // Si no tiene organización asignada explícitamente, buscamos una por defecto para evitar bloqueos
         if (!finalProfile.organizationId) {
           try {
             const { data: anyOrg } = await supabase
@@ -164,7 +194,6 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
               finalProfile.organizationId = anyOrg.id;
               finalProfile.organizationName = anyOrg.name;
               finalProfile.organizationType = anyOrg.type;
-              // También cargar settings para evitar bloqueos de permisos
               const orgSettings = (anyOrg.settings as any) || {};
               const orgModules = orgSettings.modules || {};
               if (finalProfile.allowedModules) {
@@ -185,76 +214,116 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
       }
     } catch (rpcErr) {
       console.warn('⚠️ Could not check super admin status:', rpcErr);
-      // Fallback: Si el email es el del superadmin, forzar rol
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email === 'admin@cifrix.com' || user?.email === 'superadmin@cifrix.com') {
         finalProfile.role = 'SUPER_ADMIN';
       }
     }
 
-    // console.log('✅ Profile loaded successfully:', finalProfile);
     return finalProfile;
 
   } catch (e) {
     console.error('Fatal exception fetching profile:', e);
-    return finalProfile; // Retornar lo que tengamos en lugar de null
+    return finalProfile;
   }
 }
+
+// Variable para controlar que el listener solo se registre una vez
+let authListenerRegistered = false;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
   loading: true,
+  initialized: false,
+
   initialize: async () => {
+    // Prevent multiple initializations
+    if (get().initialized) return;
+
     try {
-      // 1. Get initial session
-      const { data: { session } } = await supabase.auth.getSession();
+      // 1. Get initial session from storage
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Error getting session:', error);
+        set({ user: null, profile: null, loading: false, initialized: true });
+        return;
+      }
 
       if (session?.user) {
+        console.log('✅ Sesión recuperada para:', session.user.email);
         const profile = await fetchUserProfile(session.user.id);
-        set({ user: session.user, profile, loading: false });
+        set({ user: session.user, profile, loading: false, initialized: true });
       } else {
-        set({ user: null, profile: null, loading: false });
+        console.log('ℹ️ No hay sesión activa');
+        set({ user: null, profile: null, loading: false, initialized: true });
       }
     } catch (e) {
-      set({ user: null, profile: null, loading: false });
+      console.error('Auth initialization error:', e);
+      set({ user: null, profile: null, loading: false, initialized: true });
     }
 
-    // 2. Listen for changes
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = get().user;
+    // 2. Register auth listener ONCE
+    if (!authListenerRegistered) {
+      authListenerRegistered = true;
 
-      if (session?.user) {
-        // If user changed or no profile yet, fetch it
-        if (currentUser?.id !== session.user.id || !get().profile) {
-          const profile = await fetchUserProfile(session.user.id);
-          set({ user: session.user, profile, loading: false });
-        } else {
-          // Just update user object (e.g. token refresh), keep profile
-          set({ user: session.user, loading: false });
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+
+        // Handle different events
+        switch (event) {
+          case 'SIGNED_OUT':
+            set({ user: null, profile: null, loading: false });
+            break;
+
+          case 'SIGNED_IN':
+          case 'TOKEN_REFRESHED':
+            if (session?.user) {
+              const currentUser = get().user;
+              // Only fetch profile if user changed
+              if (currentUser?.id !== session.user.id) {
+                const profile = await fetchUserProfile(session.user.id);
+                set({ user: session.user, profile, loading: false });
+              } else {
+                // Just update user reference for token refresh
+                set({ user: session.user });
+              }
+            }
+            break;
+
+          case 'INITIAL_SESSION':
+            // Initial session is already handled in initialize()
+            // Only update if we don't have a user yet
+            if (!get().user && session?.user) {
+              const profile = await fetchUserProfile(session.user.id);
+              set({ user: session.user, profile, loading: false });
+            }
+            break;
+
+          case 'USER_UPDATED':
+            if (session?.user) {
+              set({ user: session.user });
+            }
+            break;
         }
-      } else if (_event === 'SIGNED_OUT') {
-        // SOLO cerrar sesión si el evento es explícitamente SIGNED_OUT
-        // Esto evita que errores de red o parpadeos de conexión (donde session es null)
-        // causen un logout indeseado.
-        console.log('🛑 Usuario cerró sesión explícitamente');
-        set({ user: null, profile: null, loading: false });
-      } else {
-        // En cualquier otro caso donde session sea null pero NO sea logout (ej: error de red),
-        // MANTENEMOS la sesión actual si existe.
-        console.warn(`⚠️ Evento de Auth ${_event} recibido sin sesión. Ignorando para evitar logout accidental.`);
-        // No limpiamos el usuario aquí.
-        set({ loading: false });
-      }
-    });
+      });
+    }
   },
+
   setUser: (user) => {
     set({ user });
   },
+
   signOut: async () => {
-    await supabase.auth.signOut();
-    set({ user: null, profile: null });
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Error signing out:', e);
+    }
+    set({ user: null, profile: null, initialized: false });
   },
+
   refreshProfile: async () => {
     const user = get().user;
     if (user) {

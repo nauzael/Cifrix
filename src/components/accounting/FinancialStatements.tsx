@@ -80,17 +80,39 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     const margin = 40;
     let y = margin;
 
+    // Set Document Metadata (Best Practice: Metadata)
+    doc.setProperties({
+      title: 'Balance General - ' + (organization?.name || 'Organización'),
+      author: 'Cifrix Contable',
+      subject: 'Estados Financieros',
+      creator: 'Cifrix Application',
+      keywords: 'contabilidad, balance, reporte'
+    });
+
+    if (organization?.settings?.logo_url) {
+      try {
+        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 60, 60, undefined, 'FAST');
+        y += 70;
+      } catch (e) {
+        console.error('Error adding logo to PDF:', e);
+        y += 10; // Fallback spacing
+      }
+    }
+
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
+    doc.setTextColor(30, 41, 59); // Slate-800
     doc.text(organization?.name || 'Organización', margin, y);
     y += 22;
 
     doc.setFontSize(14);
+    doc.setTextColor(71, 85, 105); // Slate-600
     doc.text('Balance General', margin, y);
     y += 18;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // Slate-500
     if (organization?.tax_id) {
       doc.text(`NIT: ${organization.tax_id}`, margin, y);
       y += 14;
@@ -147,39 +169,75 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
+    doc.setTextColor(30, 41, 59); // Slate-800
     doc.text('1. Activos', margin, y);
-    y += 6;
+    y += 10;
     autoTable(doc, {
       startY: y,
       head,
       body: assetsBody,
       theme: 'striped',
-      headStyles: { fillColor: [228, 233, 244], textColor: 60 },
+      headStyles: {
+        fillColor: [37, 99, 235], // Blue-600
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10,
+        halign: 'left'
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [51, 65, 85] // Slate-700
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252] // Slate-50
+      },
+      columnStyles: {
+        3: { halign: 'right', fontStyle: 'bold' }
+      },
+      margin: { left: margin, right: margin }
     });
-    y = (doc as any).lastAutoTable.finalY + 20;
+    y = (doc as any).lastAutoTable.finalY + 25;
 
     doc.text('2. Pasivos', margin, y);
-    y += 6;
+    y += 10;
     autoTable(doc, {
       startY: y,
       head,
       body: liabilitiesBody,
       theme: 'striped',
-      headStyles: { fillColor: [228, 233, 244], textColor: 60 },
+      headStyles: {
+        fillColor: [220, 38, 38], // Red-600
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: { fontSize: 9 },
+      columnStyles: {
+        3: { halign: 'right', fontStyle: 'bold' }
+      }
     });
-    y = (doc as any).lastAutoTable.finalY + 20;
+    y = (doc as any).lastAutoTable.finalY + 25;
 
     doc.text('3. Patrimonio', margin, y);
-    y += 6;
+    y += 10;
     autoTable(doc, {
       startY: y,
       head,
       body: equityBody,
       theme: 'striped',
-      headStyles: { fillColor: [228, 233, 244], textColor: 60 },
-      styles: { fontSize: 10 },
+      headStyles: {
+        fillColor: [217, 119, 6], // Amber-600
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: { fontSize: 9 },
+      columnStyles: {
+        3: { halign: 'right', fontStyle: 'bold' }
+      },
+      styles: { fontSize: 9 },
     });
-    y = (doc as any).lastAutoTable.finalY + 20;
+    y = (doc as any).lastAutoTable.finalY + 30;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
@@ -424,9 +482,13 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
         <div className="pdf-container mx-auto bg-white dark:bg-slate-900 shadow-2xl min-h-[29.7cm] p-12 border border-slate-200 dark:border-slate-800">
           <header className="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
             <div className="flex items-center gap-4">
-              <div className="size-14 bg-blue-600 rounded-xl flex items-center justify-center text-white">
-                <Landmark className="size-8" />
-              </div>
+              {organization?.settings?.logo_url ? (
+                <img src={organization.settings.logo_url} className="size-16 object-contain" />
+              ) : (
+                <div className="size-14 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+                  <Landmark className="size-8" />
+                </div>
+              )}
               <div>
                 <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase">
                   {organization?.name || 'Organización'}
@@ -543,14 +605,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             </div>
             <p className="mt-4 text-[10px] text-slate-400 italic">Este balance ha sido generado automáticamente de acuerdo a los principios de contabilidad generalmente aceptados.</p>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 mb-16">
-            <h4 className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase mb-2 flex items-center gap-2">
-              Declaración de Veracidad
-            </h4>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Certifico que la información financiera aquí presentada ha sido preparada y verificada bajo los estándares de auditoría interna de la organización. Los saldos reflejan fielmente la situación económica de la congregación a la fecha de corte.
-            </p>
-          </div>
+
           <div className="grid grid-cols-2 gap-20 pt-10">
             <div className="text-center">
               <div className="border-t border-slate-400 pt-4 px-8">

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, Organization } from '../../lib/db';
-import { 
-  ShieldCheck, 
-  History, 
-  Key, 
-  Eye, 
-  EyeOff, 
+import {
+  ShieldCheck,
+  History,
+  Key,
+  Eye,
+  EyeOff,
   AlertCircle,
   Clock,
   User,
@@ -23,7 +23,7 @@ interface SecuritySettingsProps {
 export function SecuritySettings({ organization }: SecuritySettingsProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAction, setFilterAction] = useState<string>('all');
-  
+
   const auditLogs = useLiveQuery(
     async () => {
       let logs = await db.audit_logs
@@ -31,32 +31,32 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
         .equals(organization.id)
         .reverse()
         .sortBy('created_at');
-      
+
       if (filterAction !== 'all') {
         logs = logs.filter(log => log.action === filterAction);
       }
-      
+
       if (searchTerm) {
-        logs = logs.filter(log => 
+        logs = logs.filter(log =>
           log.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
           log.action.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
-      
+
       return logs.slice(0, 50); // Limit to last 50 for performance
     },
     [organization.id, filterAction, searchTerm]
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
       {/* Autenticación y Sesión */}
       <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-6 text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-4">
           <Key className="size-5 text-blue-600" />
           <h3 className="font-black text-lg">Control de Acceso</h3>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between mb-2">
@@ -83,11 +83,11 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
             <Activity className="size-5 text-blue-600" />
             <h3 className="font-black text-lg">Registro de Auditoría</h3>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-              <input 
+              <input
                 type="text"
                 placeholder="Buscar entidad..."
                 value={searchTerm}
@@ -95,7 +95,7 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
                 className="w-full sm:w-48 pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/20 outline-none"
               />
             </div>
-            <select 
+            <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
               className="px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/20 outline-none"
@@ -132,12 +132,11 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
                     </div>
                   </td>
                   <td className="px-4 sm:px-6 py-4">
-                    <span className={`px-2 py-1 rounded-md text-[9px] font-black tracking-wider uppercase whitespace-nowrap ${
-                      log.action === 'DELETE' ? 'bg-red-100 text-red-700' :
-                      log.action === 'CREATE' ? 'bg-green-100 text-green-700' :
-                      log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700' :
-                      'bg-slate-100 text-slate-700'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-md text-[9px] font-black tracking-wider uppercase whitespace-nowrap ${log.action === 'DELETE' ? 'bg-red-100 text-red-700' :
+                        log.action === 'CREATE' ? 'bg-green-100 text-green-700' :
+                          log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700' :
+                            'bg-slate-100 text-slate-700'
+                      }`}>
                       {log.action}
                     </span>
                   </td>
@@ -151,10 +150,10 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
                     </div>
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-right">
-                    <button 
+                    <button
                       className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
                       title="Ver datos técnicos"
-                      // onClick={() => console.log('Log Data:', log)}
+                    // onClick={() => console.log('Log Data:', log)}
                     >
                       <Eye size={14} />
                     </button>
