@@ -141,7 +141,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
             <div>
               <h1 className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white leading-none">Cifrix</h1>
-              <p className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.15em] mt-1 opacity-80">Contabilidad inteligente</p>
+              <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1 opacity-90">Contabilidad inteligente</p>
             </div>
           </div>
           <button
@@ -161,12 +161,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {orgType === 'IGLESIA' ? <Church className="size-6" /> : <Building2 className="size-6" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1.5 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 leading-none mb-1.5 flex items-center gap-1.5">
                   <span className="size-1 rounded-full bg-blue-500 animate-pulse" />
                   Organización
                 </p>
-                <p className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase break-words leading-tight tracking-tight">
-                  {organization?.name || 'Cargando...'}
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 break-words leading-tight capitalize">
+                  {organization?.name?.toLowerCase() || 'Cargando...'}
                 </p>
               </div>
             </div>
@@ -175,7 +175,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
 
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-        <p className="px-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 mt-2">Menú Principal</p>
+        <p className="px-3 text-[10px] font-bold text-slate-400 tracking-wide mb-4 mt-2 border-l-2 border-blue-500/30 ml-3">Menú principal</p>
         {filteredNavigation.map((item) => {
           const Icon = item.icon;
           return (
@@ -216,8 +216,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <p className="text-sm font-black truncate text-white">
                 {profile?.full_name?.split(' ')[0] || 'Usuario'}
               </p>
-              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">
-                {profile?.role ? formatRole(profile.role) : 'Admin'}
+              <p className="text-[10px] font-bold text-blue-400 tracking-wide">
+                {profile?.role ? formatRole(profile.role) : 'Administrador'}
               </p>
             </div>
           </div>
@@ -227,7 +227,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 py-2.5 rounded-xl transition-all text-xs font-black text-slate-200 hover:text-white border border-white/10 relative z-10 active:scale-95"
           >
             <LogOut className="size-4" />
-            CERRAR SESIÓN
+            Cerrar sesión
           </button>
         </div>
       </div>
