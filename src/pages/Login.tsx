@@ -39,7 +39,7 @@ export const Login: React.FC = () => {
       // 1. Verificación preventiva de configuración
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
       if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
-        throw new Error('Configuración de Supabase no detectada. Verifique que su archivo .env contenga VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.');
+        throw new Error('Variables de entorno no detectadas. Por favor: 1. Asegúrese de que el archivo .env existe. 2. REINICIE el servidor de desarrollo (Cierre la terminal y ejecute npm run dev de nuevo).');
       }
 
       // 2. Intentar login

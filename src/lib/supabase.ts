@@ -43,6 +43,12 @@ if (supabaseUrl && storedUrl && storedUrl !== supabaseUrl) {
 
 if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
   console.warn('⚠️ Cifrix: Corriendo en modo OFFLINE/DEMO. (Variables de Supabase faltantes o inválidas)');
+  console.log('DEBUG - Env Check:', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    urlValue: supabaseUrl?.substring(0, 10) + '...',
+    envKeys: Object.keys(import.meta.env).filter(k => k.startsWith('VITE_'))
+  });
 } else {
   try {
     const urlCheck = new URL(supabaseUrl);
