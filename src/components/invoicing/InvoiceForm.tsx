@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, Customer, InvoiceItem } from '../../lib/db';
+import { db } from '../../lib/db';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Save, X, Calculator, Calendar, UserPlus } from 'lucide-react';
+import { Plus, Trash2, Save, FileText, UserPlus } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
+import { Modal } from '../ui/Modal';
 
 const itemSchema = z.object({
   code: z.string().optional(),
@@ -39,7 +39,7 @@ interface InvoiceFormProps {
 export function InvoiceForm({ organizationId, onClose, onSuccess }: InvoiceFormProps) {
   const customers = useLiveQuery(() => db.customers.where('organization_id').equals(organizationId).toArray());
   const organization = useLiveQuery(() => db.organizations.get(organizationId));
-  const lastInvoice = useLiveQuery(() => 
+  const lastInvoice = useLiveQuery(() =>
     db.invoices
       .where('organization_id')
       .equals(organizationId)
@@ -59,26 +59,22 @@ export function InvoiceForm({ organizationId, onClose, onSuccess }: InvoiceFormP
     }
   });
 
-  // Auto-generate invoice number based on DIAN settings
   useEffect(() => {
     if (organization?.settings?.dian) {
       const { resolutionPrefix, resolutionFrom } = organization.settings.dian;
       const prefix = resolutionPrefix || '';
       let nextNum = resolutionFrom || 1;
-      
+
       if (lastInvoice?.number) {
-        // Try to parse the number from the last invoice
-        // We strip the prefix if it exists to find the sequence number
-        const currentNumStr = lastInvoice.number.startsWith(prefix) 
-          ? lastInvoice.number.slice(prefix.length) 
+        const currentNumStr = lastInvoice.number.startsWith(prefix)
+          ? lastInvoice.number.slice(prefix.length)
           : lastInvoice.number;
-          
+
         const currentNum = parseInt(currentNumStr);
         if (!isNaN(currentNum)) {
           nextNum = currentNum + 1;
         }
       }
-      
       setValue('number', `${prefix}${nextNum}`);
     }
   }, [organization, lastInvoice, setValue]);
@@ -108,7 +104,7 @@ export function InvoiceForm({ organizationId, onClose, onSuccess }: InvoiceFormP
   const onSubmit = async (data: InvoiceFormData) => {
     try {
       const invoiceId = uuidv4();
-      
+
       await db.transaction('rw', [db.invoices, db.invoice_items], async () => {
         await db.invoices.add({
           id: invoiceId,
@@ -128,29 +124,24 @@ export function InvoiceForm({ organizationId, onClose, onSuccess }: InvoiceFormP
         });
 
         const items = data.items.map(item => {
-            const quantity = item.quantity;
-            const price = item.unit_price;
-            const discountPercent = item.discount_percent || 0;
-            const taxPercent = item.tax_percent;
-            
-            const subtotal = quantity * price;
-            const discountAmount = subtotal * (discountPercent / 100);
-            const taxableAmount = subtotal - discountAmount;
-            const total = taxableAmount * (1 + taxPercent / 100);
+          const subtotal = item.quantity * item.unit_price;
+          const discountAmount = subtotal * (item.discount_percent / 100);
+          const taxableAmount = subtotal - discountAmount;
+          const total = taxableAmount * (1 + item.tax_percent / 100);
 
-            return {
-              id: uuidv4(),
-              invoice_id: invoiceId,
-              code: item.code,
-              description: item.description,
-              quantity: quantity,
-              unit_price: price,
-              discount_percent: discountPercent,
-              discount_amount: discountAmount,
-              tax_percent: taxPercent,
-              total: total,
-              sync_status: 'pendiente' as const
-            };
+          return {
+            id: uuidv4(),
+            invoice_id: invoiceId,
+            code: item.code,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            discount_percent: item.discount_percent,
+            discount_amount: discountAmount,
+            tax_percent: item.tax_percent,
+            total: total,
+            sync_status: 'pendiente' as const
+          };
         });
 
         await db.invoice_items.bulkAdd(items);
@@ -163,231 +154,212 @@ export function InvoiceForm({ organizationId, onClose, onSuccess }: InvoiceFormP
     }
   };
 
-  const modalContent = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      {/* Overlay con fondo oscuro y blur */}
-      <div 
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
-      />
-      
-      {/* Contenedor del Modal */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-6xl shadow-2xl max-h-[95vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
-          <h3 className="text-xl font-black text-slate-900 dark:text-white">Nueva Factura de Venta</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-8 space-y-8">
-          
-          {/* Header Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-            {/* Left Column */}
-            <div className="space-y-6">
-               <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-1">
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Tipo</label>
-                    <select className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg outline-none text-sm">
-                        <option>CC</option>
-                        <option>NIT</option>
-                    </select>
-                  </div>
-                  <div className="col-span-3">
-                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Documento</label>
-                     <div className="relative">
-                        <input className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-lg outline-none text-sm" placeholder="Buscar Nº de ID" />
-                     </div>
-                  </div>
-               </div>
-
-               <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre o Razón Social</label>
-                  <select 
+  return (
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="Nueva Factura de Venta"
+      subtitle={`Consecutivo: ${watch('number') || 'Auto'}`}
+      icon={FileText}
+      maxWidth="full"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Card Principal de Información */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-950/50 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800">
+              <div className="space-y-2 group">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Seleccionar Cliente</label>
+                <div className="relative">
+                  <select
                     {...register('customer_id')}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none"
+                    className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer"
                   >
-                    <option value="">Seleccionar cliente...</option>
-                    {customers?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    <option value="">-- Buscar un cliente registrado --</option>
+                    {customers?.map(c => <option key={c.id} value={c.id}>{c.name} ({c.tax_id})</option>)}
                   </select>
-                  <button type="button" className="mt-2 text-blue-600 text-xs font-bold flex items-center gap-1 hover:underline">
-                    <UserPlus size={14} /> Nuevo contacto
+                  <button type="button" className="absolute right-12 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 p-2">
+                    <UserPlus size={18} />
                   </button>
-               </div>
+                </div>
+                {errors.customer_id && <p className="text-red-500 text-[10px] font-bold mt-1.5 ml-1">{errors.customer_id.message}</p>}
+              </div>
 
-               <div>
-                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Correo</label>
-                 <input className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-xl outline-none text-sm" placeholder="correo@ejemplo.com" />
-               </div>
-            </div>
+              <div className="space-y-2 group">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Número de Factura</label>
+                <input
+                  {...register('number')}
+                  readOnly
+                  className="w-full px-5 py-3.5 bg-slate-100 dark:bg-slate-900/50 dark:text-slate-400 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-black focus:ring-0 outline-none transition-all font-mono"
+                />
+              </div>
 
-            {/* Right Column */}
-            <div className="space-y-6">
-               <div className="flex justify-end gap-4">
-                  <div className="w-full max-w-[200px]">
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 text-right">Fecha</label>
-                    <input type="date" {...register('date')} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-right outline-none text-sm" />
-                  </div>
-               </div>
+              <div className="space-y-2 group">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Fecha de Emisión</label>
+                <input
+                  type="date"
+                  {...register('date')}
+                  className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+                />
+              </div>
 
-               <div className="flex justify-end gap-4">
-                  <div className="w-full max-w-[200px]">
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 text-right">Forma de pago</label>
-                    <select {...register('payment_form')} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-right outline-none text-sm">
-                       <option value="Contado">Contado</option>
-                       <option value="Credito">Crédito</option>
-                    </select>
-                  </div>
-               </div>
-
-               <div className="flex justify-end gap-4">
-                  <div className="w-full max-w-[200px]">
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 text-right">Medio de pago</label>
-                    <select {...register('payment_method')} className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border-none rounded-xl text-right outline-none text-sm">
-                       <option value="10 - Efectivo">Efectivo</option>
-                       <option value="48 - Tarjeta Crédito">Tarjeta Crédito</option>
-                       <option value="31 - Transferencia">Transferencia</option>
-                       <option value="1 - Instrumento no definido">Instrumento no definido</option>
-                    </select>
-                  </div>
-               </div>
-               
-               {/* Hidden but required field for logic */}
-               <input type="hidden" {...register('due_date')} />
-               <input type="hidden" {...register('number')} />
+              <div className="space-y-2 group">
+                <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Forma de Pago</label>
+                <select {...register('payment_form')} className="w-full px-5 py-3.5 bg-white dark:bg-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all appearance-none cursor-pointer">
+                  <option value="Contado">Pago de Contado</option>
+                  <option value="Credito">Pago a Crédito</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-4 pt-4">
-            <div className="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 dark:bg-slate-800 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <tr>
-                    <th className="px-3 py-3 w-48">Item / Descripción</th>
-                    <th className="px-2 py-3 w-24">Referencia</th>
-                    <th className="px-2 py-3 w-28 text-right">Precio</th>
-                    <th className="px-2 py-3 w-16 text-center">Desc %</th>
-                    <th className="px-2 py-3 w-20 text-center">Impuesto</th>
-                    <th className="px-2 py-3 w-20 text-center">Cant.</th>
-                    <th className="px-3 py-3 w-32 text-right">Total</th>
-                    <th className="px-2 py-3 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                  {fields.map((field, index) => {
-                    const itemValues = (watchedItems[index] || {}) as any;
-                    const subtotal = (Number(itemValues.quantity) || 0) * (Number(itemValues.unit_price) || 0);
-                    const discount = subtotal * ((Number(itemValues.discount_percent) || 0) / 100);
-                    const tax = (subtotal - discount) * ((Number(itemValues.tax_percent) || 0) / 100);
-                    const totalLine = (subtotal - discount) + tax;
+          {/* Card de Resumen de Totales */}
+          <div className="space-y-4">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-blue-500/30 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:scale-150 transition-transform duration-1000" />
 
-                    return (
-                    <tr key={field.id} className="hover:bg-slate-50/50 group">
-                      <td className="p-2 align-top">
-                        <div className="space-y-1">
-                            <input 
-                                {...register(`items.${index}.description`)} 
-                                className="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:ring-0 text-sm font-medium placeholder-slate-400" 
-                                placeholder="Buscar item..." 
-                            />
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-6">Resumen de Facturación</p>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center opacity-80">
+                  <span className="text-xs font-bold">Subtotal</span>
+                  <span className="font-mono text-sm">${formatCurrency(totals.subtotal)}</span>
+                </div>
+                {totals.discount > 0 && (
+                  <div className="flex justify-between items-center text-rose-200">
+                    <span className="text-xs font-bold">Descuento</span>
+                    <span className="font-mono text-sm">-${formatCurrency(totals.discount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center opacity-80">
+                  <span className="text-xs font-bold">Impuestos (IVA)</span>
+                  <span className="font-mono text-sm">${formatCurrency(totals.tax)}</span>
+                </div>
+                <div className="h-[1px] bg-white/20 my-4" />
+                <div className="flex justify-between items-end">
+                  <span className="text-xs font-black uppercase">Total a Pagar</span>
+                  <span className="text-3xl font-black font-mono tracking-tighter">${formatCurrency(totals.total)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabla de Items */}
+        <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/30">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest w-[40%]">Producto / Servicio</th>
+                  <th className="px-4 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Precio Unit.</th>
+                  <th className="px-4 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Cant.</th>
+                  <th className="px-4 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Desc %</th>
+                  <th className="px-4 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Impuesto</th>
+                  <th className="px-4 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Subtotal</th>
+                  <th className="px-6 py-5 w-16"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                {fields.map((field, index) => {
+                  const itemValues = (watchedItems[index] || {}) as any;
+                  const itemSubtotal = (Number(itemValues.quantity) || 0) * (Number(itemValues.unit_price) || 0);
+                  const itemDiscount = itemSubtotal * ((Number(itemValues.discount_percent) || 0) / 100);
+                  const itemTax = (itemSubtotal - itemDiscount) * ((Number(itemValues.tax_percent) || 0) / 100);
+                  const itemTotal = (itemSubtotal - itemDiscount) + itemTax;
+
+                  return (
+                    <tr key={field.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                      <td className="px-6 py-4">
+                        <input
+                          {...register(`items.${index}.description`)}
+                          className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold dark:text-white placeholder-slate-400"
+                          placeholder="Nombre del producto o detalle del servicio..."
+                        />
+                      </td>
+                      <td className="px-4 py-4">
+                        <input
+                          type="number"
+                          step="0.01"
+                          {...register(`items.${index}.unit_price`, { valueAsNumber: true })}
+                          className="w-full bg-transparent border-none focus:ring-0 text-sm text-right font-black font-mono dark:text-white"
+                          placeholder="0.00"
+                        />
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center justify-center">
+                          <input
+                            type="number"
+                            {...register(`items.${index}.quantity`, { valueAsNumber: true })}
+                            className="w-16 bg-slate-100 dark:bg-slate-800 border-none rounded-xl py-2 text-sm text-center font-black dark:text-white"
+                          />
                         </div>
                       </td>
-                      <td className="p-2 align-top">
-                        <input 
-                            {...register(`items.${index}.code`)} 
-                            className="w-full bg-slate-50/50 rounded px-2 py-1 border-none text-xs text-slate-500" 
-                            placeholder="REF" 
+                      <td className="px-4 py-4">
+                        <input
+                          type="number"
+                          {...register(`items.${index}.discount_percent`, { valueAsNumber: true })}
+                          className="w-full bg-transparent border-none focus:ring-0 text-sm text-center font-bold text-rose-500"
+                          placeholder="0"
                         />
                       </td>
-                      <td className="p-2 align-top">
-                        <input 
-                            type="number" 
-                            step="0.01" 
-                            {...register(`items.${index}.unit_price`, { valueAsNumber: true })} 
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-right font-mono" 
-                            placeholder="0.00"
-                        />
-                      </td>
-                      <td className="p-2 align-top">
-                        <input 
-                            type="number" 
-                            {...register(`items.${index}.discount_percent`, { valueAsNumber: true })} 
-                            className="w-full bg-transparent border-none focus:ring-0 text-sm text-center text-orange-500" 
-                            placeholder="0"
-                        />
-                      </td>
-                      <td className="p-2 align-top">
-                        <select 
-                            {...register(`items.${index}.tax_percent`, { valueAsNumber: true })} 
-                            className="w-full bg-transparent border-none focus:ring-0 text-xs text-center appearance-none"
+                      <td className="px-4 py-4">
+                        <select
+                          {...register(`items.${index}.tax_percent`, { valueAsNumber: true })}
+                          className="w-full bg-transparent border-none focus:ring-0 text-xs text-center font-bold dark:text-slate-400 appearance-none cursor-pointer"
                         >
-                            <option value="19">IVA 19%</option>
-                            <option value="5">IVA 5%</option>
-                            <option value="0">0%</option>
+                          <option value="19">IVA 19%</option>
+                          <option value="5">IVA 5%</option>
+                          <option value="0">EXENTO 0%</option>
                         </select>
                       </td>
-                      <td className="p-2 align-top">
-                        <input 
-                            type="number" 
-                            {...register(`items.${index}.quantity`, { valueAsNumber: true })} 
-                            className="w-full bg-slate-100 dark:bg-slate-800 rounded px-2 py-1 border-none text-sm text-center font-bold" 
-                        />
+                      <td className="px-4 py-4 text-right">
+                        <span className="text-sm font-black text-slate-900 dark:text-white font-mono">${formatCurrency(itemTotal)}</span>
                       </td>
-                      <td className="p-2 align-top text-right text-sm font-bold text-slate-700 dark:text-slate-300">
-                        $ {formatCurrency(totalLine)}
-                      </td>
-                      <td className="p-2 align-top text-center">
-                        <button type="button" onClick={() => remove(index)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </td>
                     </tr>
-                  )})}
-                </tbody>
-              </table>
-              <button 
-                type="button" 
-                onClick={() => append({ description: '', quantity: 1, unit_price: 0, tax_percent: 19, discount_percent: 0, code: '' })}
-                className="w-full py-3 bg-slate-50 dark:bg-slate-800/50 text-blue-600 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-50 transition-all"
-              >
-                <Plus size={14} /> Agregar Línea
-              </button>
-            </div>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
-
-          <div className="flex justify-end">
-            <div className="w-full max-w-xs space-y-3 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 font-bold">Subtotal</span>
-                <span className="font-bold text-slate-900 dark:text-white">$ {formatCurrency(totals.subtotal)}</span>
-              </div>
-              {totals.discount > 0 && (
-                <div className="flex justify-between text-sm text-orange-600">
-                    <span className="font-bold">Descuento</span>
-                    <span className="font-bold">- $ {formatCurrency(totals.discount)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm text-blue-600">
-                <span className="font-bold">Impuestos</span>
-                <span className="font-bold">$ {formatCurrency(totals.tax)}</span>
-              </div>
-              <div className="flex justify-between text-xl border-t-2 border-slate-200 dark:border-slate-700 pt-3 mt-2">
-                <span className="font-black text-slate-900 dark:text-white">TOTAL</span>
-                <span className="font-black text-slate-900 dark:text-white">$ {formatCurrency(totals.total)}</span>
-              </div>
-            </div>
-          </div>
-        </form>
-
-        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 flex justify-end gap-4">
-          <button onClick={onClose} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all">Cancelar</button>
-          <button 
-            type="submit" 
-            className="px-10 py-3 bg-blue-600 text-white font-black rounded-xl shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center gap-2"
+          <button
+            type="button"
+            onClick={() => append({ description: '', quantity: 1, unit_price: 0, tax_percent: 19, discount_percent: 0, code: '' })}
+            className="w-full py-5 bg-slate-50 dark:bg-slate-800/30 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all border-t border-slate-100 dark:border-slate-800"
           >
-            <Save size={20} /> Guardar Factura
+            <Plus size={16} /> Agregar nuevo item a la factura
           </button>
         </div>
-      </div>
-    </div>
-  );
 
-  return createPortal(modalContent, document.body);
+        {/* Botonera inferior */}
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/50 flex justify-end gap-4 z-10">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-8 py-4 font-black text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="group relative px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black rounded-2xl shadow-2xl shadow-blue-600/30 hover:shadow-blue-600/40 transition-all active:scale-95 flex items-center justify-center gap-3 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            <Save size={20} />
+            <span>Emitir Factura</span>
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
+

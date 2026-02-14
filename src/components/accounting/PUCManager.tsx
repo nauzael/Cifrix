@@ -6,11 +6,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, FolderTree, ChevronRight, Loader2, Pencil, Check, X } from 'lucide-react';
+import { Plus, Trash2, FolderTree, ChevronRight, Loader2, Tag } from 'lucide-react';
 import { UNIVERSAL_PUC } from '../../lib/pucTemplates';
 import { logActivity } from '../../lib/audit';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import PUC_MD from '../../../.documentacion/PUC.md?raw';
+import { Modal } from '../ui/Modal';
 
 const accountSchema = z.object({
   code: z.string().min(1, 'El código es requerido'),
@@ -31,8 +32,6 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [orgId, setOrgId] = useState<string>(organizationId);
   const { user } = useAuthStore();
-  const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState<string>('');
   const [query, setQuery] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedParent, setSelectedParent] = useState<Account | null>(null);
@@ -40,8 +39,6 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
   useEffect(() => {
     setOrgId(organizationId);
   }, [organizationId]);
-
-  // Organización no es necesaria para la carga universal
 
   const accounts = useLiveQuery(
     () => (orgId ? db.accounts.where('organization_id').equals(orgId).sortBy('code') : []),
@@ -62,30 +59,17 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
     const lines = (PUC_MD || '').split(/\r?\n/);
     const entries: Array<{ code: string; name: string; type: Account['type']; nature: Account['nature']; accepts_movement: boolean }> = [];
     const typeMap: Record<string, Account['type']> = {
-      '1': 'ACTIVO',
-      '2': 'PASIVO',
-      '3': 'PATRIMONIO',
-      '4': 'INGRESO',
-      '5': 'EGRESO',
-      '6': 'EGRESO',
-      '7': 'EGRESO',
-      '8': 'ACTIVO',
-      '9': 'PASIVO'
+      '1': 'ACTIVO', '2': 'PASIVO', '3': 'PATRIMONIO', '4': 'INGRESO', '5': 'EGRESO', '6': 'EGRESO', '7': 'EGRESO', '8': 'ACTIVO', '9': 'PASIVO'
     };
     const natureByType: Record<Account['type'], Account['nature']> = {
-      ACTIVO: 'DEBITO',
-      PASIVO: 'CREDITO',
-      PATRIMONIO: 'CREDITO',
-      INGRESO: 'CREDITO',
-      EGRESO: 'DEBITO'
+      ACTIVO: 'DEBITO', PASIVO: 'CREDITO', PATRIMONIO: 'CREDITO', INGRESO: 'CREDITO', EGRESO: 'DEBITO'
     };
     for (const raw of lines) {
       const m = raw.match(/^\s*(\d{1,6})\s+(.+)$/);
       if (!m) continue;
       const code = m[1];
-      let name = m[2].trim();
+      let name = m[2].trim().replace(/<[^>]+>/g, '').trim();
       if (/^\s*a\s+\d+/.test(name)) continue;
-      name = name.replace(/<[^>]+>/g, '').trim();
       const t = typeMap[code[0]];
       if (!t) continue;
       const nature: Account['nature'] = natureByType[t];
@@ -125,9 +109,7 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
 
   const onSubmit = async (data: AccountFormData) => {
     if (!orgId) return;
-
     try {
-      const level = data.code.length;
       await db.accounts.add({
         id: uuidv4(),
         organization_id: orgId,
@@ -135,267 +117,93 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
         name: data.name,
         type: data.type,
         nature: data.nature,
-        level: level,
+        level: data.code.length,
         accepts_movement: data.accepts_movement,
         parent_id: data.parent_id === "" ? null : data.parent_id,
         created_at: new Date().toISOString(),
         sync_status: 'pendiente'
       });
+      setIsModalOpen(false);
       reset();
     } catch (error) {
-      console.error('Error adding account:', error);
       alert('Error al crear la cuenta. Verifique que el código no exista.');
     }
   };
 
-  const getDescendantIds = (rootId: string) => {
-    const result: string[] = [];
-    const stack = [rootId];
-    while (stack.length) {
-      const current = stack.pop() as string;
-      const children = accounts?.filter(a => a.parent_id === current) || [];
-      for (const ch of children) {
-        result.push(ch.id);
-        stack.push(ch.id);
-      }
-    }
-    return result;
-  };
+  const deleteAccount = async (id: string) => {
+    const descendantIds = (accounts || []).filter(a => a.parent_id === id).map(a => a.id);
+    const hasEntries = await db.journal_entries.where('account_id').equals(id).count() > 0;
 
-  const deleteAccount = async (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    const descendantIds = getDescendantIds(id);
-    const idsToDelete = [id, ...descendantIds];
-
-    const hasEntries = await db.journal_entries.where('account_id').anyOf(idsToDelete).count() > 0;
     if (hasEntries) {
       alert('No se puede eliminar esta cuenta porque ya tiene movimientos contables registrados.');
       return;
     }
 
-    const msg = descendantIds.length > 0 
-      ? `Esta cuenta tiene ${descendantIds.length} sub-cuentas. ¿Desea eliminarla junto con sus sub-cuentas?`
-      : '¿Está seguro de eliminar esta cuenta?';
-
-    if (confirm(msg)) {
+    if (confirm('¿Está seguro de eliminar esta cuenta?')) {
       try {
-        const account = await db.accounts.get(id);
-        await db.accounts.bulkDelete(idsToDelete);
-        
-        if (account && orgId) {
-          await logActivity({
-            organization_id: orgId,
-            user_id: user?.id || 'unknown',
-            action: 'DELETE',
-            entity_type: 'ACCOUNT',
-            entity_id: id,
-            old_data: { account, deleted_ids: idsToDelete },
-            new_data: null
-          });
-        }
-        alert(`Se eliminaron ${idsToDelete.length} cuenta(s) correctamente.`);
+        await db.accounts.delete(id);
       } catch (error) {
-        console.error('Error deleting account:', error);
         alert('Error al eliminar la cuenta.');
       }
     }
   };
 
-  const toggleExpand = (id: string) => {
-    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const startEditAccount = (account: Account) => {
-    setEditingAccountId(account.id);
-    setEditingName(account.name);
-  };
-
-  const cancelEditAccount = () => {
-    setEditingAccountId(null);
-    setEditingName('');
-  };
-
-  const saveEditAccount = async () => {
-    if (!editingAccountId || !orgId) return;
-    const name = editingName.trim();
-    if (!name) return;
-    const existing = await db.accounts.get(editingAccountId);
-    if (!existing) return;
-    await db.accounts.update(editingAccountId, { name, sync_status: 'pendiente' });
-    await logActivity({
-      organization_id: orgId,
-      user_id: user?.id || 'unknown',
-      action: 'UPDATE',
-      entity_type: 'ACCOUNT',
-      entity_id: editingAccountId,
-      old_data: { name: existing.name },
-      new_data: { name }
-    });
-    setEditingAccountId(null);
-    setEditingName('');
-  };
-
-  const seedPUC = async () => {
-    if (!orgId) return;
-    
-    const defaultAccounts = UNIVERSAL_PUC;
-
-    for (const acc of defaultAccounts) {
-      const exists = await db.accounts.where({ organization_id: orgId, code: acc.code }).first();
-      if (!exists) {
-        let parentId: string | null = null;
-        if ('parent_code' in acc && acc.parent_code) {
-          const parent = await db.accounts.where({ organization_id: orgId, code: acc.parent_code }).first();
-          if (parent) parentId = parent.id;
-        }
-
-        await db.accounts.add({
-          id: uuidv4(),
-          organization_id: orgId,
-          code: acc.code,
-          name: acc.name,
-          type: acc.type,
-          nature: acc.nature,
-          level: acc.code.length,
-          accepts_movement: acc.accepts_movement,
-          parent_id: parentId,
-          created_at: new Date().toISOString(),
-          sync_status: 'pendiente'
-        });
-      }
-    }
-    alert('PUC universal cargado exitosamente.');
-  };
-
-  const clearPUC = async () => {
-    if (!orgId) return;
-    
-    const count = await db.accounts.where('organization_id').equals(orgId).count();
-    if (count === 0) {
-      alert('La tabla PUC ya está vacía.');
-      return;
-    }
-
-    const hasEntries = await db.journal_entries.count() > 0;
-    if (hasEntries) {
-      alert('No se puede limpiar el PUC porque existen movimientos contables que dependen de estas cuentas.');
-      return;
-    }
-
-    if (confirm(`¿Está seguro de eliminar las ${count} cuentas del PUC? Esta acción no se puede deshacer.`)) {
-      try {
-        const accountIds = await db.accounts.where('organization_id').equals(orgId).primaryKeys();
-        await db.accounts.bulkDelete(accountIds);
-        alert('Tabla PUC limpiada exitosamente.');
-      } catch (error) {
-        console.error('Error clearing PUC:', error);
-        alert('Error al limpiar la tabla PUC.');
-      }
-    }
-  };
-
-  const addChild = (parent: Account) => {
-    reset({
-      name: '',
-      code: parent.code,
-      type: parent.type,
-      nature: parent.nature,
-      accepts_movement: true,
-      parent_id: parent.id
-    });
-    setSelectedParent(parent);
-    setIsModalOpen(true);
-  };
-
-  const handleNewAccount = () => {
-    setSelectedParent(null);
-    reset({
-      type: 'ACTIVO',
-      nature: 'DEBITO',
-      accepts_movement: true,
-      parent_id: null,
-      code: '',
-      name: ''
-    });
-    setIsModalOpen(true);
-  };
-
   const renderTree = (parentId: string | null = null, depth = 0) => {
     const q = query.trim().toLowerCase();
-    const parentMap = new Map<string, string | null>((accounts || []).map(a => [a.id, a.parent_id]));
-    const matchIds = q
-      ? (accounts || []).filter(a => a.code.includes(q) || a.name.toLowerCase().includes(q)).map(a => a.id)
-      : [];
-    const ancestorIds = new Set<string>();
-    const addAnc = (id: string) => {
-      let p = parentMap.get(id) || null;
-      while (p) {
-        ancestorIds.add(p);
-        p = parentMap.get(p) || null;
-      }
-    };
-    matchIds.forEach(addAnc);
-    const visibleIds = new Set<string>([...matchIds, ...Array.from(ancestorIds)]);
+    const nodes = accounts?.filter(acc => acc.parent_id === parentId && (q ? (acc.code.includes(q) || acc.name.toLowerCase().includes(q)) : true)) || [];
 
-    const nodes = accounts?.filter(acc => acc.parent_id === parentId && (q ? visibleIds.has(acc.id) : true)) || [];
-    
     return nodes.map(node => {
       const hasChildren = accounts?.some(acc => acc.parent_id === node.id);
       const isExpanded = q ? true : !!expanded[node.id];
 
       return (
         <div key={node.id} className="select-none">
-          <div 
-            className={`flex flex-col sm:flex-row sm:items-center gap-2 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 px-2 rounded transition-colors group ${depth > 0 ? 'ml-4 sm:ml-6' : ''}`}
+          <div
+            className={`flex flex-col sm:flex-row sm:items-center gap-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800/50 px-4 rounded-2xl transition-all group ${depth > 0 ? 'ml-8 relative before:absolute before:left-[-15px] before:top-1/2 before:w-4 before:h-[1px] before:bg-slate-200 dark:before:bg-slate-800' : ''}`}
           >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <button 
-                onClick={() => toggleExpand(node.id)}
-                className={`p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <button
+                onClick={() => setExpanded(prev => ({ ...prev, [node.id]: !prev[node.id] }))}
+                className={`p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg shadow-sm transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
               >
                 {hasChildren ? <ChevronRight size={14} className="text-slate-400" /> : <div className="size-[14px]" />}
               </button>
-              
-              <span className={`font-mono text-xs w-16 font-bold flex-shrink-0 ${
-                node.level === 1 ? 'text-blue-600' : 
-                node.level === 2 ? 'text-indigo-600' : 'text-slate-500'
-              }`}>
+
+              <span className={`font-mono text-xs font-black min-w-[70px] ${node.level === 1 ? 'text-blue-600' : 'text-slate-500'
+                }`}>
                 {node.code}
               </span>
-              
-              <span className={`text-sm truncate ${node.level === 1 ? 'font-black uppercase' : node.level === 2 ? 'font-bold' : ''}`}>
+
+              <span className={`text-sm truncate tracking-tight font-bold ${node.level === 1 ? 'uppercase text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                 {node.name}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 ml-8 sm:ml-0 pb-1 sm:pb-0">
-               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
-                 node.nature === 'DEBITO' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
-               }`}>
-                 {node.nature[0]}
-               </span>
-               {!node.accepts_movement && (
-                 <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded uppercase">G</span>
-               )}
+            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${node.nature === 'DEBITO' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                }`}>
+                {node.nature}
+              </span>
+              {!node.accepts_movement && (
+                <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full">GRUPO</span>
+              )}
               <button
-                onClick={() => addChild(node)}
-                className="p-1.5 sm:px-2 sm:py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center gap-1 text-[10px] font-black uppercase transition-colors"
-                title="Agregar subcuenta"
-                type="button"
+                onClick={() => {
+                  setSelectedParent(node);
+                  reset({ code: node.code, type: node.type, nature: node.nature, accepts_movement: true, parent_id: node.id, name: '' });
+                  setIsModalOpen(true);
+                }}
+                className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-all active:scale-95"
+                title="Nueva subcuenta"
               >
-                <Plus size={12} />
-                <span className="hidden sm:inline">Subcuenta</span>
+                <Plus size={16} />
               </button>
-              <button 
-                onClick={(e) => deleteAccount(e, node.id)} 
-                className="p-1.5 sm:px-2 sm:py-1 rounded-full bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 flex items-center gap-1 text-[10px] font-black uppercase transition-colors"
-                type="button"
+              <button
+                onClick={() => deleteAccount(node.id)}
+                className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 transition-all active:scale-95"
                 title="Eliminar"
               >
-                <Trash2 size={12} />
-                <span className="hidden sm:inline">Eliminar</span>
+                <Trash2 size={16} />
               </button>
             </div>
           </div>
@@ -406,187 +214,210 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
   };
 
   if (!orgId) return (
-    <div className="flex flex-col items-center justify-center py-20 text-slate-500 dark:text-slate-400">
-      <Loader2 className="animate-spin mb-4 text-blue-600" size={32} />
-      <p className="font-bold">Cargando organización...</p>
+    <div className="flex flex-col items-center justify-center py-32 space-y-4">
+      <div className="size-16 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
+      <p className="text-slate-400 font-bold animate-pulse">Cargando estructura PUC...</p>
     </div>
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Plan Único de Cuentas (PUC)</h3>
-           <p className="text-sm text-slate-500 dark:text-slate-400">Gestione la estructura contable de su organización</p>
+    <div className="space-y-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="space-y-1">
+          <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Estructura Contable (PUC)</h3>
+          <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Organización de cuentas y niveles</p>
         </div>
-        <div className="flex w-full sm:w-auto gap-2">
-          <button 
+        <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+          <button
             onClick={clearPUC}
-            className="flex-1 sm:flex-none text-xs bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            className="flex-1 lg:flex-none text-[11px] font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/10 text-red-600 hover:bg-red-100 px-5 py-3 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            <Trash2 size={14} />
-            <span className="sm:hidden">Limpiar</span>
-            <span className="hidden sm:inline">Limpiar PUC</span>
+            <Trash2 size={16} /> Limpiar
           </button>
-          <button 
+          <button
             onClick={seedPUC}
-            className="flex-1 sm:flex-none text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
-            title="Cargar plan de cuentas universal"
+            className="flex-1 lg:flex-none text-[11px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 px-5 py-3 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            <FolderTree size={14} />
-            <span className="sm:hidden">Cargar PUC</span>
-            <span className="hidden sm:inline">Cargar PUC Universal</span>
+            <FolderTree size={16} /> Cargar Universal
+          </button>
+          <button
+            onClick={() => {
+              setSelectedParent(null);
+              reset({ type: 'ACTIVO', nature: 'DEBITO', accepts_movement: true, parent_id: null, code: '', name: '' });
+              setIsModalOpen(true);
+            }}
+            className="flex-[2] lg:flex-none text-[11px] font-black uppercase tracking-widest bg-blue-600 text-white shadow-xl shadow-blue-600/20 hover:bg-blue-700 px-8 py-3 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Plus size={16} /> Nueva Cuenta
           </button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 min-h-[400px] sm:min-h-[500px]">
-        <div className="mb-3">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por código o nombre..."
-            className="w-full text-sm border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500"
-          />
+      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden min-h-[500px] flex flex-col">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800/50 bg-slate-50/30 dark:bg-slate-800/10 backdrop-blur-sm">
+          <div className="relative max-w-2xl">
+            <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por código (ej: 1105) o nombre de la cuenta..."
+              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all dark:text-white shadow-inner"
+            />
+          </div>
         </div>
-        <div className="overflow-x-auto -mx-1 px-1">
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
           {accounts && accounts.length > 0 ? (
-            renderTree()
+            <div className="space-y-1">
+              {renderTree()}
+            </div>
           ) : (
-            <div className="text-center py-10 text-slate-400">
-              No hay cuentas registradas. Cargue el PUC universal o cree una nueva.
+            <div className="h-full flex flex-col items-center justify-center py-20 text-center space-y-4">
+              <div className="size-20 bg-slate-100 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center text-slate-400">
+                <FolderTree size={40} />
+              </div>
+              <p className="text-slate-400 font-bold max-w-sm">No se han encontrado cuentas registradas. Inicie cargando el Plan Único de Cuentas Universal.</p>
             </div>
           )}
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-in fade-in zoom-in duration-200">
-            <button 
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-            >
-              <X size={20} />
-            </button>
-            
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              {selectedParent ? 'Nueva Subcuenta' : 'Nueva Cuenta'}
-            </h3>
-
-            {selectedParent && (
-              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase mb-1">Cuenta Padre</p>
-                <p className="font-mono font-bold text-slate-700 dark:text-slate-300">{selectedParent.code} - {selectedParent.name}</p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit((data) => { onSubmit(data); setIsModalOpen(false); })} className="space-y-4">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={selectedParent ? 'Nueva subcuenta' : 'Nueva cuenta contable'}
+        subtitle={selectedParent ? `Nivel inferior de ${selectedParent.code}` : 'Configuración de cuenta principal'}
+        icon={Plus}
+        maxWidth="md"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {selectedParent && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/50 flex items-center gap-4">
+              <div className="size-10 bg-blue-600 text-white rounded-xl shadow-lg flex items-center justify-center font-black">P</div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Código</label>
-                <div className="grid grid-cols-1 gap-2">
-                  <input 
-                    {...register('code')}
-                    className="w-full text-sm border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ej: 110505"
-                    autoFocus
-                  />
-                  <SearchableSelect
-                    options={codeOptions}
-                    value={codeOptions.find(o => o.value === watch('code'))?.value}
-                    onChange={(val) => {
-                      const opt = codeOptions.find(o => o.value === val);
-                      if (!opt) return;
-                      setValue('code', val);
-                      setValue('name', opt.name);
-                      setValue('type', opt.type);
-                      setValue('nature', opt.nature);
-                      setValue('accepts_movement', opt.accepts_movement);
-                    }}
-                    placeholder="Buscar código en catálogo"
-                    size="md"
-                  />
-                </div>
-                {errors.code && <p className="text-red-500 text-xs mt-1">{errors.code.message}</p>}
+                <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Cuenta superior</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white font-mono">{selectedParent.code} — {selectedParent.name}</p>
               </div>
+            </div>
+          )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Nombre</label>
-                <div className="grid grid-cols-1 gap-2">
-                  <input 
-                    {...register('name')}
-                    className="w-full text-sm border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ej: Caja General"
-                  />
-                  <SearchableSelect
-                    options={nameOptions}
-                    value={nameOptions.find(o => o.value === watch('name'))?.value}
-                    onChange={(val) => {
-                      const opt = nameOptions.find(o => o.value === val);
-                      if (!opt) return;
-                      setValue('name', val);
-                      setValue('code', opt.code);
-                      setValue('type', opt.type);
-                      setValue('nature', opt.nature);
-                      setValue('accepts_movement', opt.accepts_movement);
-                    }}
-                    placeholder="Buscar nombre en catálogo"
-                    size="md"
-                  />
-                </div>
-                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          <div className="space-y-4">
+            <div className="space-y-2 group">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Código de cuenta</label>
+              <div className="grid gap-3">
+                <input
+                  {...register('code')}
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all font-mono"
+                  placeholder="Ej: 110505"
+                  autoFocus
+                />
+                <SearchableSelect
+                  options={codeOptions}
+                  value={codeOptions.find(o => o.value === watch('code'))?.value}
+                  onChange={(val) => {
+                    const opt = codeOptions.find(o => o.value === val);
+                    if (!opt) return;
+                    setValue('code', val);
+                    setValue('name', opt.name);
+                    setValue('type', opt.type);
+                    setValue('nature', opt.nature);
+                    setValue('accepts_movement', opt.accepts_movement);
+                  }}
+                  placeholder="Sugerencias del catálogo contable..."
+                  size="lg"
+                  className="rounded-2xl border-slate-200 dark:border-slate-800"
+                />
               </div>
+              {errors.code && <p className="text-red-500 text-[10px] font-bold mt-1.5 ml-1">{errors.code.message}</p>}
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Tipo</label>
-                <select {...register('type')} className="w-full text-sm border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                  <option value="ACTIVO">Activo</option>
-                  <option value="PASIVO">Pasivo</option>
-                  <option value="PATRIMONIO">Patrimonio</option>
-                  <option value="INGRESO">Ingresos</option>
-                  <option value="EGRESO">Gastos</option>
-                </select>
+            <div className="space-y-2 group">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Nombre descriptivo</label>
+              <div className="grid gap-3">
+                <input
+                  {...register('name')}
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+                  placeholder="Ej: Caja General Regional"
+                />
+                <SearchableSelect
+                  options={nameOptions}
+                  value={nameOptions.find(o => o.value === watch('name'))?.value}
+                  onChange={(val) => {
+                    const opt = nameOptions.find(o => o.value === val);
+                    if (!opt) return;
+                    setValue('name', val);
+                    setValue('code', opt.code);
+                    setValue('type', opt.type);
+                    setValue('nature', opt.nature);
+                    setValue('accepts_movement', opt.accepts_movement);
+                  }}
+                  placeholder="Buscar nombre en base de datos..."
+                  size="lg"
+                  className="rounded-2xl border-slate-200 dark:border-slate-800"
+                />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Naturaleza</label>
-                  <select {...register('nature')} className="w-full text-sm border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                    <option value="DEBITO">Débito</option>
-                    <option value="CREDITO">Crédito</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Movimiento</label>
-                  <select 
-                    {...register('accepts_movement', { setValueAs: v => v === 'true' })} 
-                    className="w-full text-sm border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="true">Sí</option>
-                    <option value="false">No (Grupo)</option>
-                  </select>
-                </div>
-              </div>
-
-              {!selectedParent && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Cuenta Padre (Opcional)</label>
-                  <select {...register('parent_id')} className="w-full text-sm border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">-- Ninguna --</option>
-                    {accounts?.filter(a => !a.accepts_movement).map(acc => (
-                      <option key={acc.id} value={acc.id}>{acc.code} - {acc.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-                Guardar Cuenta
-              </button>
-            </form>
+              {errors.name && <p className="text-red-500 text-[10px] font-bold mt-1.5 ml-1">{errors.name.message}</p>}
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Clase de cuenta</label>
+              <select {...register('type')} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all appearance-none">
+                <option value="ACTIVO">ACTIVO</option>
+                <option value="PASIVO">PASIVO</option>
+                <option value="PATRIMONIO">PATRIMONIO</option>
+                <option value="INGRESO">INGRESO</option>
+                <option value="EGRESO">EGRESO / GASTO</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Naturaleza contable</label>
+              <select {...register('nature')} className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all appearance-none">
+                <option value="DEBITO">DÉBITO (+)</option>
+                <option value="CREDITO">CRÉDITO (-)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex border-t border-slate-100 dark:border-slate-800 pt-6">
+              <label className="flex items-center gap-4 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    {...register('accepts_movement')}
+                    className="sr-only peer"
+                  />
+                  <div className="w-12 h-6 bg-slate-200 dark:bg-slate-800 rounded-full peer peer-checked:bg-blue-600 transition-all shadow-inner" />
+                  <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:left-7 shadow-sm" />
+                </div>
+                <div>
+                  <p className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Recibe movimientos</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">¿Es una cuenta de registro o grupo?</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="pt-4 flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="group relative flex-[2] px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-bold shadow-xl shadow-blue-600/20 hover:from-blue-700 hover:to-indigo-700 transition-all active:scale-95 overflow-hidden flex items-center justify-center gap-3"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <span>Guardar cuenta</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
+

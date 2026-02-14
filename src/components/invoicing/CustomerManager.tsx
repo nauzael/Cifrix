@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, Customer } from '../../lib/db';
+import { db } from '../../lib/db';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, User, Search, X, Mail, Phone, MapPin } from 'lucide-react';
+import { Plus, Trash2, User, Search, Mail, Phone, MapPin } from 'lucide-react';
+import { Modal } from '../ui/Modal';
 
 const customerSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -31,7 +31,7 @@ export function CustomerManager({ organizationId }: CustomerManagerProps) {
     [organizationId]
   );
 
-  const filteredCustomers = customers?.filter(c => 
+  const filteredCustomers = customers?.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.tax_id?.includes(searchTerm)
   ) || [];
@@ -62,125 +62,159 @@ export function CustomerManager({ organizationId }: CustomerManagerProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="relative max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
-          <input 
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+          <input
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:text-white"
-            placeholder="Buscar cliente..."
+            className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all dark:text-white"
+            placeholder="Buscar por nombre o identificación..."
           />
         </div>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all"
+          className="group bg-blue-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95"
         >
-          <Plus size={20} /> Nuevo Cliente
+          <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+          Nuevo cliente
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCustomers.map(customer => (
-          <div key={customer.id} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 group">
+          <div key={customer.id} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 group hover:shadow-xl hover:border-blue-500/20 transition-all duration-300">
             <div className="flex justify-between items-start">
-              <div className="flex items-center gap-3">
-                <div className="size-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 font-black">
+              <div className="flex items-center gap-4">
+                <div className="size-12 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-lg shadow-inner">
                   {customer.name.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h4 className="font-black text-slate-900 dark:text-white">{customer.name}</h4>
-                  <p className="text-xs text-slate-500">{customer.tax_id || 'Sin ID fiscal'}</p>
+                  <h4 className="font-black text-slate-900 dark:text-white tracking-tight">{customer.name}</h4>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{customer.tax_id || 'Sin identificación'}</p>
                 </div>
               </div>
-              <button 
-                onClick={() => db.customers.delete(customer.id)}
-                className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              <button
+                onClick={() => {
+                  if (confirm('¿Seguro que desea eliminar este cliente?')) {
+                    db.customers.delete(customer.id);
+                  }
+                }}
+                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
               >
-                <Trash2 size={16} />
+                <Trash2 size={18} />
               </button>
             </div>
 
-            <div className="space-y-2 pt-2 border-t border-slate-50 dark:border-slate-800">
-              {customer.email && <div className="flex items-center gap-2 text-xs text-slate-500"><Mail size={12} /> {customer.email}</div>}
-              {customer.phone && <div className="flex items-center gap-2 text-xs text-slate-500"><Phone size={12} /> {customer.phone}</div>}
-              {customer.address && <div className="flex items-center gap-2 text-xs text-slate-500"><MapPin size={12} /> {customer.address}</div>}
+            <div className="space-y-3 pt-4 border-t border-slate-50 dark:border-slate-800/50">
+              {customer.email && (
+                <div className="flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <Mail size={14} className="text-blue-500/60" />
+                  {customer.email}
+                </div>
+              )}
+              {customer.phone && (
+                <div className="flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <Phone size={14} className="text-blue-500/60" />
+                  {customer.phone}
+                </div>
+              )}
+              {customer.address && (
+                <div className="flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <MapPin size={14} className="text-blue-500/60" />
+                  {customer.address}
+                </div>
+              )}
             </div>
           </div>
         ))}
+        {filteredCustomers.length === 0 && (
+          <div className="col-span-full py-20 text-center space-y-4">
+            <div className="size-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-400 dark:text-slate-600">
+              <User size={40} />
+            </div>
+            <p className="text-slate-400 font-bold">No se encontraron clientes</p>
+          </div>
+        )}
       </div>
 
-      {isModalOpen && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)} />
-          <div className="relative bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white">Nuevo Cliente</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X size={24} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre / Razón Social</label>
-                <input 
-                  {...register('name')}
-                  autoFocus
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 dark:text-white border-none rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none"
-                  placeholder="Ej. Juan Pérez o Empresa S.A.S"
-                />
-                {errors.name && <p className="text-red-500 text-[10px] font-bold mt-1">{errors.name.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">NIT / ID Fiscal</label>
-                <input 
-                  {...register('tax_id')}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 dark:text-white border-none rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none"
-                  placeholder="900.000.000-1"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Email</label>
-                  <input 
-                    {...register('email')}
-                    type="email"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 dark:text-white border-none rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none"
-                    placeholder="correo@ejemplo.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Teléfono</label>
-                  <input 
-                    {...register('phone')}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 dark:text-white border-none rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none"
-                    placeholder="300 000 0000"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Dirección</label>
-                <input 
-                  {...register('address')}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 dark:text-white border-none rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none"
-                  placeholder="Calle 123 # 45-67"
-                />
-              </div>
-
-              <div className="pt-4">
-                <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-xl font-black shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all">
-                  Guardar Cliente
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Nuevo cliente"
+        subtitle="Registro de tercero para facturación"
+        icon={User}
+        maxWidth="md"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-2 group">
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Nombre o razón social</label>
+            <input
+              {...register('name')}
+              autoFocus
+              className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+              placeholder="Ej. Juan Pérez o Empresa S.A.S"
+            />
+            {errors.name && <p className="text-red-500 text-[10px] font-bold mt-1.5 ml-1">{errors.name.message}</p>}
           </div>
-        </div>,
-        document.body
-      )}
+
+          <div className="space-y-2 group">
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Identificación fiscal (NIT/CC)</label>
+            <input
+              {...register('tax_id')}
+              className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+              placeholder="Ej. 1.000.222.333-1"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2 group">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Correo electrónico</label>
+              <input
+                {...register('email')}
+                type="email"
+                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+                placeholder="ejemplo@correo.com"
+              />
+            </div>
+            <div className="space-y-2 group">
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Número telefónico</label>
+              <input
+                {...register('phone')}
+                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+                placeholder="300 000 0000"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2 group">
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Dirección física</label>
+            <input
+              {...register('address')}
+              className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+              placeholder="Calle 123 # 45-67, Ciudad"
+            />
+          </div>
+
+          <div className="pt-4 flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 px-6 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="group relative flex-[2] px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-bold shadow-xl shadow-blue-600/20 hover:from-blue-700 hover:to-indigo-700 transition-all active:scale-95 overflow-hidden flex items-center justify-center gap-3"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              <span>Guardar cliente</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
+

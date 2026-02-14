@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { db } from '../../lib/db';
 import { v4 as uuidv4 } from 'uuid';
-import { Save, Building2, Church, Globe, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Building2, Church, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface OnboardingWizardProps {
@@ -41,60 +41,71 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-4">
-      <div className="max-w-xl w-full">
-        {/* Progress Bar */}
-        <div className="flex gap-2 mb-12">
+    <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden">
+      {/* Elementos decorativos de fondo */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
+
+      <div className="max-w-xl w-full relative z-10">
+        <div className="flex gap-3 mb-12">
           {[1, 2, 3].map(i => (
-            <div 
-              key={i} 
-              className={`h-2 flex-1 rounded-full transition-all duration-500 ${
-                i <= step ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-800'
-              }`} 
-            />
+            <div
+              key={i}
+              className={`h-1.5 flex-1 rounded-full transition-all duration-700 relative overflow-hidden ${i <= step ? 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'bg-slate-200 dark:bg-slate-800'
+                }`}
+            >
+              {i === step && (
+                <motion.div
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '100%' }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                />
+              )}
+            </div>
           ))}
         </div>
 
         <AnimatePresence mode="wait">
           {step === 1 && (
-            <motion.div 
+            <motion.div
               key="step1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
             >
-              <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Bienvenido a Cifrix</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-lg">Primero, dinos qué tipo de organización vas a gestionar.</p>
-              
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <button 
-                  onClick={() => { setFormData({...formData, type: 'IGLESIA'}); handleNext(); }}
-                  className={`p-8 rounded-2xl border-2 transition-all text-left space-y-4 ${
-                    formData.type === 'IGLESIA' ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-900/10' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                  }`}
+              <div className="space-y-2">
+                <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Bienvenido a Cifrix</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">Comencemos configurando tu espacio de trabajo.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => { setFormData({ ...formData, type: 'IGLESIA' }); handleNext(); }}
+                  className="group p-8 rounded-[2.5rem] bg-white dark:bg-slate-900 border-2 border-transparent hover:border-blue-500/50 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all text-left space-y-6 relative overflow-hidden"
                 >
-                  <div className="size-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600">
-                    <Church size={24} />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 -mr-10 -mt-10 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
+                  <div className="size-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 group-hover:rotate-3 transition-transform">
+                    <Church size={32} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white">Iglesia / Ministerio</h3>
-                    <p className="text-sm text-slate-500">Módulo de diezmos y miembros incluido.</p>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Iglesia o Ministerio</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">Gestión de diezmos, ofrendas y membresía dedicada.</p>
                   </div>
                 </button>
 
-                <button 
-                  onClick={() => { setFormData({...formData, type: 'EMPRESA'}); handleNext(); }}
-                  className={`p-8 rounded-2xl border-2 transition-all text-left space-y-4 ${
-                    formData.type === 'EMPRESA' ? 'border-blue-600 bg-blue-50/50 dark:bg-blue-900/10' : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                  }`}
+                <button
+                  onClick={() => { setFormData({ ...formData, type: 'EMPRESA' }); handleNext(); }}
+                  className="group p-8 rounded-[2.5rem] bg-white dark:bg-slate-900 border-2 border-transparent hover:border-indigo-500/50 shadow-xl shadow-slate-200/50 dark:shadow-none transition-all text-left space-y-6 relative overflow-hidden"
                 >
-                  <div className="size-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600">
-                    <Building2 size={24} />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 -mr-10 -mt-10 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
+                  <div className="size-14 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:scale-110 group-hover:rotate-3 transition-transform">
+                    <Building2 size={32} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white">Empresa / Negocio</h3>
-                    <p className="text-sm text-slate-500">Contabilidad comercial estándar.</p>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Empresa o Negocio</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">Contabilidad estándar, facturación y gestión comercial.</p>
                   </div>
                 </button>
               </div>
@@ -102,103 +113,108 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
           )}
 
           {step === 2 && (
-            <motion.div 
+            <motion.div
               key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
             >
-              <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Datos Generales</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-lg">Configura los detalles básicos de tu organización.</p>
-              
-              <div className="space-y-4 pt-4">
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre de la Organización</label>
-                  <input 
+              <div className="space-y-2">
+                <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Datos Principales</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">¿Cómo se llama tu {formData.type === 'IGLESIA' ? 'ministerio' : 'empresa'}?</p>
+              </div>
+
+              <div className="space-y-6 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800">
+                <div className="space-y-2 group">
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Nombre Legal u oficial</label>
+                  <input
                     autoFocus
                     value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none text-lg"
-                    placeholder="Ej. Iglesia Central"
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none text-xl font-bold dark:text-white transition-all placeholder:text-slate-300"
+                    placeholder="Ej. Fundación Vida Plena"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">NIT / ID Fiscal</label>
-                  <input 
+                <div className="space-y-2 group">
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">NIT / Identificación Fiscal</label>
+                  <input
                     value={formData.tax_id}
-                    onChange={e => setFormData({...formData, tax_id: e.target.value})}
-                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none text-lg"
+                    onChange={e => setFormData({ ...formData, tax_id: e.target.value })}
+                    className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none text-xl font-bold dark:text-white transition-all placeholder:text-slate-300 font-mono"
                     placeholder="900.000.000-1"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-8">
-                <button onClick={handleBack} className="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 rounded-2xl transition-all flex items-center justify-center gap-2">
-                  <ArrowLeft size={20} /> Atrás
+              <div className="flex gap-4">
+                <button onClick={handleBack} className="flex-1 py-5 font-black text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-2xl transition-all flex items-center justify-center gap-2">
+                  <ArrowLeft size={20} /> Regresar
                 </button>
-                <button 
+                <button
                   disabled={!formData.name}
-                  onClick={handleNext} 
-                  className="flex-[2] py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  onClick={handleNext}
+                  className="flex-[2] py-5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black rounded-2xl shadow-2xl shadow-blue-600/30 hover:shadow-blue-600/40 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
                 >
-                  Siguiente <ArrowRight size={20} />
+                  Continuar <ArrowRight size={20} />
                 </button>
               </div>
             </motion.div>
           )}
 
           {step === 3 && (
-            <motion.div 
+            <motion.div
               key="step3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
             >
-              <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Localización</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-lg">Para ajustar formatos de moneda y fecha.</p>
-              
-              <div className="space-y-4 pt-4">
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">País</label>
-                  <select 
+              <div className="space-y-2">
+                <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Localización</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-lg font-medium">Personalicemos tu experiencia regional.</p>
+              </div>
+
+              <div className="space-y-6 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800">
+                <div className="space-y-2 group">
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Región / País</label>
+                  <select
                     value={formData.country}
-                    onChange={e => setFormData({...formData, country: e.target.value})}
-                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none text-lg"
+                    onChange={e => setFormData({ ...formData, country: e.target.value })}
+                    className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none text-xl font-bold dark:text-white transition-all appearance-none cursor-pointer"
                   >
-                    <option value="Colombia">Colombia</option>
-                    <option value="México">México</option>
-                    <option value="España">España</option>
-                    <option value="Estados Unidos">Estados Unidos</option>
-                    <option value="Otro">Otro</option>
+                    <option value="Colombia">🇨🇴 Colombia</option>
+                    <option value="México">🇲🇽 México</option>
+                    <option value="España">🇪🇸 España</option>
+                    <option value="Estados Unidos">🇺🇸 Estados Unidos</option>
+                    <option value="Otro">🌍 Otro</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">Moneda</label>
-                  <select 
+                <div className="space-y-2 group">
+                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Moneda Principal</label>
+                  <select
                     value={formData.currency}
-                    onChange={e => setFormData({...formData, currency: e.target.value})}
-                    className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none text-lg"
+                    onChange={e => setFormData({ ...formData, currency: e.target.value })}
+                    className="w-full px-6 py-5 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none text-xl font-bold dark:text-white transition-all appearance-none cursor-pointer"
                   >
-                    <option value="COP">COP ($)</option>
-                    <option value="MXN">MXN ($)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
+                    <option value="COP">Peso Colombiano (COP)</option>
+                    <option value="MXN">Peso Mexicano (MXN)</option>
+                    <option value="USD">Dólar Estadounidense (USD)</option>
+                    <option value="EUR">Euro (EUR)</option>
                   </select>
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-8">
-                <button onClick={handleBack} className="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 rounded-2xl transition-all flex items-center justify-center gap-2">
-                  <ArrowLeft size={20} /> Atrás
+              <div className="flex gap-4">
+                <button onClick={handleBack} className="flex-1 py-5 font-black text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-2xl transition-all flex items-center justify-center gap-2">
+                  <ArrowLeft size={20} /> Regresar
                 </button>
-                <button 
-                  onClick={handleSubmit} 
-                  className="flex-[2] py-4 bg-green-600 text-white font-black rounded-2xl shadow-xl shadow-green-600/20 hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+                <button
+                  onClick={handleSubmit}
+                  className="group relative flex-[2] py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black rounded-2xl shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all active:scale-95 overflow-hidden flex items-center justify-center gap-3"
                 >
-                  Completar Registro <CheckCircle size={20} />
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  Finalizar Configuración <CheckCircle size={20} />
                 </button>
               </div>
             </motion.div>
@@ -208,3 +224,4 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     </div>
   );
 };
+

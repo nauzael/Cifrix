@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, Project, Organization } from '../../lib/db';
+import { db, Organization } from '../../lib/db';
 import { useAuthStore } from '../../store/authStore';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, Save, X, Target } from 'lucide-react';
+import { Plus, Trash2, Save, Calculator } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
 import { logActivity } from '../../lib/audit';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { useAccountingStore } from '../../store/accountingStore';
+import { Modal } from '../ui/Modal';
 
 const entrySchema = z.object({
   account_id: z.string().min(1, 'Seleccione una cuenta'),
@@ -50,7 +50,7 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
         if (o) setOrg(o);
         return;
       }
-      
+
       if (user) {
         const orgs = await db.organizations.toArray();
         if (orgs.length > 0) {
@@ -86,13 +86,12 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
     }
   });
 
-  // Load existing transaction data if in edit mode
   useEffect(() => {
     const loadTransaction = async () => {
       if (transactionId) {
         const tx = await db.transactions.get(transactionId);
         const entries = await db.journal_entries.where('transaction_id').equals(transactionId).toArray();
-        
+
         if (tx && entries) {
           reset({
             date: tx.date,
@@ -106,7 +105,6 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
             }))
           });
 
-          // Update formatted values for display
           const newFormattedValues: { [key: string]: string } = {};
           entries.forEach((e, index) => {
             if (e.debit > 0) newFormattedValues[`${index}-debit`] = formatCurrency(e.debit);
@@ -141,11 +139,9 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
   }, [accounts]);
 
   const [formattedValues, setFormattedValues] = useState<{ [key: string]: string }>({});
-
   const watchedEntries = watch("entries");
 
   const handleCurrencyInput = (index: number, field: 'debit' | 'credit', value: string) => {
-    // Remove dots to get the numeric value
     const numericValue = Number(value.replace(/\./g, ''));
     if (!isNaN(numericValue)) {
       setValue(`entries.${index}.${field}`, numericValue);
@@ -161,6 +157,7 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
       }));
     }
   };
+
   const totalDebit = watchedEntries.reduce((sum, entry) => sum + (Number(entry.debit) || 0), 0);
   const totalCredit = watchedEntries.reduce((sum, entry) => sum + (Number(entry.credit) || 0), 0);
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
@@ -168,8 +165,7 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
 
   const onSubmit = async (data: TransactionFormData) => {
     if (!orgId) return;
-    
-    // Check lock date
+
     const lockDate = org?.settings?.accounting?.lockDate;
     if (lockDate && data.date < lockDate) {
       alert(`No se pueden crear asientos antes de la fecha de cierre: ${lockDate}`);
@@ -180,18 +176,12 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
       alert('El asiento no está balanceado. Débitos y Créditos deben ser iguales.');
       return;
     }
-    if (hasGroupSelected) {
-      alert('Una o más líneas usan cuentas de grupo que no aceptan movimiento. Seleccione subcuentas.');
-      return;
-    }
 
     try {
-      // If editing, use existing ID, else generate new one
       const finalTransactionId = transactionId || uuidv4();
-      
+
       await db.transaction('rw', [db.transactions, db.journal_entries, db.audit_logs], async () => {
         if (transactionId) {
-          // UPDATE EXISTING
           await db.transactions.update(transactionId, {
             date: data.date,
             description: data.description,
@@ -199,12 +189,8 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
             project_id: data.project_id || null,
             sync_status: 'pendiente'
           });
-
-          // Delete old entries and add new ones (cleanest approach for simple accounting)
           await db.journal_entries.where('transaction_id').equals(transactionId).delete();
         } else {
-          // CREATE NEW
-          // 1. Create Transaction Header
           await db.transactions.add({
             id: finalTransactionId,
             organization_id: orgId,
@@ -212,7 +198,7 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
             description: data.description,
             reference_no: data.reference_no || null,
             project_id: data.project_id || null,
-            type: 'transferencia', // Changing to a more generic type for manual entries
+            type: 'transferencia',
             category_id: null,
             method: 'EFECTIVO',
             created_by: user?.id || 'unknown',
@@ -221,7 +207,6 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
           });
         }
 
-        // 2. Create Journal Entries (Same for Create and Update)
         const entries = data.entries.map(entry => ({
           id: uuidv4(),
           transaction_id: finalTransactionId,
@@ -233,7 +218,6 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
 
         await db.journal_entries.bulkAdd(entries);
 
-        // 3. Log Activity
         if (orgId && user?.id) {
           await logActivity({
             organization_id: orgId,
@@ -250,214 +234,204 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
       onClose();
     } catch (error) {
       console.error('Error creating transaction:', error);
-      alert('Error crítico al guardar: No se pudo asegurar la integridad de los datos.');
+      alert('Error crítico al guardar.');
     }
   };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-4xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-          <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">
-            {transactionId ? 'Editar Asiento Contable' : 'Nuevo Asiento Contable'}
-          </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1">
-            <X size={20} className="sm:size-6" />
-          </button>
+  return (
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={transactionId ? 'Editar asiento contable' : 'Nuevo asiento contable'}
+      subtitle="Registro de partida doble y contabilidad"
+      icon={Calculator}
+      maxWidth="full"
+      className="max-w-5xl"
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2 group">
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Fecha</label>
+            <input
+              type="date"
+              {...register('date')}
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+            />
+          </div>
+          <div className="md:col-span-2 space-y-2 group">
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Descripción del asiento</label>
+            <input
+              {...register('description')}
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+              placeholder="Ej: Pago de servicios públicos del mes"
+            />
+            {errors.description && <p className="text-red-500 text-[10px] font-bold mt-1 ml-1">{errors.description.message}</p>}
+          </div>
+          <div className="space-y-2 group">
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Referencia</label>
+            <input
+              {...register('reference_no')}
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all"
+              placeholder="# Factura o comprobante"
+            />
+          </div>
+          <div className="md:col-span-2 space-y-2 group">
+            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Proyecto o campaña asociada</label>
+            <Controller
+              control={control}
+              name="project_id"
+              render={({ field }) => (
+                <SearchableSelect
+                  options={[
+                    { value: '', label: 'Sin proyecto asociado' },
+                    ...(projects || []).map(p => ({ value: p.id, label: p.name }))
+                  ]}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Seleccione un proyecto..."
+                  className="w-full"
+                />
+              )}
+            />
+          </div>
         </div>
 
-        {/* Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-          <form id="transaction-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-[10px] sm:text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Fecha</label>
-                <input 
-                  type="date" 
-                  {...register('date')}
-                  className="w-full border-slate-300 rounded-lg text-sm px-3 py-2"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-[10px] sm:text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Descripción</label>
-                <input 
-                  {...register('description')}
-                  className="w-full border-slate-300 rounded-lg text-sm px-3 py-2"
-                  placeholder="Ej: Pago de servicios públicos"
-                />
-                {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
-              </div>
-              <div>
-                 <label className="block text-[10px] sm:text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Referencia (Opcional)</label>
-                <input 
-                  {...register('reference_no')}
-                  className="w-full border-slate-300 rounded-lg text-sm px-3 py-2"
-                  placeholder="Ej: FACT-001"
-                />
-              </div>
-              <div>
-                 <label className="block text-[10px] sm:text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Proyecto / Campaña</label>
-                 <Controller
-                   control={control}
-                   name="project_id"
-                   render={({ field }) => (
-                      <SearchableSelect
-                        options={[
-                          { value: '', label: 'Ninguno' },
-                          ...(projects || []).map(p => ({ value: p.id, label: p.name }))
-                        ]}
-                        value={field.value}
-                       onChange={field.onChange}
-                       placeholder="Ninguno"
-                       size="sm"
-                       className="w-full"
-                     />
-                   )}
-                 />
-              </div>
-            </div>
-
-            {/* Entries Table */}
-            <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-x-auto scrollbar-hide">
-              <table className="min-w-[650px] w-full text-left">
-                <thead className="bg-slate-50 dark:bg-slate-800 text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  <tr>
-                    <th className="px-3 py-3">Cuenta</th>
-                    <th className="px-3 py-3 w-32 text-right">Débito</th>
-                    <th className="px-3 py-3 w-32 text-right">Crédito</th>
-                    <th className="px-3 py-3 w-12"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {fields.map((field, index) => (
-                    <tr key={field.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                    <td className="p-2 sm:p-3">
-                      <Controller
-                        control={control}
-                        name={`entries.${index}.account_id`}
-                        render={({ field }) => (
-                          <SearchableSelect
-                            options={accountOptions}
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="Buscar cuenta..."
-                            size="sm"
-                            className="w-full"
-                          />
-                        )}
-                      />
-                      {errors.entries?.[index]?.account_id && (
-                        <p className="text-red-500 text-[10px] mt-1">{errors.entries[index]?.account_id?.message}</p>
-                      )}
-                      {watchedEntries[index]?.account_id && accountsMap[watchedEntries[index].account_id] && accountsMap[watchedEntries[index].account_id].accepts_movement === false && (
-                        <p className="text-amber-600 text-[10px] mt-1">Seleccione una subcuenta (no grupo).</p>
-                      )}
-                    </td>
-                      <td className="p-2 sm:p-3">
-                        <input 
-                          type="text" 
-                          value={formattedValues[`${index}-debit`] ?? (field.debit > 0 ? formatCurrency(field.debit) : '')}
-                          onChange={(e) => handleCurrencyInput(index, 'debit', e.target.value)}
-                          className="w-full border-slate-200 dark:border-slate-700 dark:bg-slate-800 rounded text-sm py-2 px-3 text-right font-mono focus:ring-2 focus:ring-blue-500/50 outline-none"
-                          placeholder="0"
-                          onFocus={(e) => e.target.select()}
+        {/* Entries Table - Premium Stylized */}
+        <div className="relative group/table border border-slate-200 dark:border-slate-800/60 rounded-[1.5rem] overflow-hidden bg-white dark:bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-700">
+          <table className="min-w-[750px] w-full text-left border-collapse">
+            <thead className="bg-slate-50/50 dark:bg-slate-800/30 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <tr>
+                <th className="px-6 py-4">Cuenta contable</th>
+                <th className="px-6 py-4 w-40 text-right">Débito</th>
+                <th className="px-6 py-4 w-40 text-right">Crédito</th>
+                <th className="px-6 py-4 w-16"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+              {fields.map((field, index) => (
+                <tr key={field.id} className="group/row transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                  <td className="px-6 py-4">
+                    <Controller
+                      control={control}
+                      name={`entries.${index}.account_id`}
+                      render={({ field }) => (
+                        <SearchableSelect
+                          options={accountOptions}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Buscar cuenta..."
+                          className="w-full"
                         />
-                      </td>
-                      <td className="p-2 sm:p-3">
-                        <input 
-                          type="text" 
-                          value={formattedValues[`${index}-credit`] ?? (field.credit > 0 ? formatCurrency(field.credit) : '')}
-                          onChange={(e) => handleCurrencyInput(index, 'credit', e.target.value)}
-                          className="w-full border-slate-200 dark:border-slate-700 dark:bg-slate-800 rounded text-sm py-2 px-3 text-right font-mono focus:ring-2 focus:ring-blue-500/50 outline-none"
-                          placeholder="0"
-                          onFocus={(e) => e.target.select()}
-                        />
-                      </td>
-                      <td className="p-2 sm:p-3 text-center">
-                        <button 
-                          type="button" 
-                          onClick={() => remove(index)}
-                          className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-slate-50 dark:bg-slate-800 font-bold text-sm">
-                  <tr>
-                    <td className="p-3">
-                      <button 
-                        type="button" 
-                        onClick={() => append({ account_id: '', debit: 0, credit: 0 })}
-                        className="text-blue-600 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider hover:text-blue-700"
-                      >
-                        <Plus size={16} /> Agregar Línea
-                      </button>
-                    </td>
-                    <td className={`p-3 text-right font-mono ${!isBalanced ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                      {formatCurrency(totalDebit)}
-                    </td>
-                    <td className={`p-3 text-right font-mono ${!isBalanced ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
-                      {formatCurrency(totalCredit)}
-                    </td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {accountOptions.length === 0 && (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 text-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-                <span className="text-center sm:text-left">No hay cuentas detalladas para seleccionar. Cree una subcuenta en el PUC.</span>
-                <button
-                  type="button"
-                  className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
-                  onClick={() => {
-                    setActiveTab('puc');
-                    onClose();
-                  }}
-                >
-                  Ir al PUC
-                </button>
-              </div>
-            )}
-
-            {(!isBalanced || hasGroupSelected) && (
-              <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm font-bold text-center border border-red-100 dark:border-red-900/30">
-                {!isBalanced ? (
-                  <>El asiento está desbalanceado por $ {formatCurrency(Math.abs(totalDebit - totalCredit))}</>
-                ) : (
-                  <>Hay cuentas de grupo seleccionadas que no aceptan movimiento</>
-                )}
-              </div>
-            )}
-          </form>
+                      )}
+                    />
+                    {errors.entries?.[index]?.account_id && (
+                      <p className="text-red-500 text-[10px] font-bold mt-1.5 ml-1">{errors.entries[index]?.account_id?.message}</p>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <input
+                      type="text"
+                      value={formattedValues[`${index}-debit`] ?? (field.debit > 0 ? formatCurrency(field.debit) : '')}
+                      onChange={(e) => handleCurrencyInput(index, 'debit', e.target.value)}
+                      className="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm py-2.5 px-4 text-right font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all placeholder:text-slate-400"
+                      placeholder="0.00"
+                      onFocus={(e) => e.target.select()}
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <input
+                      type="text"
+                      value={formattedValues[`${index}-credit`] ?? (field.credit > 0 ? formatCurrency(field.credit) : '')}
+                      onChange={(e) => handleCurrencyInput(index, 'credit', e.target.value)}
+                      className="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm py-2.5 px-4 text-right font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 outline-none transition-all placeholder:text-slate-400"
+                      placeholder="0.00"
+                      onFocus={(e) => e.target.select()}
+                    />
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all active:scale-90"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="bg-slate-50/50 dark:bg-slate-800/40">
+              <tr>
+                <td className="px-6 py-5">
+                  <button
+                    type="button"
+                    onClick={() => append({ account_id: '', debit: 0, credit: 0 })}
+                    className="group-add flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
+                  >
+                    <Plus size={18} className="p-0.5 bg-blue-100 dark:bg-blue-900/30 rounded-full" />
+                    Nueva línea contable
+                  </button>
+                </td>
+                <td className={`px-6 py-5 text-right font-black text-sm ${!isBalanced ? 'text-red-500' : 'text-slate-600 dark:text-slate-400'}`}>
+                  <p className="text-[9px] uppercase tracking-widest opacity-50 mb-1">Total Débito</p>
+                  {formatCurrency(totalDebit)}
+                </td>
+                <td className={`px-6 py-5 text-right font-black text-sm ${!isBalanced ? 'text-red-500' : 'text-slate-600 dark:text-slate-400'}`}>
+                  <p className="text-[9px] uppercase tracking-widest opacity-50 mb-1">Total Crédito</p>
+                  {formatCurrency(totalCredit)}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex flex-col sm:flex-row justify-end gap-3">
-          <button 
+        {accountOptions.length === 0 && (
+          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 text-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span className="text-center sm:text-left">No hay cuentas detalladas para seleccionar. Cree una subcuenta en el PUC.</span>
+            <button
+              type="button"
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors"
+              onClick={() => {
+                setActiveTab('puc');
+                onClose();
+              }}
+            >
+              Ir al PUC
+            </button>
+          </div>
+        )}
+
+        {(!isBalanced || hasGroupSelected) && (
+          <div className="bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 p-4 rounded-2xl text-xs font-bold border border-red-100 dark:border-red-900/20 flex items-center justify-center gap-2 animate-pulse">
+            <span className="size-2 rounded-full bg-red-500" />
+            {!isBalanced ? (
+              <>El asiento está desbalanceado por $ {formatCurrency(Math.abs(totalDebit - totalCredit))}</>
+            ) : (
+              <>Hay cuentas de grupo seleccionadas que no aceptan movimiento</>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+          <button
+            type="button"
             onClick={onClose}
-            className="order-2 sm:order-1 px-4 py-2.5 text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="px-8 py-4 text-slate-500 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all active:scale-95"
           >
-            Cancelar
+            Descartar cambios
           </button>
-          <button 
-            type="submit" 
-            form="transaction-form"
+          <button
+            type="submit"
             disabled={!isBalanced}
-            className="order-1 sm:order-2 px-6 py-2.5 bg-blue-600 text-white font-bold text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+            className="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm rounded-2xl shadow-xl shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:grayscale transition-all active:scale-95 flex items-center justify-center gap-3 overflow-hidden"
           >
-            <Save size={18} />
-            Guardar Asiento
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            <Save size={20} className="group-hover:scale-110 transition-transform" />
+            Guardar asiento contable
           </button>
         </div>
-      </div>
-    </div>,
-    document.body
+      </form>
+    </Modal>
   );
 }
