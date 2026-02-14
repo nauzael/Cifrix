@@ -38,10 +38,17 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
 
       if (rpcError) {
         console.error('Error creating organization via RPC:', rpcError);
+
+        // Detectar error de nombre duplicado
+        if (rpcError.code === '23505' || rpcError.message?.includes('organizations_name_unique')) {
+          throw new Error(`Ya existe una organización con el nombre "${formData.name}". Por favor, elija un nombre diferente.`);
+        }
+
         // Si el error es 42883 (función no existe), dar un mensaje más útil
         if (rpcError.code === '42883') {
           throw new Error('La función de creación segura no está instalada en la base de datos.');
         }
+
         throw new Error(`Error al crear la organización: ${rpcError.message}`);
       }
 
@@ -50,8 +57,6 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
       }
 
       console.log('✅ Organización creada exitosamente via RPC. ID:', newOrgId);
-
-
 
       onSuccess();
       onClose();

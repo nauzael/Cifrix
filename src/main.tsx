@@ -3,9 +3,15 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import './index.css'
 import { syncToSupabase } from './lib/sync';
+import { APP_CONFIG, dbLog } from './lib/config';
 
-// Initial sync
-syncToSupabase();
+// Initial sync solo si NO estamos en modo producción
+if (APP_CONFIG.DB_MODE !== 'production') {
+  syncToSupabase();
+  dbLog('Initial sync triggered');
+} else {
+  dbLog('Initial sync SKIPPED - Running in production mode');
+}
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 
