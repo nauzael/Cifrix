@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Building2, Save, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../ui/Modal';
+import { toast } from '../../store/toastStore';
 
 interface CreateOrganizationModalProps {
   isOpen: boolean;
@@ -42,11 +43,12 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
         throw new Error(`Error al crear la organización: ${rpcError.message}`);
       }
 
+      toast.success('Organización creada exitosamente');
       onSuccess();
       onClose();
       setFormData({ name: '', type: 'EMPRESA', tax_id: '' });
     } catch (error: any) {
-      alert(error.message || 'Error desconocido al crear la organización');
+      toast.error(error.message || 'Error desconocido al crear la organización');
     } finally {
       setLoading(false);
     }
@@ -126,4 +128,3 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
     </Modal>
   );
 }
-

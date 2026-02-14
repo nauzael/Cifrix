@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { Loader2, Save, User, Mail, Phone, MapPin, Briefcase } from 'lucide-react';
+import { toast } from '../../store/toastStore';
 
 const profileSchema = z.object({
   full_name: z.string().min(3, 'El nombre es requerido'),
@@ -55,10 +56,10 @@ export function ProfileSettings() {
       });
 
       await refreshProfile();
-      alert('Perfil actualizado correctamente');
+      toast.success('Perfil actualizado correctamente');
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      alert('Error al actualizar perfil: ' + (error.message || 'Error desconocido'));
+      toast.error('Error al actualizar perfil: ' + (error.message || 'Error desconocido'));
     } finally {
       setIsSaving(false);
     }

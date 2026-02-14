@@ -13,6 +13,7 @@ import {
   Percent,
   Coins
 } from 'lucide-react';
+import { toast } from '../../store/toastStore';
 
 const accountingSchema = z.object({
   currency: z.string().min(1, 'La moneda es requerida'),
@@ -95,10 +96,10 @@ export function AccountingSettings({ organization }: AccountingSettingsProps) {
         },
         sync_status: 'pendiente'
       });
-      alert('Configuración contable guardada correctamente');
+      toast.success('Configuración contable guardada correctamente');
     } catch (error) {
       console.error('Error saving accounting settings:', error);
-      alert('Error al guardar la configuración');
+      toast.error('Error al guardar la configuración');
     } finally {
       setIsSaving(false);
     }

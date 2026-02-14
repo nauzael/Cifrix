@@ -18,6 +18,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from '../../store/toastStore';
+import { confirm } from '../../store/confirmStore';
 
 interface User {
   id: string;
@@ -60,7 +62,7 @@ export function UserManagement() {
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
-        alert('Error cargando perfiles: ' + profilesError.message);
+        toast.error('Error cargando perfiles: ' + profilesError.message);
         setUsers([]);
         return;
       }
@@ -175,57 +177,91 @@ export function UserManagement() {
   };
 
   const handleResetPassword = async (user: User) => {
-    const email = prompt("Ingrese el correo electrónico del usuario para enviar el reset:", user.email !== 'Datos privados' ? user.email : '');
-    if (!email) return;
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (error) throw error;
-      alert(`Correo de restablecimiento enviado a ${email}`);
-    } catch (error: any) {
-      alert('Error: ' + error.message);
-    }
+    confirm({
+      title: 'Restablecer Contraseña',
+      message: 'Ingrese el correo electrónico del usuario para enviar el enlace de restablecimiento:',
+      inputType: 'email',
+      inputPlaceholder: 'usuario@correo.com',
+      defaultValue: user.email !== 'Email privado' && user.email !== 'Sin asignar' ? user.email : '',
+      confirmText: 'Enviar Enlace',
+      type: 'info',
+      onConfirm: async (email) => {
+        if (!email) return;
+        try {
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password`,
+          });
+          if (error) throw error;
+          toast.success(`Correo de restablecimiento enviado a ${email}`);
+        } catch (error: any) {
+          toast.error('Error: ' + error.message);
+        }
+      }
+    });
   };
 
   const handleToggleStatus = async (user: User) => {
     const newStatus = user.status === 'active' ? 'inactive' : 'active';
-    if (!window.confirm(`¿Estás seguro de que deseas ${newStatus === 'active' ? 'activar' : 'desactivar'} a este usuario?`)) return;
-    try {
-      const { error } = await (supabase.from('user_organizations') as any).update({ status: newStatus }).eq('user_id', user.id);
-      if (error) throw error;
-      fetchUsers();
-    } catch (error: any) {
-      alert('Error al actualizar estado: ' + error.message);
-    }
+
+    confirm({
+      title: `${newStatus === 'active' ? 'Activar' : 'Desactivar'} Usuario`,
+      message: `¿Estás seguro de que deseas ${newStatus === 'active' ? 'activar' : 'desactivar'} a ${user.name}?`,
+      confirmText: newStatus === 'active' ? 'Activar' : 'Desactivar',
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          const { error } = await (supabase.from('user_organizations') as any).update({ status: newStatus }).eq('user_id', user.id);
+          if (error) throw error;
+          fetchUsers();
+          toast.success(`Usuario ${newStatus === 'active' ? 'activado' : 'desactivado'} correctamente.`);
+        } catch (error: any) {
+          toast.error('Error al actualizar estado: ' + error.message);
+        }
+      }
+    });
   };
 
   const handleDeleteUser = async (user: User) => {
-    if (!window.confirm('ADVERTENCIA: ¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE a este usuario?')) return;
-    try {
-      const { error: rpcError } = await (supabase as any).rpc('delete_user_complete', { target_user_id: user.id });
-      if (rpcError) {
-        await supabase.from('user_organizations' as any).delete().eq('user_id', user.id);
-        await supabase.from('user_invites' as any).delete().eq('user_id', user.id);
-        alert('Usuario eliminado de la organización.');
-      } else {
-        alert('Usuario eliminado permanentemente del sistema.');
+    confirm({
+      title: 'Eliminar Usuario',
+      message: `ADVERTENCIA: ¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE a ${user.name}? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar Permanentemente',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const { error: rpcError } = await (supabase as any).rpc('delete_user_complete', { target_user_id: user.id });
+          if (rpcError) {
+            await supabase.from('user_organizations' as any).delete().eq('user_id', user.id);
+            await supabase.from('user_invites' as any).delete().eq('user_id', user.id);
+            toast.info('Usuario eliminado de la organización.');
+          } else {
+            toast.success('Usuario eliminado permanentemente del sistema.');
+          }
+          fetchUsers();
+        } catch (error: any) {
+          toast.error('Error al eliminar usuario: ' + error.message);
+        }
       }
-      fetchUsers();
-    } catch (error: any) {
-      alert('Error al eliminar usuario: ' + error.message);
-    }
+    });
   };
 
   const handleCancelInvite = async (id: string) => {
-    if (!window.confirm('¿Estás seguro de que deseas cancelar esta invitación?')) return;
-    try {
-      const { error } = await supabase.from('user_invites' as any).delete().eq('id', id);
-      if (error) throw error;
-      fetchUsers();
-    } catch (error: any) {
-      alert('Error al cancelar la invitación: ' + error.message);
-    }
+    confirm({
+      title: 'Cancelar Invitación',
+      message: '¿Estás seguro de que deseas cancelar esta invitación?',
+      confirmText: 'Cancelar Invitación',
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.from('user_invites' as any).delete().eq('id', id);
+          if (error) throw error;
+          fetchUsers();
+          toast.success('Invitación cancelada correctamente.');
+        } catch (error: any) {
+          toast.error('Error al cancelar la invitación: ' + error.message);
+        }
+      }
+    });
   };
 
   const formatRole = (role: string) => {

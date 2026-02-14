@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
+import { toast } from '../../store/toastStore';
 
 export function Communications() {
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,7 @@ export function Communications() {
 
   const handleSend = async () => {
     if (!formData.subject || !formData.content) {
-      alert('Por favor complete todos los campos');
+      toast.warning('Por favor complete todos los campos');
       return;
     }
 
@@ -43,7 +44,7 @@ export function Communications() {
 
       if (error) {
         if (error.message?.includes('relation "campaigns" does not exist')) {
-          alert('La tabla "campaigns" no existe. Se simulará el envío.');
+          toast.info('La tabla "campaigns" no existe. Se simulará el envío.');
           console.log('Campaign sent:', formData);
         } else {
           throw error;
@@ -61,7 +62,7 @@ export function Communications() {
         }]);
       }
 
-      alert('Campaña enviada exitosamente');
+      toast.success('Campaña enviada exitosamente');
       setFormData({
         channel: 'email',
         recipients: 'all',
@@ -71,7 +72,7 @@ export function Communications() {
 
     } catch (error: any) {
       console.error('Error sending campaign:', error);
-      alert('Error al enviar campaña: ' + error.message);
+      toast.error('Error al enviar campaña: ' + error.message);
     } finally {
       setLoading(false);
     }

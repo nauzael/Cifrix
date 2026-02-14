@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from '../store/toastStore';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, Organization } from '../lib/db';
@@ -481,7 +482,7 @@ ${equityRows}
       }
     } catch (error) {
       console.error('Error previewing report:', error);
-      alert('Hubo un error al generar la vista previa.');
+      toast.error('Hubo un error al generar la vista previa.');
     } finally {
       setIsGenerating(null);
     }

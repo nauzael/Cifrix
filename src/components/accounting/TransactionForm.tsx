@@ -12,6 +12,7 @@ import { logActivity } from '../../lib/audit';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import { useAccountingStore } from '../../store/accountingStore';
 import { Modal } from '../ui/Modal';
+import { toast } from '../../store/toastStore';
 
 const entrySchema = z.object({
   account_id: z.string().min(1, 'Seleccione una cuenta'),
@@ -168,12 +169,12 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
 
     const lockDate = org?.settings?.accounting?.lockDate;
     if (lockDate && data.date < lockDate) {
-      alert(`No se pueden crear asientos antes de la fecha de cierre: ${lockDate}`);
+      toast.error(`No se pueden crear asientos antes de la fecha de cierre: ${lockDate}`);
       return;
     }
 
     if (!isBalanced) {
-      alert('El asiento no está balanceado. Débitos y Créditos deben ser iguales.');
+      toast.warning('El asiento no está balanceado. Débitos y Créditos deben ser iguales.');
       return;
     }
 
@@ -230,11 +231,12 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
         }
       });
 
+      toast.success(transactionId ? 'Asiento actualizado correctamente' : 'Asiento creado correctamente');
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Error creating transaction:', error);
-      alert('Error crítico al guardar.');
+      toast.error('Error crítico al guardar.');
     }
   };
 

@@ -4,6 +4,7 @@ import { X, Loader2, Shield, Grid, Building2, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 import { cn } from '../../lib/utils';
+import { toast } from '../../store/toastStore';
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -169,12 +170,12 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
         await useAuthStore.getState().refreshProfile();
       }
 
-      alert('Usuario actualizado exitosamente y de forma segura.');
+      toast.success('Usuario actualizado exitosamente');
       onSuccess();
       onClose();
     } catch (error: any) {
       console.error('Error updating user:', error);
-      alert('Error al actualizar usuario: ' + (error.message || error));
+      toast.error('Error al actualizar usuario: ' + (error.message || error));
     } finally {
       setLoading(false);
     }

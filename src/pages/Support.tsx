@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { 
-  BookOpen, 
-  Search, 
-  ChevronRight, 
-  HelpCircle, 
-  MessageCircle, 
-  FileText, 
+import {
+  BookOpen,
+  Search,
+  ChevronRight,
+  HelpCircle,
+  MessageCircle,
+  FileText,
   Video,
   ExternalLink
 } from 'lucide-react';
+import { toast } from '../store/toastStore';
 
 const articles = [
   {
@@ -53,12 +54,12 @@ export function Support() {
         <p className="text-slate-500 dark:text-slate-400 text-base sm:text-xl max-w-2xl mx-auto font-medium animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
           Explora nuestra base de conocimientos o contacta con nuestro equipo de expertos para resolver tus dudas.
         </p>
-        
+
         <div className="relative max-w-2xl mx-auto mt-8 sm:mt-12 group animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
           <div className="absolute inset-0 bg-blue-600/20 blur-3xl group-focus-within:bg-blue-600/30 transition-all duration-500" />
           <div className="relative">
             <Search className="absolute left-5 sm:left-7 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
-            <input 
+            <input
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Busca tutoriales, guías o funciones..."
@@ -80,9 +81,9 @@ export function Support() {
             </div>
             <div className="space-y-3">
               {cat.items.map((item, j) => (
-                <button 
+                <button
                   key={j}
-                  onClick={() => alert(`Próximamente: ${item.title}`)}
+                  onClick={() => toast.info(`Próximamente: ${item.title}`)}
                   className="w-full flex items-center gap-4 p-4 hover:bg-white dark:hover:bg-slate-800 rounded-2xl transition-all group/item text-left border border-transparent hover:border-slate-100 dark:hover:border-slate-700 hover:shadow-xl hover:shadow-slate-200/40 dark:hover:shadow-none"
                 >
                   <div className="size-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 group-hover/item:text-blue-600 group-hover/item:bg-blue-50 dark:group-hover/item:bg-blue-900/30 transition-all shrink-0">
@@ -106,18 +107,18 @@ export function Support() {
             <p className="text-blue-100 text-base sm:text-lg font-medium opacity-90">Nuestro equipo de soporte está listo para acompañarte en cada paso. Respuesta promedio en menos de 2 horas.</p>
           </div>
           <div className="relative z-10 flex flex-col sm:flex-row gap-4 sm:gap-6 w-full sm:w-auto">
-             <button 
-               onClick={() => alert('El chat en vivo estará disponible pronto')}
-               className="bg-white text-blue-600 px-8 sm:px-10 py-5 sm:py-6 rounded-[2rem] font-black flex items-center justify-center gap-3 shadow-2xl shadow-blue-900/40 hover:scale-105 hover:bg-blue-50 active:scale-95 transition-all text-base sm:text-lg flex-1 sm:flex-none group/btn"
-             >
-               <MessageCircle size={24} className="group-hover:rotate-12 transition-transform" /> Chat en Vivo
-             </button>
-             <button 
-               onClick={() => alert('Sistema de tickets en construcción')}
-               className="bg-blue-900/30 backdrop-blur-md text-white border-2 border-white/20 px-8 sm:px-10 py-5 sm:py-6 rounded-[2rem] font-black flex items-center justify-center gap-3 hover:bg-blue-900/50 active:scale-95 transition-all text-base sm:text-lg flex-1 sm:flex-none group/btn"
-             >
-               <HelpCircle size={24} className="group-hover:rotate-12 transition-transform" /> Crear Ticket
-             </button>
+            <button
+              onClick={() => toast.info('El chat en vivo estará disponible pronto')}
+              className="bg-white text-blue-600 px-8 sm:px-10 py-5 sm:py-6 rounded-[2rem] font-black flex items-center justify-center gap-3 shadow-2xl shadow-blue-900/40 hover:scale-105 hover:bg-blue-50 active:scale-95 transition-all text-base sm:text-lg flex-1 sm:flex-none group/btn"
+            >
+              <MessageCircle size={24} className="group-hover:rotate-12 transition-transform" /> Chat en Vivo
+            </button>
+            <button
+              onClick={() => toast.info('Sistema de tickets en construcción')}
+              className="bg-blue-900/30 backdrop-blur-md text-white border-2 border-white/20 px-8 sm:px-10 py-5 sm:py-6 rounded-[2rem] font-black flex items-center justify-center gap-3 hover:bg-blue-900/50 active:scale-95 transition-all text-base sm:text-lg flex-1 sm:flex-none group/btn"
+            >
+              <HelpCircle size={24} className="group-hover:rotate-12 transition-transform" /> Crear Ticket
+            </button>
           </div>
           <HelpCircle size={240} className="absolute -right-20 -bottom-20 text-white/10 hidden xl:block pointer-events-none" />
           <MessageCircle size={180} className="absolute -left-10 -top-10 text-white/5 hidden xl:block pointer-events-none" />
@@ -126,10 +127,10 @@ export function Support() {
 
       {/* Footer Links */}
       <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 sm:gap-12 text-xs font-black text-slate-400 uppercase tracking-[0.2em] pb-10">
-         <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group">Términos <ExternalLink size={12} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></a>
-         <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group">Privacidad <ExternalLink size={12} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></a>
-         <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group">API Docs <ExternalLink size={12} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></a>
-         <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group">Comunidad <ExternalLink size={12} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></a>
+        <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group">Términos <ExternalLink size={12} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></a>
+        <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group">Privacidad <ExternalLink size={12} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></a>
+        <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group">API Docs <ExternalLink size={12} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></a>
+        <a href="#" className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group">Comunidad <ExternalLink size={12} className="group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" /></a>
       </div>
     </div>
   );

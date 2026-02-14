@@ -12,6 +12,7 @@ import {
   X,
   Loader2
 } from 'lucide-react';
+import { toast } from '../../store/toastStore';
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState('general');
@@ -93,10 +94,10 @@ export function Settings() {
           details: settings
         }] as any);
 
-      alert('Configuración guardada exitosamente');
+      toast.success('Configuración guardada exitosamente');
     } catch (error: any) {
       console.error('Error saving settings:', error);
-      alert('Error al guardar configuración: ' + error.message);
+      toast.error('Error al guardar configuración: ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -145,8 +146,8 @@ export function Settings() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-6 px-4 text-xs font-black uppercase tracking-widest flex items-center gap-3 whitespace-nowrap transition-all relative group ${activeTab === tab.id
-                    ? 'text-blue-600'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                  ? 'text-blue-600'
+                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                   }`}
               >
                 <tab.icon size={18} className={activeTab === tab.id ? 'animate-pulse' : ''} />

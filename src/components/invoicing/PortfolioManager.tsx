@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, Invoice, Payment, Customer } from '../../lib/db';
 import { DianService } from '../../lib/dian';
-import { 
-  TrendingUp, 
-  AlertCircle, 
-  Clock, 
-  Search, 
-  Filter, 
-  MoreVertical, 
+import {
+  TrendingUp,
+  AlertCircle,
+  Clock,
+  Search,
+  Filter,
+  MoreVertical,
   CreditCard,
   User,
   Calendar,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { PaymentForm } from './PaymentForm';
+import { toast } from '../../store/toastStore';
 
 interface PortfolioManagerProps {
   organizationId: string;
@@ -47,7 +48,7 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
   );
 
   const unpaidInvoices = invoices?.filter(inv => inv.status !== 'pagada' && inv.status !== 'anulada') || [];
-  
+
   const getInvoiceBalance = (invoiceId: string, total: number) => {
     const invPayments = payments?.filter(p => p.invoice_id === invoiceId) || [];
     const paid = invPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -61,13 +62,13 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
     try {
       const response = await DianService.sendInvoice(invoiceId);
       if (response.success) {
-        alert(`Factura enviada a la DIAN. CUFE: ${response.cufe}`);
+        toast.success(`Factura enviada a la DIAN. CUFE: ${response.cufe}`);
       } else {
-        alert(`Error al enviar a la DIAN: ${response.message}`);
+        toast.error(`Error al enviar a la DIAN: ${response.message}`);
       }
     } catch (error) {
       console.error(error);
-      alert('Error de conexión con el servicio de facturación');
+      toast.error('Error de conexión con el servicio de facturación');
     } finally {
       setSendingId(null);
     }
@@ -82,8 +83,8 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
 
   const filteredInvoices = unpaidInvoices.filter(inv => {
     const customerName = getCustomerName(inv.customer_id).toLowerCase();
-    return inv.number.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           customerName.includes(searchTerm.toLowerCase());
+    return inv.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerName.includes(searchTerm.toLowerCase());
   });
 
   return (
@@ -129,7 +130,7 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
         <div className="flex justify-between items-center">
           <div className="relative max-w-md w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
-            <input 
+            <input
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:text-white"
@@ -137,9 +138,9 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
             />
           </div>
           <div className="flex gap-2">
-             <button className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:bg-slate-50 transition-all">
-               <Filter size={18} />
-             </button>
+            <button className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:bg-slate-50 transition-all">
+              <Filter size={18} />
+            </button>
           </div>
         </div>
 
@@ -161,7 +162,7 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
                   const balance = getInvoiceBalance(invoice.id, invoice.total);
                   const isOverdue = new Date(invoice.due_date) < new Date();
                   const isSending = sendingId === invoice.id;
-                  
+
                   return (
                     <tr key={invoice.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4">
@@ -173,7 +174,7 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="size-8 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-[10px] font-black text-slate-500">
-                            {getCustomerName(invoice.customer_id).substring(0,2).toUpperCase()}
+                            {getCustomerName(invoice.customer_id).substring(0, 2).toUpperCase()}
                           </div>
                           <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{getCustomerName(invoice.customer_id)}</span>
                         </div>
@@ -206,7 +207,7 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 justify-end">
                           {(!invoice.dian_status || invoice.dian_status === 'error' || invoice.dian_status === 'rechazada') && (
-                            <button 
+                            <button
                               onClick={() => handleSendDian(invoice.id)}
                               disabled={isSending}
                               className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50"
@@ -215,8 +216,8 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
                               {isSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                             </button>
                           )}
-                          
-                          <button 
+
+                          <button
                             onClick={() => setSelectedInvoice(invoice)}
                             className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"
                             title="Registrar Pago"
@@ -245,11 +246,11 @@ export function PortfolioManager({ organizationId }: PortfolioManagerProps) {
       </div>
 
       {selectedInvoice && (
-        <PaymentForm 
+        <PaymentForm
           invoice={selectedInvoice}
           remainingAmount={getInvoiceBalance(selectedInvoice.id, selectedInvoice.total)}
           onClose={() => setSelectedInvoice(null)}
-          onSuccess={() => {}}
+          onSuccess={() => { }}
         />
       )}
     </div>

@@ -32,6 +32,7 @@ import {
   Heart,
   FileBarChart
 } from 'lucide-react';
+import { toast } from '../store/toastStore';
 
 const contributionSchema = z.object({
   amount: z.string().min(1, 'El monto es requerido').transform((val) => Number(val)),
@@ -116,7 +117,7 @@ export function Diezmos() {
 
   const onSubmit = async (data: ContributionForm) => {
     if (!selectedMember || !orgId) {
-      alert('Por favor seleccione un miembro');
+      toast.warning('Por favor seleccione un miembro');
       return;
     }
 
@@ -194,10 +195,10 @@ export function Diezmos() {
       reset();
       setSelectedMember(null);
       await loadData();
-      alert('Aporte registrado correctamente en contabilidad.');
+      toast.success('Aporte registrado correctamente en contabilidad.');
     } catch (error: any) {
       console.error('Error saving contribution:', error);
-      alert(error.message || 'Error al guardar');
+      toast.error(error.message || 'Error al guardar');
     } finally {
       setIsSaving(false);
     }

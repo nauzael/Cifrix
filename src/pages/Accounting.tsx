@@ -31,6 +31,8 @@ import {
   Building2
 } from 'lucide-react';
 import { formatCurrency, formatDate, cn } from '../lib/utils';
+import { toast } from '../store/toastStore';
+import { confirm } from '../store/confirmStore';
 
 export function Accounting() {
   const { user, profile } = useAuthStore();
@@ -163,16 +165,28 @@ export function Accounting() {
     // Check lock date
     const lockDate = org?.settings?.accounting?.lockDate;
     if (lockDate && date < lockDate) {
-      alert(`No se pueden eliminar asientos antes de la fecha de cierre: ${lockDate}`);
+      toast.error(`No se pueden eliminar asientos antes de la fecha de cierre: ${lockDate}`);
       return;
     }
 
-    if (confirm('¿Está seguro de eliminar este asiento?')) {
-      await db.transaction('rw', [db.transactions, db.journal_entries], async () => {
-        await db.transactions.delete(id);
-        await db.journal_entries.where('transaction_id').equals(id).delete();
-      });
-    }
+    confirm({
+      title: 'Eliminar Asiento',
+      message: '¿Está seguro de eliminar este asiento? Esta acción no se puede deshacer.',
+      confirmText: 'SÍ, ELIMINAR',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await db.transaction('rw', [db.transactions, db.journal_entries], async () => {
+            await db.transactions.delete(id);
+            await db.journal_entries.where('transaction_id').equals(id).delete();
+          });
+          toast.success('Asiento eliminado correctamente');
+        } catch (error) {
+          console.error('Error deleting transaction:', error);
+          toast.error('Error al eliminar el asiento');
+        }
+      }
+    });
   };
 
   return (
@@ -370,8 +384,8 @@ export function Accounting() {
                         <td className="px-4 sm:px-6 py-4 text-center align-top">
                           <div className="flex flex-col items-center gap-2">
                             <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-wide ${tx.sync_status === 'sincronizado'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-blue-50 text-blue-600 border border-blue-100'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-blue-50 text-blue-600 border border-blue-100'
                               }`}>
                               {tx.sync_status === 'sincronizado' ? 'Sincronizado' : 'Solo Local'}
                             </span>

@@ -28,6 +28,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { logActivity } from '../lib/audit';
 import { generateDonationCertificate } from '../lib/certificates';
+import { toast } from '../store/toastStore';
+import { confirm } from '../store/confirmStore';
 
 const memberSchema = z.object({
   full_name: z.string().min(3, 'El nombre es requerido'),
@@ -98,6 +100,7 @@ export function Members() {
       setMembers(results.sort((a, b) => a.full_name.localeCompare(b.full_name)));
     } catch (error) {
       console.error("Error fetching members:", error);
+      toast.error('Error al cargar miembros.');
     } finally {
       setIsLoading(false);
     }
@@ -152,6 +155,7 @@ export function Members() {
           old_data: editingMember,
           new_data: data
         });
+        toast.success('Miembro actualizado correctamente');
       } else {
         const memberId = uuidv4();
         const newMember: Member = {
@@ -180,13 +184,15 @@ export function Members() {
           entity_id: memberId,
           new_data: data
         });
+        toast.success('Miembro registrado correctamente');
       }
 
       await fetchMembers();
       setIsModalOpen(false);
       reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving member:", error);
+      toast.error('Error al guardar: ' + error.message);
     }
   };
 
@@ -207,25 +213,39 @@ export function Members() {
       new_data: { status: nextStatus }
     });
 
+    toast.info(`Estado de ${member.full_name} cambiado a ${nextStatus}`);
     fetchMembers();
   };
 
   const deleteMember = async (id: string) => {
-    if (confirm('¿Está seguro de eliminar este miembro? Esta acción no se puede deshacer.')) {
-      const member = members.find(m => m.id === id);
-      await db.members.delete(id);
+    const member = members.find(m => m.id === id);
+    if (!member) return;
 
-      await logActivity({
-        organization_id: orgId,
-        user_id: user?.id || 'unknown',
-        action: 'DELETE',
-        entity_type: 'MEMBER',
-        entity_id: id,
-        old_data: member
-      });
+    confirm({
+      title: 'Eliminar Miembro',
+      message: `¿Está seguro de eliminar a ${member.full_name}? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await db.members.delete(id);
 
-      fetchMembers();
-    }
+          await logActivity({
+            organization_id: orgId,
+            user_id: user?.id || 'unknown',
+            action: 'DELETE',
+            entity_type: 'MEMBER',
+            entity_id: id,
+            old_data: member
+          });
+
+          toast.success('Miembro eliminado correctamente');
+          fetchMembers();
+        } catch (error: any) {
+          toast.error('Error al eliminar: ' + error.message);
+        }
+      }
+    });
   };
 
   const exportCSV = () => {
@@ -248,6 +268,7 @@ export function Members() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    toast.success('Archivo exportado correctamente');
   };
 
   const printDirectory = () => {
@@ -255,16 +276,26 @@ export function Members() {
   };
 
   const handleGenerateCertificate = async (member: Member) => {
-    const org = await db.organizations.get(orgId);
-    if (!org) return;
+    try {
+      const org = await db.organizations.get(orgId);
+      if (!org) return;
 
-    const currentYear = new Date().getFullYear();
-    const contributions = await db.contributions
-      .where('member_id').equals(member.id)
-      .filter(c => c.date.startsWith(currentYear.toString()))
-      .toArray();
+      const currentYear = new Date().getFullYear();
+      const contributions = await db.contributions
+        .where('member_id').equals(member.id)
+        .filter(c => c.date.startsWith(currentYear.toString()))
+        .toArray();
 
-    generateDonationCertificate(org, member, contributions, currentYear);
+      if (contributions.length === 0) {
+        toast.warning('No hay contribuciones registradas para este miembro en el año actual.');
+        return;
+      }
+
+      generateDonationCertificate(org, member, contributions, currentYear);
+      toast.success('Certificado generado correctamente');
+    } catch (error: any) {
+      toast.error('Error al generar certificado: ' + error.message);
+    }
   };
 
   return (

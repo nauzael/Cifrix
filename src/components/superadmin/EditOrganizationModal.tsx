@@ -3,6 +3,7 @@ import { Building2, Save, Loader2, Grid } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Database } from '../../../types/database.types';
 import { Modal } from '../ui/Modal';
+import { toast } from '../../store/toastStore';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
 
@@ -80,10 +81,12 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
         .eq('id', organization?.id);
 
       if (error) throw error;
+      toast.success('Organización actualizada correctamente');
       onSuccess();
       onClose();
     } catch (error) {
-      alert('Error al actualizar la organización');
+      console.error('Error updating organization:', error);
+      toast.error('Error al actualizar la organización');
     } finally {
       setLoading(false);
     }
@@ -200,4 +203,3 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
     </Modal>
   );
 }
-

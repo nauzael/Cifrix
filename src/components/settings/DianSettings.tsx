@@ -15,6 +15,7 @@ import {
   HelpCircle,
   ExternalLink
 } from 'lucide-react';
+import { toast } from '../../store/toastStore';
 
 const dianSchema = z.object({
   environment: z.enum(['habilitacion', 'produccion']),
@@ -75,9 +76,6 @@ export function DianSettings({ organization }: DianSettingsProps) {
     }
   });
 
-  // Watch for certificate changes to show file name (if we stored it separately, but here we just store base64)
-  // We'll handle file input manually
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -85,7 +83,6 @@ export function DianSettings({ organization }: DianSettingsProps) {
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
-        // Remove data URL prefix if present (e.g. data:application/x-pkcs12;base64,)
         const content = base64.split(',')[1] || base64;
         setValue('certificate', content);
       };
@@ -103,10 +100,10 @@ export function DianSettings({ organization }: DianSettingsProps) {
         },
         sync_status: 'pendiente'
       });
-      alert('Configuración DIAN guardada correctamente');
+      toast.success('Configuración DIAN guardada correctamente');
     } catch (error) {
       console.error('Error saving DIAN settings:', error);
-      alert('Error al guardar la configuración');
+      toast.error('Error al guardar la configuración');
     } finally {
       setIsSaving(false);
     }

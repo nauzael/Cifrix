@@ -25,6 +25,8 @@ import { useForm } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { toast } from '../store/toastStore';
+import { confirm } from '../store/confirmStore';
 
 const orgSchema = z.object({
   name: z.string().min(3, 'El nombre es requerido'),
@@ -85,19 +87,25 @@ export function Settings() {
         },
         sync_status: 'pendiente'
       });
-      alert('Configuración guardada correctamente');
+      toast.success('Configuración guardada correctamente');
     } catch (error) {
       console.error('Error saving settings:', error);
-      alert('Error al guardar la configuración');
+      toast.error('Error al guardar la configuración');
     } finally {
       setIsSaving(false);
     }
   };
 
   const deleteDatabase = async () => {
-    if (confirm('¿ESTÁ COMPLETAMENTE SEGURO? Esta acción borrará TODOS los datos locales (miembros, contabilidad, etc.), limpiará el caché y reiniciará la aplicación.')) {
-      await resetDatabase();
-    }
+    confirm({
+      title: '¡ADVERTENCIA CRÍTICA!',
+      message: '¿ESTÁ COMPLETAMENTE SEGURO? Esta acción borrará TODOS los datos locales (miembros, contabilidad, etc.), limpiará el caché y reiniciará la aplicación.',
+      confirmText: 'SÍ, BORRAR TODO',
+      type: 'danger',
+      onConfirm: async () => {
+        await resetDatabase();
+      }
+    });
   };
 
   const tabs = [
@@ -261,7 +269,7 @@ export function Settings() {
                                   const file = e.target.files?.[0];
                                   if (file && org) {
                                     if (file.size > 2 * 1024 * 1024) {
-                                      alert('El archivo es demasiado grande (Máximo 2MB)');
+                                      toast.error('El archivo es demasiado grande (Máximo 2MB)');
                                       return;
                                     }
                                     const reader = new FileReader();
@@ -287,15 +295,21 @@ export function Settings() {
                               <button
                                 type="button"
                                 onClick={async () => {
-                                  if (confirm('¿Desea eliminar el logo?')) {
-                                    await db.organizations.update(org!.id, {
-                                      settings: {
-                                        ...org!.settings,
-                                        logo_url: null
-                                      },
-                                      sync_status: 'pendiente'
-                                    });
-                                  }
+                                  confirm({
+                                    title: 'Eliminar Logo',
+                                    message: '¿Desea eliminar el logo?',
+                                    confirmText: 'SÍ, ELIMINAR',
+                                    type: 'danger',
+                                    onConfirm: async () => {
+                                      await db.organizations.update(org!.id, {
+                                        settings: {
+                                          ...org!.settings,
+                                          logo_url: null
+                                        },
+                                        sync_status: 'pendiente'
+                                      });
+                                    }
+                                  });
                                 }}
                                 className="px-4 py-2.5 bg-red-50 dark:bg-red-500/10 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
                               >

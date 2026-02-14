@@ -23,9 +23,14 @@ import { Communications } from './pages/superadmin/Communications';
 import { Reports as SuperAdminReports } from './pages/superadmin/Reports';
 import { Support as SuperAdminSupport } from './pages/superadmin/Support';
 
+import { ToastContainer } from './components/ui/Toast';
+import { GlobalConfirmModal } from './components/ui/GlobalConfirmModal';
+
 function App() {
   return (
     <BrowserRouter>
+      <ToastContainer />
+      <GlobalConfirmModal />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

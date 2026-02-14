@@ -12,6 +12,8 @@ import { logActivity } from '../../lib/audit';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import PUC_MD from '../../../.documentacion/PUC.md?raw';
 import { Modal } from '../ui/Modal';
+import { toast } from '../../store/toastStore';
+import { confirm } from '../../store/confirmStore';
 
 const accountSchema = z.object({
   code: z.string().min(1, 'El código es requerido'),
@@ -125,38 +127,52 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
       });
       setIsModalOpen(false);
       reset();
+      toast.success('Cuenta guardada exitosamente');
     } catch (error) {
-      alert('Error al crear la cuenta. Verifique que el código no exista.');
+      toast.error('Error al crear la cuenta. Verifique que el código no exista.');
     }
   };
 
   const deleteAccount = async (id: string) => {
-    const descendantIds = (accounts || []).filter(a => a.parent_id === id).map(a => a.id);
     const hasEntries = await db.journal_entries.where('account_id').equals(id).count() > 0;
 
     if (hasEntries) {
-      alert('No se puede eliminar esta cuenta porque ya tiene movimientos contables registrados.');
+      toast.error('No se puede eliminar esta cuenta porque ya tiene movimientos contables registrados.');
       return;
     }
 
-    if (confirm('¿Está seguro de eliminar esta cuenta?')) {
-      try {
-        await db.accounts.delete(id);
-      } catch (error) {
-        alert('Error al eliminar la cuenta.');
+    confirm({
+      title: 'Eliminar Cuenta',
+      message: '¿Está seguro de eliminar esta cuenta?',
+      confirmText: 'Eliminar',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await db.accounts.delete(id);
+          toast.success('Cuenta eliminada correctamente.');
+        } catch (error) {
+          toast.error('Error al eliminar la cuenta.');
+        }
       }
-    }
+    });
   };
 
   const clearPUC = async () => {
     if (!orgId) return;
-    if (confirm('¿Está seguro de eliminar TODO el Plan Único de Cuentas? Esta acción no se puede deshacer.')) {
-      try {
-        await db.accounts.where('organization_id').equals(orgId).delete();
-      } catch (error) {
-        alert('Error al limpiar el PUC.');
+    confirm({
+      title: 'Limpiar PUC',
+      message: '¿Está seguro de eliminar TODO el Plan Único de Cuentas? Esta acción no se puede deshacer.',
+      confirmText: 'Limpiar Todo',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await db.accounts.where('organization_id').equals(orgId).delete();
+          toast.success('PUC limpiado correctamente.');
+        } catch (error) {
+          toast.error('Error al limpiar el PUC.');
+        }
       }
-    }
+    });
   };
 
   const seedPUC = async () => {
@@ -164,9 +180,23 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
     try {
       const existing = await db.accounts.where('organization_id').equals(orgId).count();
       if (existing > 0) {
-        if (!confirm('Ya existen cuentas en el PUC. ¿Desea agregar las cuentas base universales?')) return;
+        confirm({
+          title: 'Cargar PUC Universal',
+          message: 'Ya existen cuentas en el PUC. ¿Desea agregar las cuentas base universales?',
+          confirmText: 'Agregar',
+          type: 'warning',
+          onConfirm: performSeed
+        });
+        return;
       }
+      performSeed();
+    } catch (error) {
+      toast.error('Error al cargar el PUC universal.');
+    }
+  };
 
+  const performSeed = async () => {
+    try {
       await db.transaction('rw', db.accounts, async () => {
         for (const item of UNIVERSAL_PUC) {
           await db.accounts.add({
@@ -184,8 +214,9 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
           });
         }
       });
+      toast.success('PUC universal cargado correctamente.');
     } catch (error) {
-      alert('Error al cargar el PUC universal.');
+      toast.error('Error al cargar el PUC universal.');
     }
   };
 
@@ -461,4 +492,3 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
     </div>
   );
 }
-

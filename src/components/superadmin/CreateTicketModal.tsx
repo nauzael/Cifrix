@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from '../../store/toastStore';
 
 interface CreateTicketModalProps {
   isOpen: boolean;
@@ -54,6 +55,7 @@ export function CreateTicketModal({ isOpen, onClose, onSuccess }: CreateTicketMo
         }]);
       }
 
+      toast.success('Ticket creado exitosamente');
       onSuccess();
       onClose();
       setFormData({
@@ -66,11 +68,12 @@ export function CreateTicketModal({ isOpen, onClose, onSuccess }: CreateTicketMo
       console.error('Error creating ticket:', err);
       // Fallback for demo if table doesn't exist
       if (err.message?.includes('relation "tickets" does not exist')) {
-        alert('La tabla "tickets" no existe en la base de datos. Se ha simulado la creación.');
+        toast.info('La tabla "tickets" no existe en la base de datos. Se ha simulado la creación.');
         onSuccess();
         onClose();
       } else {
         setError(err.message || 'Error al crear el ticket');
+        toast.error('Error al crear el ticket');
       }
     } finally {
       setLoading(false);

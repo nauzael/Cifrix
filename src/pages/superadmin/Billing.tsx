@@ -11,6 +11,7 @@ import {
   Check,
   X
 } from 'lucide-react';
+import { toast } from '../../store/toastStore';
 
 export function Billing() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -81,7 +82,7 @@ export function Billing() {
 
   const handleExport = () => {
     if (transactions.length === 0) {
-      alert('No hay datos para exportar');
+      toast.error('No hay datos para exportar');
       return;
     }
 
@@ -104,6 +105,7 @@ export function Billing() {
     link.href = URL.createObjectURL(blob);
     link.download = `billing_export_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+    toast.success('Facturación exportada correctamente');
   };
 
   return (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 import { Building2, Check, Loader2, LogOut, ArrowRight } from 'lucide-react';
+import { toast } from '../store/toastStore';
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -12,17 +13,12 @@ export const Onboarding: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
 
-  // New state for creating an organization (if applicable)
-  // For now, based on user request "assign to company or organization they belong to",
-  // we assume they select from existing list.
-
   useEffect(() => {
     fetchOrganizations();
   }, []);
 
   const fetchOrganizations = async () => {
     try {
-      // Use RPC to bypass RLS restrictions for non-members
       const { data, error } = await (supabase as any).rpc('get_public_organizations');
 
       if (error) throw error;
@@ -39,7 +35,6 @@ export const Onboarding: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // Use RPC to join organization (bypassing RLS)
       const { error } = await (supabase as any).rpc('join_organization', {
         org_id: selectedOrgId,
         user_role: 'BASIC'
@@ -47,15 +42,13 @@ export const Onboarding: React.FC = () => {
 
       if (error) throw error;
 
-      // Refresh profile
       await initialize();
-
-      // Redirect to dashboard
+      toast.success('Te has unido a la organización correctamente');
       navigate('/');
 
     } catch (error: any) {
       console.error('Error joining organization:', error);
-      alert('Error al unirse a la organización: ' + error.message);
+      toast.error('Error al unirse a la organización: ' + error.message);
     } finally {
       setSubmitting(false);
     }

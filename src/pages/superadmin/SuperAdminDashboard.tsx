@@ -18,6 +18,8 @@ import { CreateOrganizationModal } from '../../components/superadmin/CreateOrgan
 import { EditOrganizationModal } from '../../components/superadmin/EditOrganizationModal';
 import { CreateUserModal } from '../../components/superadmin/CreateUserModal';
 import { SystemHealthCheck } from '../../components/SystemHealthCheck';
+import { toast } from '../../store/toastStore';
+import { confirm } from '../../store/confirmStore';
 
 type Organization = Database['public']['Tables']['organizations']['Row'];
 
@@ -114,61 +116,73 @@ export function SuperAdminDashboard() {
 
   const handleDeleteOrg = async (org: Organization) => {
     setOpenMenuId(null);
-    if (!window.confirm(`ADVERTENCIA: ¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE la organización "${org.name}"? Esta acción no se puede deshacer.`)) return;
+    confirm({
+      title: 'Eliminar Organización',
+      message: `ADVERTENCIA: ¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE la organización "${org.name}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar Permanentemente',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('organizations')
+            .delete()
+            .eq('id', org.id);
 
-    try {
-      const { error } = await supabase
-        .from('organizations')
-        .delete()
-        .eq('id', org.id);
+          if (error) throw error;
 
-      if (error) throw error;
-
-      alert('Organización eliminada correctamente.');
-      fetchDashboardData();
-    } catch (error: any) {
-      console.error('Error deleting organization:', error);
-      alert('Error al eliminar organización: ' + error.message);
-    }
+          toast.success('Organización eliminada correctamente.');
+          fetchDashboardData();
+        } catch (error: any) {
+          console.error('Error deleting organization:', error);
+          toast.error('Error al eliminar organización: ' + error.message);
+        }
+      }
+    });
   };
 
   const handleGoToDashboard = async (org: Organization) => {
     setOpenMenuId(null);
 
-    if (!window.confirm(`¿Deseas acceder al dashboard de "${org.name}"? Esto reemplazará temporalmente tus datos locales.`)) return;
+    confirm({
+      title: 'Acceder a Organización',
+      message: `¿Deseas acceder al dashboard de "${org.name}"? Esto reemplazará temporalmente tus datos locales.`,
+      confirmText: 'Acceder ahora',
+      type: 'info',
+      onConfirm: async () => {
+        try {
+          setIsLoading(true);
 
-    try {
-      setIsLoading(true);
+          // 1. Fetch fresh data to ensure we allow entry with LATEST settings
+          const { data: freshOrg, error } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', org.id)
+            .single();
 
-      // 1. Fetch fresh data to ensure we allow entry with LATEST settings
-      const { data: freshOrg, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('id', org.id)
-        .single();
+          if (error || !freshOrg) throw new Error('No se pudo obtener la información actualizada de la organización.');
 
-      if (error || !freshOrg) throw new Error('No se pudo obtener la información actualizada de la organización.');
+          await db.clearAllData();
 
-      await db.clearAllData();
+          await db.organizations.add({
+            id: freshOrg.id,
+            name: freshOrg.name,
+            type: freshOrg.type as 'IGLESIA' | 'EMPRESA',
+            tax_id: freshOrg.tax_id || '',
+            settings: freshOrg.settings,
+            created_at: freshOrg.created_at,
+            sync_status: 'sincronizado'
+          });
 
-      await db.organizations.add({
-        id: freshOrg.id,
-        name: freshOrg.name,
-        type: freshOrg.type as 'IGLESIA' | 'EMPRESA',
-        tax_id: freshOrg.tax_id || '',
-        settings: freshOrg.settings,
-        created_at: freshOrg.created_at,
-        sync_status: 'sincronizado'
-      });
+          // Force reload to ensure all hooks (useAuthStore, useLiveQuery) reset
+          window.location.href = '/';
 
-      // Force reload to ensure all hooks (useAuthStore, useLiveQuery) reset
-      window.location.href = '/';
-
-    } catch (error: any) {
-      console.error('Error switching to dashboard:', error);
-      alert('Error al acceder al dashboard: ' + error.message);
-      setIsLoading(false);
-    }
+        } catch (error: any) {
+          console.error('Error switching to dashboard:', error);
+          toast.error('Error al acceder al dashboard: ' + error.message);
+          setIsLoading(false);
+        }
+      }
+    });
   };
 
   return (
