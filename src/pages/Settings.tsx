@@ -25,8 +25,6 @@ import { useForm } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { seedIglesiaSAS, seedEmpresaSAS } from '../utils/seedData';
-import { Database } from 'lucide-react';
 
 const orgSchema = z.object({
   name: z.string().min(3, 'El nombre es requerido'),
@@ -330,41 +328,6 @@ export function Settings() {
                   </button>
                 </div>
               </form>
-
-              {/* Data Tools */}
-              <div className="mt-12 p-8 bg-indigo-50/50 dark:bg-indigo-500/5 rounded-3xl border border-indigo-100 dark:border-indigo-500/10 space-y-6">
-                <div className="flex flex-col sm:flex-row items-start gap-6">
-                  <div className="p-4 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-600/20">
-                    <Database size={28} />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                      Herramientas de Desarrollo ({org?.type === 'EMPRESA' ? 'Modo Empresa' : 'Modo Iglesia'})
-                    </h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium max-w-2xl">
-                      Genera automáticamente registros de prueba (miembros, facturas, transacciones) para validar el funcionamiento de la plataforma en los últimos 3 meses.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-4">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const entityName = org?.name || 'la organización actual';
-                      if (confirm(`¿Desea generar datos de prueba para ${entityName}?`)) {
-                        const result = org?.type === 'EMPRESA' ? await seedEmpresaSAS(org.id) : await seedIglesiaSAS(org.id);
-                        alert(result.message);
-                        if (result.success) window.location.reload();
-                      }
-                    }}
-                    className="group flex items-center gap-3 px-8 py-3.5 bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
-                  >
-                    <Database size={18} className="group-hover:rotate-12 transition-transform" />
-                    Generar Data Dummy
-                  </button>
-                </div>
-              </div>
             </div>
           )}
 
@@ -391,31 +354,6 @@ export function Settings() {
               <SecuritySettings organization={org} />
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Danger Zone */}
-      <div className="bg-red-50/50 dark:bg-red-500/5 border border-red-100 dark:border-red-500/10 rounded-[2.5rem] p-8 sm:p-10">
-        <div className="flex flex-col sm:flex-row items-start gap-8">
-          <div className="p-4 bg-red-100 dark:bg-red-500/10 text-red-600 rounded-2xl">
-            <AlertTriangle size={32} />
-          </div>
-          <div className="flex-1 space-y-4">
-            <div>
-              <h4 className="text-xl font-black text-red-600 tracking-tight">Acciones Críticas</h4>
-              <p className="text-sm text-red-500/70 font-black uppercase tracking-widest mt-1">Manejar con precaución extrema</p>
-            </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium max-w-2xl">
-              Reiniciar la base de datos eliminará permanentemente todos los registros locales, configuraciones y datos de caché. Esta acción no se puede deshacer.
-            </p>
-            <button
-              onClick={deleteDatabase}
-              className="group flex items-center gap-3 px-8 py-4 bg-white dark:bg-slate-900 border-2 border-red-100 dark:border-red-500/20 text-red-600 text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-red-600 hover:text-white hover:border-red-600 transition-all active:scale-95 shadow-sm"
-            >
-              <Trash2 size={18} className="group-hover:rotate-12 transition-transform" />
-              Borrar Todo y Reiniciar App
-            </button>
-          </div>
         </div>
       </div>
     </div>
