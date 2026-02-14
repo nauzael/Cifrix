@@ -23,10 +23,10 @@ export const Onboarding: React.FC = () => {
   const fetchOrganizations = async () => {
     try {
       // Use RPC to bypass RLS restrictions for non-members
-      const { data, error } = await supabase.rpc('get_public_organizations');
+      const { data, error } = await (supabase as any).rpc('get_public_organizations');
 
       if (error) throw error;
-      setOrganizations(data || []);
+      setOrganizations((data as any[]) || []);
     } catch (error) {
       console.error('Error fetching organizations:', error);
     } finally {
@@ -138,8 +138,8 @@ export const Onboarding: React.FC = () => {
                 onClick={handleJoinOrganization}
                 disabled={!selectedOrgId || submitting}
                 className={`w-full flex items-center justify-center py-4 px-6 rounded-2xl shadow-xl transition-all duration-300 font-black text-sm group ${!selectedOrgId || submitting
-                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20 hover:shadow-blue-600/30 hover:-translate-y-0.5 active:scale-95'
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20 hover:shadow-blue-600/30 hover:-translate-y-0.5 active:scale-95'
                   }`}
               >
                 {submitting ? (
