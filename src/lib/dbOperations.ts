@@ -3,20 +3,29 @@ import { db } from './db';
 import { APP_CONFIG, dbLog } from './config';
 
 /**
- * Capa de Abstracción para Operaciones de Base de Datos
+ * Capa de Abstracción para Operaciones de Base de Datos (MODO OFFLINE-FIRST)
  * 
- * En modo HYBRID:
- * - Escrituras (INSERT/UPDATE/DELETE) → Directo a Supabase + Actualizar caché local
- * - Lecturas (SELECT) → Desde caché local (más rápido)
+ * Lógica:
+ * 1. Si hay internet y modo != offline: Intenta Supabase primero.
+ * 2. Si no hay internet o falla: Guarda en Dexie con sync_status = 'pendiente'.
+ * 3. Las lecturas siempre vienen de Dexie (Velocidad instantánea).
  */
 
 export interface WriteResult<T = any> {
     data: T | null;
     error: any;
+    offline: boolean;
 }
 
 /**
- * Inserta un registro directamente en Supabase y actualiza la caché local
+ * Determina si debemos intentar escribir en Supabase directamente
+ */
+function shouldAttemptOnline(): boolean {
+    return navigator.onLine && APP_CONFIG.DB_MODE !== 'offline';
+}
+
+/**
+ * Inserta un registro. Soporta modo offline automático.
  */
 export async function insertRecord<T extends Record<string, any>>(
     tableName: string,
@@ -25,41 +34,47 @@ export async function insertRecord<T extends Record<string, any>>(
     try {
         dbLog(`INSERT ${tableName}`, { id: (record as any).id });
 
-        // 1. Insertar en Supabase (producción)
-        const { data, error } = await (supabase as any)
-            .from(tableName)
-            .insert(record)
-            .select()
-            .single();
+        // 1. Si estamos online y no es modo offline estricto, intentamos Supabase
+        if (shouldAttemptOnline()) {
+            const { data, error } = await (supabase as any)
+                .from(tableName)
+                .insert(record)
+                .select()
+                .single();
 
-        if (error) {
-            console.error(`Error inserting into ${tableName}:`, error);
-            return { data: null, error };
-        }
+            if (!error) {
+                // Éxito en la nube -> Guardar en local como sincronizado
+                await (db as any)[tableName].put({ ...data, sync_status: 'sincronizado' });
+                return { data, error: null, offline: false };
+            }
 
-        // 2. Actualizar caché local si está habilitado
-        if (APP_CONFIG.USE_LOCAL_CACHE) {
-            try {
-                await (db as any)[tableName].put({
-                    ...data,
-                    sync_status: 'sincronizado'
-                });
-                dbLog(`Cache updated for ${tableName}`, { id: (data as any)?.id });
-            } catch (cacheError) {
-                console.warn(`Cache update failed for ${tableName}:`, cacheError);
-                // No fallar la operación si solo falla la caché
+            // Si el error es de red, continuamos hacia la lógica offline
+            if (error.message?.includes('Fetch') || error.code === 'PGRST100') {
+                dbLog(`Network error in insertRecord, switching to offline mode`);
+            } else {
+                return { data: null, error, offline: false };
             }
         }
 
-        return { data, error: null };
+        // 2. Lógica Offline: Guardar en Dexie con estado 'pendiente'
+        const offlineRecord = {
+            ...record,
+            sync_status: 'pendiente',
+            updated_at: new Date().toISOString()
+        };
+
+        await (db as any)[tableName].put(offlineRecord);
+        dbLog(`Record saved OFFLINE in ${tableName}`, { id: (record as any).id });
+
+        return { data: offlineRecord as any, error: null, offline: true };
     } catch (error) {
-        console.error(`Unexpected error in insertRecord for ${tableName}:`, error);
-        return { data: null, error };
+        console.error(`Error in insertRecord for ${tableName}:`, error);
+        return { data: null, error, offline: true };
     }
 }
 
 /**
- * Actualiza un registro directamente en Supabase y actualiza la caché local
+ * Actualiza un registro. Soporta modo offline automático.
  */
 export async function updateRecord<T extends Record<string, any>>(
     tableName: string,
@@ -69,41 +84,41 @@ export async function updateRecord<T extends Record<string, any>>(
     try {
         dbLog(`UPDATE ${tableName}`, { id, updates });
 
-        // 1. Actualizar en Supabase (producción)
-        const { data, error } = await (supabase as any)
-            .from(tableName)
-            .update(updates)
-            .eq('id', id)
-            .select()
-            .single();
+        if (shouldAttemptOnline()) {
+            const { data, error } = await (supabase as any)
+                .from(tableName)
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single();
 
-        if (error) {
-            console.error(`Error updating ${tableName}:`, error);
-            return { data: null, error };
-        }
+            if (!error) {
+                await (db as any)[tableName].update(id, { ...updates, sync_status: 'sincronizado' });
+                return { data, error: null, offline: false };
+            }
 
-        // 2. Actualizar caché local si está habilitado
-        if (APP_CONFIG.USE_LOCAL_CACHE) {
-            try {
-                await (db as any)[tableName].update(id, {
-                    ...updates,
-                    sync_status: 'sincronizado'
-                });
-                dbLog(`Cache updated for ${tableName}`, { id });
-            } catch (cacheError) {
-                console.warn(`Cache update failed for ${tableName}:`, cacheError);
+            if (!(error.message?.includes('Fetch') || error.code === 'PGRST100')) {
+                return { data: null, error, offline: false };
             }
         }
 
-        return { data, error: null };
+        // Modo Offline / Fallback
+        await (db as any)[tableName].update(id, {
+            ...updates,
+            sync_status: 'pendiente',
+            updated_at: new Date().toISOString()
+        });
+
+        const updated = await (db as any)[tableName].get(id);
+        return { data: updated, error: null, offline: true };
     } catch (error) {
-        console.error(`Unexpected error in updateRecord for ${tableName}:`, error);
-        return { data: null, error };
+        console.error(`Error in updateRecord for ${tableName}:`, error);
+        return { data: null, error, offline: true };
     }
 }
 
 /**
- * Elimina un registro directamente de Supabase y de la caché local
+ * Elimina un registro. Soporta modo offline automático.
  */
 export async function deleteRecord(
     tableName: string,
@@ -112,36 +127,41 @@ export async function deleteRecord(
     try {
         dbLog(`DELETE ${tableName}`, { id });
 
-        // 1. Eliminar de Supabase (producción)
-        const { error } = await (supabase as any)
-            .from(tableName)
-            .delete()
-            .eq('id', id);
+        if (shouldAttemptOnline()) {
+            const { error } = await (supabase as any)
+                .from(tableName)
+                .delete()
+                .eq('id', id);
 
-        if (error) {
-            console.error(`Error deleting from ${tableName}:`, error);
-            return { data: null, error };
-        }
-
-        // 2. Eliminar de caché local si está habilitado
-        if (APP_CONFIG.USE_LOCAL_CACHE) {
-            try {
+            if (!error) {
                 await (db as any)[tableName].delete(id);
-                dbLog(`Cache cleared for ${tableName}`, { id });
-            } catch (cacheError) {
-                console.warn(`Cache delete failed for ${tableName}:`, cacheError);
+                return { data: null, error: null, offline: false };
+            }
+
+            if (!(error.message?.includes('Fetch') || error.code === 'PGRST100')) {
+                return { data: null, error, offline: false };
             }
         }
 
-        return { data: null, error: null };
+        // Modo Offline: Marcar para eliminación en la tabla de registros eliminados
+        await (db as any)[tableName].delete(id);
+        await db.deleted_records.put({
+            id,
+            table_name: tableName,
+            deleted_at: new Date().toISOString(),
+            sync_status: 'pendiente'
+        });
+
+        dbLog(`Record marked for OFFLINE deletion in ${tableName}`, { id });
+        return { data: null, error: null, offline: true };
     } catch (error) {
-        console.error(`Unexpected error in deleteRecord for ${tableName}:`, error);
-        return { data: null, error };
+        console.error(`Error in deleteRecord for ${tableName}:`, error);
+        return { data: null, error, offline: true };
     }
 }
 
 /**
- * Realiza un upsert (insert o update) directamente en Supabase
+ * Realiza un upsert (insert o update). Soporta modo offline automático.
  */
 export async function upsertRecord<T extends Record<string, any>>(
     tableName: string,
@@ -150,114 +170,80 @@ export async function upsertRecord<T extends Record<string, any>>(
     try {
         dbLog(`UPSERT ${tableName}`, { id: (record as any).id });
 
-        // 1. Upsert en Supabase (producción)
-        const { data, error } = await (supabase as any)
-            .from(tableName)
-            .upsert(record)
-            .select()
-            .single();
+        if (shouldAttemptOnline()) {
+            const { data, error } = await (supabase as any)
+                .from(tableName)
+                .upsert(record)
+                .select()
+                .single();
 
-        if (error) {
-            console.error(`Error upserting into ${tableName}:`, error);
-            return { data: null, error };
-        }
+            if (!error) {
+                await (db as any)[tableName].put({ ...data, sync_status: 'sincronizado' });
+                return { data, error: null, offline: false };
+            }
 
-        // 2. Actualizar caché local si está habilitado
-        if (APP_CONFIG.USE_LOCAL_CACHE) {
-            try {
-                await (db as any)[tableName].put({
-                    ...data,
-                    sync_status: 'sincronizado'
-                });
-                dbLog(`Cache updated for ${tableName}`, { id: (data as any)?.id });
-            } catch (cacheError) {
-                console.warn(`Cache update failed for ${tableName}:`, cacheError);
+            if (!(error.message?.includes('Fetch') || error.code === 'PGRST100')) {
+                return { data: null, error, offline: false };
             }
         }
 
-        return { data, error: null };
+        // Modo Offline
+        const offlineRecord = {
+            ...record,
+            sync_status: 'pendiente',
+            updated_at: new Date().toISOString()
+        };
+        await (db as any)[tableName].put(offlineRecord);
+
+        return { data: offlineRecord as any, error: null, offline: true };
     } catch (error) {
-        console.error(`Unexpected error in upsertRecord for ${tableName}:`, error);
-        return { data: null, error };
+        console.error(`Error in upsertRecord for ${tableName}:`, error);
+        return { data: null, error, offline: true };
     }
 }
 
 /**
- * Sincroniza datos desde Supabase hacia la caché local
- * Útil para refrescar la caché después de operaciones masivas
+ * Sincroniza datos DESDE Supabase hacia Dexie (Lectura)
  */
 export async function syncFromSupabase(
     tableName: string,
     organizationId?: string
 ): Promise<void> {
-    if (!APP_CONFIG.USE_LOCAL_CACHE) {
-        dbLog(`Sync skipped for ${tableName} - cache disabled`);
-        return;
-    }
+    if (!navigator.onLine) return;
 
     try {
-        dbLog(`Syncing ${tableName} from Supabase to cache...`);
-
+        dbLog(`Refreshing ${tableName} from cloud...`);
         let query = (supabase as any).from(tableName).select('*');
-
-        if (organizationId) {
-            query = query.eq('organization_id', organizationId);
-        }
+        if (organizationId) query = query.eq('organization_id', organizationId);
 
         const { data, error } = await query;
-
-        if (error) {
-            console.error(`Error fetching ${tableName} from Supabase:`, error);
-            return;
-        }
+        if (error) throw error;
 
         if (data && data.length > 0) {
-            // Limpiar tabla local primero (opcional, depende del caso de uso)
-            // await (db as any)[tableName].clear();
-
-            // Insertar/actualizar en caché local
             await (db as any)[tableName].bulkPut(
-                data.map((item: any) => ({
-                    ...item,
-                    sync_status: 'sincronizado'
-                }))
+                data.map((item: any) => ({ ...item, sync_status: 'sincronizado' }))
             );
-
-            dbLog(`Synced ${data.length} records to cache for ${tableName}`);
         }
     } catch (error) {
-        console.error(`Error syncing ${tableName}:`, error);
+        console.error(`Error in syncFromSupabase for ${tableName}:`, error);
     }
 }
 
 /**
- * Hook helper para obtener datos desde la caché local
- * Si la caché está vacía, sincroniza desde Supabase primero
+ * Lectura: Siempre intenta Dexie primero (Velocidad)
  */
 export async function getFromCacheOrSupabase<T>(
     tableName: string,
     organizationId?: string
 ): Promise<T[]> {
-    if (!APP_CONFIG.USE_LOCAL_CACHE) {
-        // Si no hay caché, ir directo a Supabase
-        let query = (supabase as any).from(tableName).select('*');
-        if (organizationId) {
-            query = query.eq('organization_id', organizationId);
-        }
-        const { data } = await query;
-        return (data || []) as T[];
-    }
-
-    // Intentar obtener desde caché
+    // 1. Obtener desde Dexie (Caché local)
     let cachedData = organizationId
         ? await (db as any)[tableName].where('organization_id').equals(organizationId).toArray()
         : await (db as any)[tableName].toArray();
 
-    // Si la caché está vacía, sincronizar desde Supabase
-    if (!cachedData || cachedData.length === 0) {
-        dbLog(`Cache miss for ${tableName}, syncing from Supabase...`);
+    // 2. Si hay internet y la caché está vacía, refrescar desde la nube
+    if (navigator.onLine && (!cachedData || cachedData.length === 0)) {
         await syncFromSupabase(tableName, organizationId);
-
         cachedData = organizationId
             ? await (db as any)[tableName].where('organization_id').equals(organizationId).toArray()
             : await (db as any)[tableName].toArray();
