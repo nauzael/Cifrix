@@ -113,7 +113,7 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
             Cancelar
           </button>
           <button
-            submit="submit"
+            type="submit"
             disabled={loading}
             className="group relative flex-[2] px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-bold shadow-xl shadow-blue-600/20 hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 overflow-hidden"
           >

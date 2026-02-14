@@ -148,6 +148,47 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
     }
   };
 
+  const clearPUC = async () => {
+    if (!orgId) return;
+    if (confirm('¿Está seguro de eliminar TODO el Plan Único de Cuentas? Esta acción no se puede deshacer.')) {
+      try {
+        await db.accounts.where('organization_id').equals(orgId).delete();
+      } catch (error) {
+        alert('Error al limpiar el PUC.');
+      }
+    }
+  };
+
+  const seedPUC = async () => {
+    if (!orgId) return;
+    try {
+      const existing = await db.accounts.where('organization_id').equals(orgId).count();
+      if (existing > 0) {
+        if (!confirm('Ya existen cuentas en el PUC. ¿Desea agregar las cuentas base universales?')) return;
+      }
+
+      await db.transaction('rw', db.accounts, async () => {
+        for (const item of UNIVERSAL_PUC) {
+          await db.accounts.add({
+            id: uuidv4(),
+            organization_id: orgId,
+            code: item.code,
+            name: item.name,
+            type: item.type,
+            nature: item.nature,
+            level: item.code.length,
+            accepts_movement: item.accepts_movement,
+            parent_id: null,
+            created_at: new Date().toISOString(),
+            sync_status: 'pendiente'
+          });
+        }
+      });
+    } catch (error) {
+      alert('Error al cargar el PUC universal.');
+    }
+  };
+
   const renderTree = (parentId: string | null = null, depth = 0) => {
     const q = query.trim().toLowerCase();
     const nodes = accounts?.filter(acc => acc.parent_id === parentId && (q ? (acc.code.includes(q) || acc.name.toLowerCase().includes(q)) : true)) || [];
