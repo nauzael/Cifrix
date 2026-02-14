@@ -135,13 +135,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     )}>
       <div className="p-6 flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 border-4 border-red-500">
-              <LayoutDashboard className="size-6" />
+          <div className="flex items-center gap-3 group transition-all duration-300">
+            <div className="size-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 group-hover:scale-110 transition-transform">
+              <LayoutDashboard className="size-5" />
             </div>
             <div>
-              <h1 className="font-black text-xl tracking-tighter text-slate-900 dark:text-white leading-none">Cifrix</h1>
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Contabilidad inteligente</p>
+              <h1 className="font-black text-2xl tracking-tighter text-slate-900 dark:text-white leading-none">Cifrix</h1>
+              <p className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.15em] mt-1 opacity-80">Contabilidad inteligente</p>
             </div>
           </div>
           <button
@@ -152,17 +152,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Org Info Widget */}
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-          <div className="flex items-start gap-3">
-            <div className="size-9 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm text-slate-400 mt-0.5 shrink-0">
-              {orgType === 'IGLESIA' ? <Church className="size-5" /> : <Building2 className="size-5" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Organización</p>
-              <p className="text-xs font-bold text-slate-900 dark:text-white uppercase break-all whitespace-normal leading-tight">
-                {organization?.name || 'Cargando...'}
-              </p>
+        {/* Org Info Widget - Premium Glassmorphism Look */}
+        <div className="relative group overflow-hidden">
+          <div className="absolute inset-0 bg-blue-600/5 dark:bg-blue-400/5 blur-xl group-hover:bg-blue-600/10 transition-colors rounded-3xl" />
+          <div className="relative bg-white/40 dark:bg-slate-800/40 backdrop-blur-md p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm transition-all duration-300 group-hover:border-blue-500/30">
+            <div className="flex items-start gap-4">
+              <div className="size-10 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-lg shadow-slate-200/50 dark:shadow-none text-blue-600 dark:text-blue-400 mt-1 shrink-0 border border-slate-100 dark:border-slate-800">
+                {orgType === 'IGLESIA' ? <Church className="size-6" /> : <Building2 className="size-6" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1.5 flex items-center gap-1.5">
+                  <span className="size-1 rounded-full bg-blue-500 animate-pulse" />
+                  Organización
+                </p>
+                <p className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase break-words leading-tight tracking-tight">
+                  {organization?.name || 'Cargando...'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
