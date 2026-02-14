@@ -28,7 +28,7 @@ async function syncFromSupabaseToCache(organizationId?: string) {
 
   for (const tableName of TABLES_TO_SYNC) {
     try {
-      let query = supabase.from(tableName).select('*');
+      let query = (supabase as any).from(tableName).select('*');
 
       // Filtrar por organización si se proporciona
       if (organizationId && tableName !== 'organizations') {
@@ -166,7 +166,7 @@ export async function syncToSupabase(organizationId?: string) {
 // Solo habilitar sincronización automática si NO estamos en modo producción
 if (APP_CONFIG.DB_MODE === 'offline' && APP_CONFIG.AUTO_SYNC_ENABLED) {
   setInterval(syncToSupabase, APP_CONFIG.SYNC_INTERVAL_MS);
-  window.addEventListener('online', syncToSupabase);
+  window.addEventListener('online', () => syncToSupabase());
   dbLog('Background sync enabled (offline mode)');
 } else if (APP_CONFIG.DB_MODE === 'hybrid') {
   // En modo híbrido, sincronizar cada 2 minutos para mantener caché actualizada

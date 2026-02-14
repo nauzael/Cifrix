@@ -23,10 +23,10 @@ export async function insertRecord<T extends Record<string, any>>(
     record: T
 ): Promise<WriteResult<T>> {
     try {
-        dbLog(`INSERT ${tableName}`, { id: record.id });
+        dbLog(`INSERT ${tableName}`, { id: (record as any).id });
 
         // 1. Insertar en Supabase (producción)
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from(tableName)
             .insert(record)
             .select()
@@ -44,7 +44,7 @@ export async function insertRecord<T extends Record<string, any>>(
                     ...data,
                     sync_status: 'sincronizado'
                 });
-                dbLog(`Cache updated for ${tableName}`, { id: data.id });
+                dbLog(`Cache updated for ${tableName}`, { id: (data as any)?.id });
             } catch (cacheError) {
                 console.warn(`Cache update failed for ${tableName}:`, cacheError);
                 // No fallar la operación si solo falla la caché
@@ -70,7 +70,7 @@ export async function updateRecord<T extends Record<string, any>>(
         dbLog(`UPDATE ${tableName}`, { id, updates });
 
         // 1. Actualizar en Supabase (producción)
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from(tableName)
             .update(updates)
             .eq('id', id)
@@ -113,7 +113,7 @@ export async function deleteRecord(
         dbLog(`DELETE ${tableName}`, { id });
 
         // 1. Eliminar de Supabase (producción)
-        const { error } = await supabase
+        const { error } = await (supabase as any)
             .from(tableName)
             .delete()
             .eq('id', id);
@@ -148,10 +148,10 @@ export async function upsertRecord<T extends Record<string, any>>(
     record: T
 ): Promise<WriteResult<T>> {
     try {
-        dbLog(`UPSERT ${tableName}`, { id: record.id });
+        dbLog(`UPSERT ${tableName}`, { id: (record as any).id });
 
         // 1. Upsert en Supabase (producción)
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
             .from(tableName)
             .upsert(record)
             .select()
@@ -169,7 +169,7 @@ export async function upsertRecord<T extends Record<string, any>>(
                     ...data,
                     sync_status: 'sincronizado'
                 });
-                dbLog(`Cache updated for ${tableName}`, { id: data.id });
+                dbLog(`Cache updated for ${tableName}`, { id: (data as any)?.id });
             } catch (cacheError) {
                 console.warn(`Cache update failed for ${tableName}:`, cacheError);
             }
@@ -198,7 +198,7 @@ export async function syncFromSupabase(
     try {
         dbLog(`Syncing ${tableName} from Supabase to cache...`);
 
-        let query = supabase.from(tableName).select('*');
+        let query = (supabase as any).from(tableName).select('*');
 
         if (organizationId) {
             query = query.eq('organization_id', organizationId);
@@ -240,7 +240,7 @@ export async function getFromCacheOrSupabase<T>(
 ): Promise<T[]> {
     if (!APP_CONFIG.USE_LOCAL_CACHE) {
         // Si no hay caché, ir directo a Supabase
-        let query = supabase.from(tableName).select('*');
+        let query = (supabase as any).from(tableName).select('*');
         if (organizationId) {
             query = query.eq('organization_id', organizationId);
         }
