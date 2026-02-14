@@ -37,9 +37,9 @@ export const Login: React.FC = () => {
 
     try {
       // 1. Verificación preventiva de configuración
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
       if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
-        throw new Error('Configuración de Supabase no detectada. Verifique su archivo .env');
+        throw new Error('Configuración de Supabase no detectada. Verifique que su archivo .env contenga VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.');
       }
 
       // 2. Intentar login
@@ -61,8 +61,6 @@ export const Login: React.FC = () => {
       console.error("Detailed Login Error:", err);
 
       // 5. SOLUCIÓN FINAL: Verificación agnóstica de sesión
-      // Independientemente del error (schema, network, etc), si auth.getSession() 
-      // retorna un usuario válido, asumimos éxito y procedemos.
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session?.user) {
@@ -75,15 +73,22 @@ export const Login: React.FC = () => {
       }
 
       // 6. Si llegamos aquí, realmente falló
-      let errorMessage = err.message || 'Error desconocido';
+      const rawError = err?.message || err?.toString() || 'Error desconocido';
+      let errorMessage = rawError;
 
-      if (errorMessage === 'Failed to fetch') {
-        errorMessage = 'No se pudo conectar con el servidor. Verifique su conexión a internet o si un bloqueador de anuncios está impidiendo la conexión a Supabase.';
+      // Normalizar error de red (Failed to fetch es común en Chrome/Firefox/Safari)
+      if (
+        errorMessage.toLowerCase().includes('failed to fetch') ||
+        errorMessage.toLowerCase().includes('network error') ||
+        errorMessage.toLowerCase().includes('load failed') ||
+        err?.name === 'TypeError'
+      ) {
+        errorMessage = 'No se pudo conectar con el servidor de Supabase. Verifique su conexión a internet o si un bloqueador de anuncios (AdBlock) está impidiendo la conexión.';
       }
 
       if (errorMessage.includes('Invalid login credentials')) {
         setError('Credenciales incorrectas. Verifique correo y contraseña.');
-      } else if (errorMessage.includes('querying schema')) {
+      } else if (errorMessage.includes('querying schema') || errorMessage.includes('schema cache')) {
         setError('Error crítico de base de datos (Schema Cache). Por favor ejecute el script SUPER_ADMIN_FIX_SCHEMA.sql en Supabase.');
       } else {
         setError(errorMessage);
