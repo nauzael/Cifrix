@@ -141,7 +141,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
             <div>
               <h1 className="font-black text-xl tracking-tighter text-slate-900 dark:text-white leading-none">Cifrix</h1>
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">v1.2.0 PRO</p>
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Contabilidad inteligente</p>
             </div>
           </div>
           <button
@@ -160,7 +160,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Organización</p>
-              <p className="text-xs font-bold text-slate-900 dark:text-white truncate uppercase">{organization?.name || 'Cargando...'}</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white uppercase break-words">{organization?.name || 'Cargando...'}</p>
             </div>
           </div>
         </div>
