@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../../lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { Building2, Church, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
@@ -40,8 +41,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     onComplete(orgId);
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden">
+  const content = (
+    <div className="fixed inset-0 z-[99999] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden">
       {/* Elementos decorativos de fondo */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
@@ -223,5 +224,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
       </div>
     </div>
   );
-};
 
+  return createPortal(content, document.getElementById('modal-root') || document.body);
+};

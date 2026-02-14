@@ -181,9 +181,10 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
 
   if (!isOpen || !user) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="fixed inset-0" onClick={onClose} />
+      <div className="relative bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
         <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20">
@@ -322,6 +323,8 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.getElementById('modal-root') || document.body
   );
+
 }

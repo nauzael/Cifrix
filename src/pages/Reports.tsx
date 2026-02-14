@@ -488,9 +488,10 @@ ${equityRows}
 
   return (
     <div className="space-y-4 pb-6">
-      {isGenerating && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-md">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300 border border-slate-200 dark:border-slate-800">
+      {isGenerating && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center">
+          <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md" />
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300 border border-slate-200 dark:border-slate-800 relative z-10">
             <div className="relative">
               <div className="size-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
               <Loader2 className="size-8 text-blue-600 absolute inset-0 m-auto animate-pulse" />
@@ -500,7 +501,8 @@ ${equityRows}
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{isGenerating}</p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.getElementById('modal-root') || document.body
       )}
 
       {/* Header Section */}
