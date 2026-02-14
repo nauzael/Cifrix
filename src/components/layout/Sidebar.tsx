@@ -136,7 +136,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="p-6 flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30">
+            <div className="size-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 border-4 border-red-500">
               <LayoutDashboard className="size-6" />
             </div>
             <div>
@@ -154,13 +154,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Org Info Widget */}
         <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm text-slate-400">
+          <div className="flex items-start gap-3">
+            <div className="size-9 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm text-slate-400 mt-0.5 shrink-0">
               {orgType === 'IGLESIA' ? <Church className="size-5" /> : <Building2 className="size-5" />}
             </div>
-            <div className="min-w-0">
+            <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Organización</p>
-              <p className="text-xs font-bold text-slate-900 dark:text-white uppercase break-words">{organization?.name || 'Cargando...'}</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white uppercase break-all whitespace-normal leading-tight">
+                {organization?.name || 'Cargando...'}
+              </p>
             </div>
           </div>
         </div>
