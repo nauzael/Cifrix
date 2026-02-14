@@ -36,6 +36,12 @@ export const Login: React.FC = () => {
     setError(null);
 
     try {
+      // 1. Verificación preventiva de configuración
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+        throw new Error('Configuración de Supabase no detectada. Verifique su archivo .env');
+      }
+
       // 2. Intentar login
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -52,7 +58,7 @@ export const Login: React.FC = () => {
       throw authError; // El catch manejará la verificación de "sesión fantasma"
 
     } catch (err: any) {
-      console.warn("Login reported error:", err);
+      console.error("Detailed Login Error:", err);
 
       // 5. SOLUCIÓN FINAL: Verificación agnóstica de sesión
       // Independientemente del error (schema, network, etc), si auth.getSession() 
@@ -69,12 +75,15 @@ export const Login: React.FC = () => {
       }
 
       // 6. Si llegamos aquí, realmente falló
-      const errorMessage = err.message || 'Error desconocido';
+      let errorMessage = err.message || 'Error desconocido';
+
+      if (errorMessage === 'Failed to fetch') {
+        errorMessage = 'No se pudo conectar con el servidor. Verifique su conexión a internet o si un bloqueador de anuncios está impidiendo la conexión a Supabase.';
+      }
 
       if (errorMessage.includes('Invalid login credentials')) {
         setError('Credenciales incorrectas. Verifique correo y contraseña.');
       } else if (errorMessage.includes('querying schema')) {
-        // Mensaje específico instruyendo a ejecutar el SQL
         setError('Error crítico de base de datos (Schema Cache). Por favor ejecute el script SUPER_ADMIN_FIX_SCHEMA.sql en Supabase.');
       } else {
         setError(errorMessage);

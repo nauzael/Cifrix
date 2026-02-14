@@ -37,8 +37,14 @@ if (storedUrl && storedUrl !== supabaseUrl) {
 
 if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
   console.warn('⚠️ Cifrix: Corriendo en modo OFFLINE/DEMO. (Variables de Supabase faltantes o inválidas)');
+  console.log('URL actual:', supabaseUrl);
 } else {
-  console.log('✅ Cifrix: Conexión configurada con Supabase:', supabaseUrl);
+  try {
+    const urlCheck = new URL(supabaseUrl);
+    console.log('✅ Cifrix: Conexión configurada con Supabase:', urlCheck.hostname);
+  } catch (e) {
+    console.error('❌ Cifrix: URL de Supabase inválida:', supabaseUrl);
+  }
 }
 
 export const supabase = createClient<Database>(
