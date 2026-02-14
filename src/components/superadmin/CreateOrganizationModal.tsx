@@ -28,52 +28,28 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No hay usuario autenticado');
 
-      // Crear la organización
-      const { data: newOrg, error: orgError } = await supabase
-        .from('organizations')
-        .insert({
-          name: formData.name,
-          type: formData.type,
-          tax_id: formData.tax_id
-        })
-        .select()
-        .single();
+      // 2. Crear la organización usando RPC seguro (evita bloqueos RLS y es atómico)
+      const { data: newOrgId, error: rpcError } = await (supabase as any).rpc('create_organization_with_founder', {
+        p_name: formData.name,
+        p_tax_id: formData.tax_id,
+        p_type: formData.type,
+        p_founder_user_id: user.id
+      });
 
-      if (orgError) {
-        console.error('Error creating organization:', orgError);
-        throw new Error(`Error al crear la organización: ${orgError.message}`);
-      }
-
-      if (!newOrg) {
-        throw new Error('La organización se creó pero no se pudo recuperar');
-      }
-
-      console.log('✅ Organización creada:', newOrg);
-
-      // Vincular al usuario creador como ADMIN
-      // Buscar Rol ADMIN para vincular
-      const { data: adminRole } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('code', 'ADMIN')
-        .maybeSingle();
-
-      if (adminRole) {
-        const { error: linkError } = await supabase
-          .from('user_organizations')
-          .insert({
-            user_id: user.id,
-            organization_id: newOrg.id,
-            role_id: adminRole.id,
-            is_primary: true
-          });
-
-        if (linkError) {
-          console.warn('⚠️ Error linking user:', linkError);
+      if (rpcError) {
+        console.error('Error creating organization via RPC:', rpcError);
+        // Si el error es 42883 (función no existe), dar un mensaje más útil
+        if (rpcError.code === '42883') {
+          throw new Error('La función de creación segura no está instalada en la base de datos.');
         }
-      } else {
-        console.warn('⚠️ No se encontró rol ADMIN, vinculación omitida.');
+        throw new Error(`Error al crear la organización: ${rpcError.message}`);
       }
+
+      if (!newOrgId) {
+        throw new Error('La organización se creó pero no se recibió el ID de confirmación');
+      }
+
+      console.log('✅ Organización creada exitosamente via RPC. ID:', newOrgId);
 
 
 
