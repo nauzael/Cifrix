@@ -20,6 +20,7 @@ export function DeclarationForm({ isNew = false, onSubmit, onCancel }: Declarati
         periodo_fiscal: declaracionActual?.periodo_fiscal || new Date().getFullYear() - 1,
         contribuyente_id: declaracionActual?.contribuyente_id || profile?.organizationId || '',
         contribuyente_nombre: declaracionActual?.contribuyente_nombre || profile?.organizationName || '',
+        tipo_contribuyente: declaracionActual?.tipo_contribuyente || 'PERSONA_NATURAL' as 'PERSONA_NATURAL' | 'PERSONA_JURIDICA',
         total_costos: declaracionActual?.total_costos || 0,
         total_gastos: declaracionActual?.total_gastos || 0,
         creditos_tributarios: declaracionActual?.creditos_tributarios || 0,
@@ -32,6 +33,7 @@ export function DeclarationForm({ isNew = false, onSubmit, onCancel }: Declarati
                 periodo_fiscal: declaracionActual.periodo_fiscal,
                 contribuyente_id: declaracionActual.contribuyente_id,
                 contribuyente_nombre: declaracionActual.contribuyente_nombre,
+                tipo_contribuyente: declaracionActual.tipo_contribuyente,
                 total_costos: declaracionActual.total_costos,
                 total_gastos: declaracionActual.total_gastos,
                 creditos_tributarios: declaracionActual.creditos_tributarios,
@@ -67,6 +69,24 @@ export function DeclarationForm({ isNew = false, onSubmit, onCancel }: Declarati
                     </select>
                 </div>
 
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Tipo de Contribuyente</label>
+                    <select
+                        value={formData.tipo_contribuyente}
+                        onChange={(e) => setFormData({ ...formData, tipo_contribuyente: e.target.value as any })}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                    >
+                        <option value="PERSONA_NATURAL">Persona Natural</option>
+                        <option value="PERSONA_JURIDICA">Persona Jurídica / Empresa</option>
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">
+                        {formData.tipo_contribuyente === 'PERSONA_NATURAL' ? 'Formulario 210' : 'Formulario 110'}
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Estado</label>
                     <select

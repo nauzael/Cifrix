@@ -37,7 +37,9 @@ export function TaxCalculator() {
             <div>
                 <h3 className="text-lg font-medium text-gray-900">Cálculo del Impuesto</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                    Detalle completo del cálculo según tarifas marginales 2024
+                    {resultadoCalculo.tipoContribuyente === 'PERSONA_NATURAL'
+                        ? 'Detalle completo del cálculo según tarifas marginales 2024'
+                        : 'Cálculo de impuesto sobre la renta (Tarifa General 35%)'}
                 </p>
             </div>
 
@@ -112,61 +114,90 @@ export function TaxCalculator() {
                 </div>
             </div>
 
-            {/* Cálculo por Tramos */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <h4 className="text-md font-medium text-gray-900">Cálculo por Tramos Marginales</h4>
-                    <p className="text-sm text-gray-500 mt-1">Tramo aplicado: {detalleCalculo.tramoAplicado}</p>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tramo (UVT)
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Base en Tramo
-                                </th>
-                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tarifa
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Impuesto
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {detalleCalculo.calculoPorTramos.map((tramo, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {tramo.tramo}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                                        {formatMoney(tramo.baseTramo)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {tramo.tarifa.toFixed(0)}%
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                                        {formatMoney(tramo.impuestoTramo)}
-                                    </td>
-                                </tr>
-                            ))}
-                            <tr className="bg-gray-50">
-                                <td colSpan={3} className="px-6 py-4 text-sm font-bold text-gray-900">
-                                    Total Impuesto Calculado
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900">
-                                    {formatMoney(resultadoCalculo.impuestoBruto)}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            {/* Cálculo por Tramos (Solo Persona Natural) */}
+            {
+                resultadoCalculo.tipoContribuyente === 'PERSONA_NATURAL' && (
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <h4 className="text-md font-medium text-gray-900">Cálculo por Tramos Marginales</h4>
+                            <p className="text-sm text-gray-500 mt-1">Tramo aplicado: {detalleCalculo.tramoAplicado}</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Tramo (UVT)
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Base en Tramo
+                                        </th>
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Tarifa
+                                        </th>
+                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Impuesto
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {detalleCalculo.calculoPorTramos.map((tramo, index) => (
+                                        <tr key={index} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {tramo.tramo}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
+                                                {formatMoney(tramo.baseTramo)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    {tramo.tarifa.toFixed(0)}%
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                                                {formatMoney(tramo.impuestoTramo)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    <tr className="bg-gray-50">
+                                        <td colSpan={3} className="px-6 py-4 text-sm font-bold text-gray-900">
+                                            Total Impuesto Calculado
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900">
+                                            {formatMoney(resultadoCalculo.impuestoBruto)}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Cálculo Tarifa Fija (Solo Persona Jurídica) */}
+            {
+                resultadoCalculo.tipoContribuyente === 'PERSONA_JURIDICA' && (
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                            <h4 className="text-md font-medium text-gray-900">Cálculo Tarifa General</h4>
+                        </div>
+                        <div className="p-6">
+                            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100">
+                                <div>
+                                    <p className="text-sm font-medium text-blue-900">Tarifa Aplicada</p>
+                                    <p className="text-2xl font-bold text-blue-700">35%</p>
+                                    <p className="text-xs text-blue-600 mt-1">Tarifa General Personas Jurídicas</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-medium text-blue-900">Impuesto Calculado</p>
+                                    <p className="text-2xl font-bold text-blue-700">{formatMoney(resultadoCalculo.impuestoBruto)}</p>
+                                    <p className="text-xs text-blue-600 mt-1">Base Gravable * 35%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* Liquidación Final */}
             <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200 p-6">
@@ -186,6 +217,6 @@ export function TaxCalculator() {
                     </div>
                 </dl>
             </div>
-        </div>
+        </div >
     );
 }

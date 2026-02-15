@@ -3,7 +3,7 @@
  * Implementa reglas tributarias y validaciones de consistencia
  */
 
-import { db, DeclaracionRenta, IngresoRenta, DeduccionRenta } from '../db';
+import { db, DeclaracionRenta, IngresoRenta, DeduccionRenta, ActivoPasivoRenta } from '../db';
 import { rentaCalculator } from './calculator';
 
 export interface ResultadoValidacion {
@@ -59,6 +59,10 @@ export class RentaValidator {
                 .where({ declaracion_id: declaracionId })
                 .toArray();
 
+            const activosPasivos = await db.activos_pasivos_renta
+                .where({ declaracion_id: declaracionId })
+                .toArray();
+
             // 4. Validar consistencia de montos
             await this.validarConsistenciaMontos(declaracion, ingresos, deducciones, errores, advertencias);
 
@@ -68,8 +72,12 @@ export class RentaValidator {
             // 6. Validar ingresos
             this.validarIngresos(ingresos, errores, advertencias);
 
-            // 7. Validar obligación de declarar
-            this.validarObligacionDeclarar(declaracion, informacion, advertencias);
+            // 7. Validaciones específicas por tipo
+            if (declaracion.tipo_contribuyente === 'PERSONA_NATURAL') {
+                this.validarPersonaNatural(declaracion, ingresos, deducciones, activosPasivos, errores, advertencias, informacion);
+            } else {
+                this.validarPersonaJuridica(declaracion, errores, advertencias);
+            }
 
             // 8. Validar cálculos
             this.validarCalculos(declaracion, errores, advertencias);
@@ -274,21 +282,29 @@ export class RentaValidator {
     }
 
     /**
-     * Valida si el contribuyente está obligado a declarar
+     * Validaciones específicas para Persona Natural
      */
-    private validarObligacionDeclarar(
+    private validarPersonaNatural(
         declaracion: DeclaracionRenta,
-        informacion: string[],
-        advertencias: string[]
+        ingresos: IngresoRenta[],
+        deducciones: DeduccionRenta[],
+        activosPasivos: ActivoPasivoRenta[],
+        errores: string[],
+        advertencias: string[],
+        informacion: string[]
     ): void {
-        // Esta validación requeriría más datos (patrimonio, consumos, etc.)
-        // Por ahora solo validamos ingresos
+        // Validar obligación de declarar
+        // Calcular patrimonio bruto (suma de todos los activos)
+        const patrimonioBruto = activosPasivos
+            .filter(ap => ap.tipo === 'ACTIVO')
+            .reduce((sum, ap) => sum + ap.valor, 0);
+
         const resultado = rentaCalculator.estaObligadoDeclarar({
             ingresosBrutos: declaracion.total_ingresos,
-            patrimonioBruto: 0, // TODO: Implementar cuando tengamos activos/pasivos
-            consumosTarjeta: 0,
-            compras: 0,
-            consignaciones: 0
+            patrimonioBruto: patrimonioBruto,
+            consumosTarjeta: 0, // Dato no disponible en declaración directa
+            compras: 0, // Dato no disponible en declaración
+            consignaciones: 0 // Dato no disponible en declaración
         });
 
         if (resultado.obligado) {
@@ -297,6 +313,40 @@ export class RentaValidator {
         } else {
             advertencias.push('Contribuyente NO obligado a declarar según topes actuales');
         }
+
+        // Validar límite total de deducciones (40% del ingreso neto menos otras rentas)
+        // Simplificado para este ejemplo
+        const totalDeducciones = deducciones.reduce((sum, d) => sum + (d.monto_deducido || d.monto), 0);
+        const limiteGlobal = declaracion.total_ingresos * 0.40;
+
+        if (totalDeducciones > limiteGlobal) {
+            advertencias.push(
+                `Total deducciones ($${totalDeducciones.toFixed(2)}) supera el 40% de ingresos ($${limiteGlobal.toFixed(2)}). ` +
+                `Es posible que parte no sea deducible.`
+            );
+        }
+    }
+
+    /**
+     * Validaciones específicas para Persona Jurídica
+     */
+    private validarPersonaJuridica(
+        declaracion: DeclaracionRenta,
+        errores: string[],
+        advertencias: string[]
+    ): void {
+        // Personas jurídicas siempre declaran
+        // Validar conciliación fiscal si existe
+        if (declaracion.utilidad_contable && declaracion.utilidad_contable > 0) {
+            const rentaLiquida = declaracion.total_ingresos - declaracion.total_costos - declaracion.total_gastos;
+            // Una validación simple de consistencia, aunque la conciliación explica las diferencias
+            if (Math.abs(rentaLiquida - declaracion.utilidad_contable) > declaracion.utilidad_contable * 0.5) {
+                advertencias.push('La diferencia entre Renta Líquida y Utilidad Contable es mayor al 50%. Verifique conciliación.');
+            }
+        }
+
+        // Validar costo de mercancía vs ingresos operacionales
+        // (Se requeriría identificar ingresos operacionales específicamente)
     }
 
     /**

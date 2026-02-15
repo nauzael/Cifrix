@@ -42,10 +42,16 @@ interface RentaState {
     actualizarActivoPasivo: (id: string, data: Partial<ActivoPasivoRenta>) => Promise<void>;
     eliminarActivoPasivo: (id: string) => Promise<void>;
 
-    // Acciones - Cálculos y Validaciones
     calcularImpuesto: () => void;
     validarDeclaracion: () => Promise<void>;
     recalcularTotales: () => Promise<void>;
+    verificarObligacion: (params: {
+        ingresosBrutos: number;
+        patrimonioBruto: number;
+        consumosTarjeta: number;
+        compras: number;
+        consignaciones: number;
+    }) => { obligado: boolean; razones: string[] };
 
     // Utilidades
     limpiarEstado: () => void;
@@ -134,6 +140,7 @@ export const useRentaStore = create<RentaState>((set, get) => ({
                 periodo_fiscal: data.periodo_fiscal || new Date().getFullYear() - 1,
                 contribuyente_id: data.contribuyente_id || '',
                 contribuyente_nombre: data.contribuyente_nombre || '',
+                tipo_contribuyente: data.tipo_contribuyente || 'PERSONA_NATURAL',
                 estado: 'BORRADOR',
                 total_ingresos: 0,
                 total_costos: 0,
@@ -444,6 +451,12 @@ export const useRentaStore = create<RentaState>((set, get) => ({
 
         // Recalcular impuesto
         get().calcularImpuesto();
+    },
+
+
+    // Verificar obligación de declarar
+    verificarObligacion: (params) => {
+        return rentaCalculator.estaObligadoDeclarar(params);
     },
 
     // Limpiar estado

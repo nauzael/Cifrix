@@ -43,6 +43,15 @@ export interface ResultadoCalculo {
     impuestoBruto: number;
     creditosTributarios: number;
     impuestoNeto: number;
+    // Nuevos campos para diferenciar tipo
+    tipoContribuyente: 'PERSONA_NATURAL' | 'PERSONA_JURIDICA';
+    tarifaAplicada: number | 'PROGRESIVA'; // número para jurídica, 'PROGRESIVA' para natural
+    tablaProgresiva?: {
+        rango: string;
+        base: number;
+        tarifa: number;
+        impuesto: number;
+    }[];
     detalleCalculo: DetalleCalculo;
 }
 
@@ -79,6 +88,17 @@ export class RentaCalculator {
      * Calcula el impuesto de renta completo para una declaración
      */
     calcularImpuesto(declaracion: DeclaracionRenta): ResultadoCalculo {
+        if (declaracion.tipo_contribuyente === 'PERSONA_JURIDICA') {
+            return this.calcularImpuestoPersonaJuridica(declaracion);
+        } else {
+            return this.calcularImpuestoPersonaNatural(declaracion);
+        }
+    }
+
+    /**
+     * Calcula el impuesto para Persona Natural (Tarifa Progresiva)
+     */
+    private calcularImpuestoPersonaNatural(declaracion: DeclaracionRenta): ResultadoCalculo {
         // 1. Calcular renta líquida
         const rentaLiquida = this.calcularRentaLiquida(declaracion);
 
@@ -96,12 +116,23 @@ export class RentaCalculator {
         // 5. Calcular tarifa efectiva
         const tarifaEfectiva = rentaLiquida > 0 ? (impuesto / rentaLiquida) * 100 : 0;
 
+        // Tabla para visualización
+        const tablaProgresiva = calculoPorTramos.map(tramo => ({
+            rango: tramo.tramo,
+            base: tramo.baseTramo,
+            tarifa: tramo.tarifa,
+            impuesto: tramo.impuestoTramo
+        }));
+
         return {
             baseGravable,
             baseGravableUVT,
             impuestoBruto: impuesto,
             creditosTributarios: declaracion.creditos_tributarios,
             impuestoNeto,
+            tipoContribuyente: 'PERSONA_NATURAL',
+            tarifaAplicada: 'PROGRESIVA',
+            tablaProgresiva,
             detalleCalculo: {
                 totalIngresos: declaracion.total_ingresos,
                 totalCostos: declaracion.total_costos,
@@ -112,6 +143,50 @@ export class RentaCalculator {
                 tramoAplicado,
                 tarifaEfectiva,
                 calculoPorTramos
+            }
+        };
+    }
+
+    /**
+     * Calcula el impuesto para Persona Jurídica (Tarifa Fija 35%)
+     */
+    private calcularImpuestoPersonaJuridica(declaracion: DeclaracionRenta): ResultadoCalculo {
+        // 1. Calcular renta líquida
+        const rentaLiquida = this.calcularRentaLiquida(declaracion);
+
+        // 2. Para PJ, la base gravable suele ser la misma renta líquida (simplificado)
+        // Se podrían restar rentas exentas específicas si se implementan
+        const baseGravable = Math.max(0, rentaLiquida);
+        const baseGravableUVT = baseGravable / this.uvt;
+
+        // 3. Tarifa fija del 35% (Año Gravable 2023/2024)
+        const TARIFA_PJ = 0.35;
+        const impuesto = baseGravable * TARIFA_PJ;
+
+        // 4. Calcular impuesto neto
+        const impuestoNeto = Math.max(0, impuesto - declaracion.creditos_tributarios);
+
+        // 5. Tarifa efectiva
+        const tarifaEfectiva = rentaLiquida > 0 ? (impuesto / rentaLiquida) * 100 : 0;
+
+        return {
+            baseGravable,
+            baseGravableUVT,
+            impuestoBruto: impuesto,
+            creditosTributarios: declaracion.creditos_tributarios,
+            impuestoNeto,
+            tipoContribuyente: 'PERSONA_JURIDICA',
+            tarifaAplicada: TARIFA_PJ * 100,
+            detalleCalculo: {
+                totalIngresos: declaracion.total_ingresos,
+                totalCostos: declaracion.total_costos,
+                totalGastos: declaracion.total_gastos,
+                totalDeducciones: declaracion.total_deducciones,
+                rentaLiquida,
+                minimoNoGravable: 0, // No aplica mínimo no gravable general
+                tramoAplicado: `Tarifa Fija ${TARIFA_PJ * 100}%`,
+                tarifaEfectiva,
+                calculoPorTramos: [] // No aplica tramos
             }
         };
     }
@@ -192,8 +267,19 @@ export class RentaCalculator {
                 // 32 UVT mensuales por dependiente = 384 UVT anuales
                 return 384 * this.uvt;
 
+            // Límites para Personas Jurídicas (generalmente sin tope fijo por norma general, sino por soporte)
+            // Se retorna un valor muy alto para indicar 'sin límite' o se maneja lógica específica
+            case 'COSTO_MERCANCIA':
+            case 'NOMINA':
+            case 'SERVICIOS':
+                return Infinity; // Deducible al 100% si tiene soporte
+
+            case 'DEPRECIACION':
+                // Depende del activo, retornamos Infinity por ahora
+                return Infinity;
+
             default:
-                return ingresosTotales * 0.1;
+                return ingresosTotales * 0.1; // Default
         }
     }
 

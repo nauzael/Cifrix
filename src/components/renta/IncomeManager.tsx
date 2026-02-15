@@ -7,17 +7,30 @@ import { useRentaStore } from '@/store/rentaStore';
 import { Plus, Edit2, Trash2, DollarSign } from 'lucide-react';
 import { IngresoRenta } from '@/lib/db';
 
-const TIPOS_INGRESO = [
-    { value: 'LABORAL', label: 'Ingresos Laborales' },
-    { value: 'HONORARIOS', label: 'Honorarios' },
-    { value: 'RENTAS', label: 'Arrendamientos' },
-    { value: 'CAPITAL', label: 'Rendimientos Financieros' },
-    { value: 'DIVIDENDOS', label: 'Dividendos' },
-    { value: 'OTROS', label: 'Otros Ingresos' }
-];
-
 export function IncomeManager() {
-    const { ingresos, agregarIngreso, actualizarIngreso, eliminarIngreso } = useRentaStore();
+    const { ingresos, declaracionActual, agregarIngreso, actualizarIngreso, eliminarIngreso } = useRentaStore();
+
+    const ALL_TIPOS_INGRESO = [
+        // Persona Natural
+        { value: 'LABORAL', label: 'Ingresos Laborales' },
+        { value: 'HONORARIOS', label: 'Honorarios' },
+        { value: 'RENTAS', label: 'Arrendamientos' },
+        { value: 'CAPITAL', label: 'Rendimientos Financieros' },
+        { value: 'DIVIDENDOS', label: 'Dividendos' },
+        // Persona Jurídica
+        { value: 'OPERACIONAL', label: 'Ingresos Operacionales' },
+        { value: 'NO_OPERACIONAL', label: 'Ingresos No Operacionales' },
+        { value: 'FINANCIERO', label: 'Ingresos Financieros' },
+        { value: 'EXTRAORDINARIO', label: 'Ingresos Extraordinarios' },
+        // Común
+        { value: 'OTROS', label: 'Otros Ingresos' }
+    ];
+
+    // Tipos dinámicos para el select según el tipo de contribuyente
+    const TIPOS_INGRESO = declaracionActual?.tipo_contribuyente === 'PERSONA_NATURAL'
+        ? ALL_TIPOS_INGRESO.filter(t => ['LABORAL', 'HONORARIOS', 'RENTAS', 'CAPITAL', 'DIVIDENDOS', 'OTROS'].includes(t.value))
+        : ALL_TIPOS_INGRESO.filter(t => ['OPERACIONAL', 'NO_OPERACIONAL', 'FINANCIERO', 'EXTRAORDINARIO', 'OTROS'].includes(t.value));
+
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<IngresoRenta>>({
@@ -267,7 +280,7 @@ export function IncomeManager() {
                                 ingresos.map((ingreso) => (
                                     <tr key={ingreso.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {TIPOS_INGRESO.find(t => t.value === ingreso.tipo_ingreso)?.label}
+                                            {ALL_TIPOS_INGRESO.find(t => t.value === ingreso.tipo_ingreso)?.label || ingreso.tipo_ingreso}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-500">
                                             {ingreso.concepto}

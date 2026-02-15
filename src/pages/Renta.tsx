@@ -13,6 +13,7 @@ import { IncomeManager } from '@/components/renta/IncomeManager';
 import { DeductionManager } from '@/components/renta/DeductionManager';
 import { TaxCalculator } from '@/components/renta/TaxCalculator';
 import { DeclarationSummary } from '@/components/renta/DeclarationSummary';
+import { ObligacionChecker } from '@/components/renta/ObligacionChecker';
 import { rentaPDFGenerator, dianXMLGenerator } from '@/lib/renta';
 
 type TabType = 'general' | 'ingresos' | 'deducciones' | 'calculo' | 'resumen';
@@ -22,6 +23,7 @@ export default function Renta() {
     const { id } = useParams<{ id?: string }>();
     const [activeTab, setActiveTab] = useState<TabType>('general');
     const [showNewDeclaration, setShowNewDeclaration] = useState(false);
+    const [showObligacionChecker, setShowObligacionChecker] = useState(false);
 
     const {
         declaraciones,
@@ -121,13 +123,22 @@ export default function Renta() {
                                 Gestiona las declaraciones de impuesto de renta
                             </p>
                         </div>
-                        <button
-                            onClick={() => setShowNewDeclaration(true)}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                            <Plus className="h-5 w-5 mr-2" />
-                            Nueva Declaración
-                        </button>
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={() => setShowObligacionChecker(true)}
+                                className="inline-flex items-center px-4 py-2 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                <AlertTriangle className="h-5 w-5 mr-2" />
+                                Verificar Obligación
+                            </button>
+                            <button
+                                onClick={() => setShowNewDeclaration(true)}
+                                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                <Plus className="h-5 w-5 mr-2" />
+                                Nueva Declaración
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -253,12 +264,34 @@ export default function Renta() {
             {showNewDeclaration && (
                 <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Nueva Declaración de Renta</h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium text-gray-900">Nueva Declaración de Renta</h3>
+                            <button onClick={() => setShowNewDeclaration(false)} className="text-gray-400 hover:text-gray-500">
+                                <span className="sr-only">Cerrar</span>
+                                <Plus className="h-6 w-6 transform rotate-45" />
+                            </button>
+                        </div>
                         <DeclarationForm
                             isNew
                             onSubmit={handleNuevaDeclaracion}
                             onCancel={() => setShowNewDeclaration(false)}
                         />
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Obligación Checker */}
+            {showObligacionChecker && (
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 relative">
+                        <button
+                            onClick={() => setShowObligacionChecker(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
+                        >
+                            <span className="sr-only">Cerrar</span>
+                            <Plus className="h-6 w-6 transform rotate-45" />
+                        </button>
+                        <ObligacionChecker />
                     </div>
                 </div>
             )}

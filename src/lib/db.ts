@@ -216,6 +216,10 @@ export interface DeclaracionRenta {
   periodo_fiscal: number;
   contribuyente_id: string;
   contribuyente_nombre: string;
+
+  // Tipo de contribuyente (NUEVO)
+  tipo_contribuyente: 'PERSONA_NATURAL' | 'PERSONA_JURIDICA';
+
   estado: 'BORRADOR' | 'PRESENTADA' | 'CORREGIDA' | 'ANULADA';
 
   // Montos principales
@@ -227,6 +231,18 @@ export interface DeclaracionRenta {
   impuesto_calculado: number;
   creditos_tributarios: number;
   impuesto_neto: number;
+
+  // Campos específicos para Persona Natural
+  renta_presuntiva?: number;
+  renta_exenta?: number;
+  rentas_trabajo?: number;
+  rentas_capital?: number;
+  rentas_no_laborales?: number;
+
+  // Campos específicos para Persona Jurídica
+  utilidad_contable?: number;
+  conciliacion_fiscal?: number;
+  impuesto_diferido?: number;
 
   // Metadata
   fecha_creacion: string;
@@ -240,11 +256,21 @@ export interface DeclaracionRenta {
 export interface IngresoRenta {
   id: string;
   declaracion_id: string;
-  tipo_ingreso: 'LABORAL' | 'HONORARIOS' | 'RENTAS' | 'CAPITAL' | 'DIVIDENDOS' | 'OTROS';
+  tipo_ingreso:
+  // Persona Natural
+  'LABORAL' | 'HONORARIOS' | 'RENTAS' | 'CAPITAL' | 'DIVIDENDOS' |
+  // Persona Jurídica
+  'OPERACIONAL' | 'NO_OPERACIONAL' | 'FINANCIERO' | 'EXTRAORDINARIO' |
+  'OTROS';
   concepto: string;
   monto: number;
   mes?: number;
   retencion_aplicada: number;
+
+  // Campos adicionales para Persona Jurídica
+  es_no_constitutivo_renta?: boolean;
+  es_exento?: boolean;
+
   notas?: string;
   created_at: string;
   sync_status?: SyncStatus;
@@ -253,7 +279,12 @@ export interface IngresoRenta {
 export interface DeduccionRenta {
   id: string;
   declaracion_id: string;
-  tipo_deduccion: 'SALUD' | 'EDUCACION' | 'INTERESES_VIVIENDA' | 'DEPENDIENTES' | 'OTROS';
+  tipo_deduccion:
+  // Para Persona Natural
+  'SALUD' | 'EDUCACION' | 'INTERESES_VIVIENDA' | 'DEPENDIENTES' |
+  // Para Persona Jurídica
+  'COSTO_MERCANCIA' | 'NOMINA' | 'SERVICIOS' | 'DEPRECIACION' |
+  'AMORTIZACION' | 'PROVISION' | 'OTROS';
   concepto: string;
   monto: number;
   limite_aplicable?: number;

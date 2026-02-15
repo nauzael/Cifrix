@@ -8,16 +8,31 @@ import { Plus, Edit2, Trash2, AlertCircle } from 'lucide-react';
 import { DeduccionRenta } from '@/lib/db';
 import { rentaCalculator } from '@/lib/renta';
 
-const TIPOS_DEDUCCION = [
-    { value: 'SALUD', label: 'Salud (EPS, Medicina Prepagada)', limite: '192 UVT anuales' },
-    { value: 'EDUCACION', label: 'Educación', limite: '15% de ingresos' },
-    { value: 'INTERESES_VIVIENDA', label: 'Intereses Vivienda', limite: '1200 UVT anuales' },
-    { value: 'DEPENDIENTES', label: 'Dependientes', limite: '384 UVT por dependiente' },
-    { value: 'OTROS', label: 'Otra Deducción', limite: 'Variable' }
-];
-
 export function DeductionManager() {
     const { deducciones, declaracionActual, agregarDeduccion, actualizarDeduccion, eliminarDeduccion } = useRentaStore();
+
+    const ALL_TIPOS_DEDUCCION = [
+        // Persona Natural
+        { value: 'SALUD', label: 'Salud (EPS, Medicina Prepagada)', limite: '192 UVT anuales' },
+        { value: 'EDUCACION', label: 'Educación', limite: '15% de ingresos' },
+        { value: 'INTERESES_VIVIENDA', label: 'Intereses Vivienda', limite: '1200 UVT anuales' },
+        { value: 'DEPENDIENTES', label: 'Dependientes', limite: '384 UVT por dependiente' },
+        // Persona Jurídica
+        { value: 'COSTO_MERCANCIA', label: 'Costo de Mercancía', limite: 'N/A' },
+        { value: 'NOMINA', label: 'Nómina y Prestaciones', limite: 'N/A' },
+        { value: 'SERVICIOS', label: 'Servicios', limite: 'N/A' },
+        { value: 'DEPRECIACION', label: 'Depreciación', limite: 'Según activo' },
+        { value: 'AMORTIZACION', label: 'Amortización', limite: 'Según bien' },
+        { value: 'PROVISION', label: 'Provisiones', limite: 'Según norma' },
+        // Común
+        { value: 'OTROS', label: 'Otras Deducciones / Gastos', limite: 'Variable' }
+    ];
+
+    // Tipos dinámicos para el select según el tipo de contribuyente
+    const TIPOS_DEDUCCION = declaracionActual?.tipo_contribuyente === 'PERSONA_NATURAL'
+        ? ALL_TIPOS_DEDUCCION.filter(t => ['SALUD', 'EDUCACION', 'INTERESES_VIVIENDA', 'DEPENDIENTES', 'OTROS'].includes(t.value))
+        : ALL_TIPOS_DEDUCCION.filter(t => ['COSTO_MERCANCIA', 'NOMINA', 'SERVICIOS', 'DEPRECIACION', 'AMORTIZACION', 'PROVISION', 'OTROS'].includes(t.value));
+
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<DeduccionRenta>>({
@@ -284,7 +299,7 @@ export function DeductionManager() {
                                     return (
                                         <tr key={deduccion.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {TIPOS_DEDUCCION.find(t => t.value === deduccion.tipo_deduccion)?.label}
+                                                {ALL_TIPOS_DEDUCCION.find(t => t.value === deduccion.tipo_deduccion)?.label || deduccion.tipo_deduccion}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500">
                                                 {deduccion.concepto}
