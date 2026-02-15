@@ -1,5 +1,5 @@
 
-import * as XLSX from 'xlsx';
+import { read, utils } from 'xlsx';
 import { IngresoRenta, ActivoPasivoRenta, DeduccionRenta } from '@/lib/db';
 
 export interface ExogenaParsedData {
@@ -17,14 +17,14 @@ export const parseExogena = async (file: File, tipoContribuyente: 'PERSONA_NATUR
         reader.onload = (e) => {
             try {
                 const data = e.target?.result;
-                const workbook = XLSX.read(data, { type: 'array' });
+                const workbook = read(data, { type: 'array' });
 
                 // Asumimos que la hoja relevante es la primera o se llama 'Reporte'
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
 
                 // Convertir a JSON array de arrays
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+                const rows = utils.sheet_to_json(sheet, { header: 1 }) as any[][];
 
                 const result: ExogenaParsedData = {
                     ingresos: [],

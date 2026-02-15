@@ -96,7 +96,13 @@ export function ExogenaImporter() {
                         <Upload className="w-4 h-4 mr-2" />
                         Seleccionar Archivo
                     </span>
-                    <input type='file' className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} />
+                    <input
+                        type='file'
+                        className="hidden"
+                        accept=".xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                        onChange={handleFileChange}
+                        onClick={(e) => (e.currentTarget.value = '')}
+                    />
                 </label>
 
                 {analyzing && <span className="text-sm text-gray-500">Analizando archivo...</span>}
