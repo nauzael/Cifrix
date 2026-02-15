@@ -26,7 +26,7 @@ export interface Member {
   ministry: string[] | null;
   status: 'activo' | 'inactivo' | 'visitante';
   is_active: boolean;
-  photo_url:string | null;
+  photo_url: string | null;
   pledge_amount?: number;
   pledge_period?: string;
   created_at: string;
@@ -195,6 +195,17 @@ export interface DeletedRecord {
   sync_status: SyncStatus;
 }
 
+export interface UserVaultEntry {
+  email: string;                    // Índice primario - Email del usuario
+  password_hash: string;            // SHA-256 hash de la contraseña + salt
+  salt: string;                     // Salt único generado por usuario
+  encrypted_profile: string;        // Perfil del usuario encriptado en AES-256
+  encryption_iv: string;            // Vector de inicialización para AES
+  user_id: string;                  // ID del usuario en Supabase
+  last_sync: string;                // Timestamp del último login online exitoso
+  created_at: string;               // Timestamp de creación de la entrada
+}
+
 export class CifrixDB extends Dexie {
   organizations!: Table<Organization>;
   members!: Table<Member>;
@@ -210,12 +221,13 @@ export class CifrixDB extends Dexie {
   invoice_items!: Table<InvoiceItem>;
   payments!: Table<Payment>;
   deleted_records!: Table<DeletedRecord>;
+  user_vault!: Table<UserVaultEntry>;
 
   ignoreDeletions = false;
 
   constructor() {
     super('CifrixDatabase');
-    this.version(9).stores({
+    this.version(10).stores({
       organizations: 'id, type, sync_status',
       members: 'id, organization_id, full_name, document_id, status, sync_status',
       transactions: 'id, organization_id, date, type, sync_status',
@@ -229,7 +241,8 @@ export class CifrixDB extends Dexie {
       invoices: 'id, organization_id, customer_id, number, date, status, dian_status, cufe, sync_status',
       invoice_items: 'id, invoice_id, sync_status',
       payments: 'id, organization_id, invoice_id, date, sync_status',
-      deleted_records: 'id, table_name, sync_status'
+      deleted_records: 'id, table_name, sync_status',
+      user_vault: 'email, user_id, last_sync'
     });
 
     // Hooks to track deletions
@@ -238,15 +251,15 @@ export class CifrixDB extends Dexie {
 
   private setupHooks() {
     const tablesToTrack = [
-      'organizations', 'members', 'transactions', 'journal_entries', 
-      'accounts', 'contributions', 'projects', 'categories', 
+      'organizations', 'members', 'transactions', 'journal_entries',
+      'accounts', 'contributions', 'projects', 'categories',
       'customers', 'invoices', 'invoice_items', 'payments'
     ];
 
     tablesToTrack.forEach(tableName => {
       (this as any)[tableName].hook('deleting', (id: string, obj: any) => {
         if (this.ignoreDeletions) return;
-        
+
         // Only track if it was already synchronized or at least exists
         // If it's a new record not yet synced, we don't strictly need to track it for Supabase
         // but tracking everything is safer.
@@ -296,7 +309,7 @@ export async function resetDatabase() {
     // 3. Close and Delete Database
     await db.close();
     await db.delete();
-    
+
     // 4. Force reload from server (not cache)
     window.location.href = window.location.origin + '/?reset=' + Date.now();
   } catch (error) {

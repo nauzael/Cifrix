@@ -24,6 +24,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  isOfflineMode: () => boolean; // Nueva función para detectar modo offline
 }
 
 // Helper to fetch profile
@@ -330,5 +331,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const profile = await fetchUserProfile(user.id);
       set({ profile });
     }
+  },
+
+  isOfflineMode: () => {
+    const user = get().user;
+    return (user as any)?.isOffline === true;
   }
 }));

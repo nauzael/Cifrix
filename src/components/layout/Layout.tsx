@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { AIAssistant } from '../ai/AIAssistant';
+import { OfflineIndicator } from '../OfflineIndicator';
 import { useTheme } from '../../hooks/useTheme';
 import { useEffect, useState } from 'react';
 
@@ -28,6 +29,7 @@ export function Layout() {
 
       <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
         <Header onMenuClick={() => setSidebarOpen(true)} />
+        <OfflineIndicator />
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[2000px] mx-auto w-full">
           <Outlet />
         </main>

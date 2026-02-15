@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { SuperAdminSidebar } from './SuperAdminSidebar';
 import { SuperAdminHeader } from './SuperAdminHeader';
+import { OfflineIndicator } from '../OfflineIndicator';
 
 export function SuperAdminLayout() {
   return (
@@ -13,6 +14,7 @@ export function SuperAdminLayout() {
       <SuperAdminSidebar />
       <main className="flex-1 ml-64 min-h-screen flex flex-col relative z-10">
         <SuperAdminHeader />
+        <OfflineIndicator />
         <div className="flex-1">
           <Outlet />
         </div>
