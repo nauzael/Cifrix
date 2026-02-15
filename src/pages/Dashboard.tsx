@@ -360,7 +360,6 @@ export function Dashboard() {
         path: '/diezmos',
         hidden: organization?.type === 'EMPRESA'
       },
-      { id: 'reports', label: 'Reportes', icon: FileBarChart, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30', hover: 'hover:border-indigo-500/50 hover:bg-indigo-50/30', path: '/reports' },
       {
         id: 'members',
         label: 'Miembros',
@@ -371,6 +370,7 @@ export function Dashboard() {
         path: '/members',
         hidden: organization?.type === 'EMPRESA'
       },
+      { id: 'reports', label: 'Reportes', icon: FileBarChart, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30', hover: 'hover:border-indigo-500/50 hover:bg-indigo-50/30', path: '/reports' },
       { id: 'settings', label: 'Ajustes', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-900/30', hover: 'hover:border-slate-500/50 hover:bg-slate-50/30', path: '/settings' },
     ];
 
