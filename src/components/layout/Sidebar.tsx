@@ -12,7 +12,6 @@ import {
   LogOut,
   Church,
   Receipt,
-  HelpCircle,
   Building2,
   X
 } from 'lucide-react';
@@ -83,12 +82,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         href: '/reports',
         icon: BarChart3,
         id: 'reports'
-      },
-      {
-        name: 'Ayuda',
-        href: '/support',
-        icon: HelpCircle,
-        id: 'support'
       },
       {
         name: 'Configuración',
