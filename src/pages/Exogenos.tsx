@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useExogenosStore } from '@/store/exogenosStore';
 import { Upload, AlertCircle, FileText, CheckCircle, Search, Filter, Trash2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/store/toastStore';
 import { ComparisonCharts } from '@/components/exogenos/ComparisonCharts';
 
 export default function Exogenos() {
