@@ -25,19 +25,11 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// Register Service Worker for PWA only in production
+// Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Si estamos en desarrollo (localhost), desregistramos cualquier SW existente para evitar caché
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      navigator.serviceWorker.getRegistrations().then(function (registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
-          console.log('SW unregistered in dev mode');
-        }
-      });
-      return;
-    }
+    // Para pruebas de modo offline, necesitamos que el SW funcione incluso en localhost
+    // Se recomienda usar el modo "registerType: 'autoUpdate'" en vite.config.ts
 
     navigator.serviceWorker.register('/sw.js').then(registration => {
       console.log('SW registered: ', registration);

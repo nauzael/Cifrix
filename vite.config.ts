@@ -31,7 +31,11 @@ export default defineConfig({
     tsconfigPaths(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       includeAssets: ['favicon.svg', 'robots.txt'],
+      devOptions: {
+        enabled: true // HABILITA EL SW EN MODO DESARROLLO
+      },
       manifest: {
         name: 'Cifrix - Software Contable',
         short_name: 'Cifrix',
@@ -54,7 +58,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 6000000
+        maximumFileSizeToCacheInBytes: 6000000,
+        navigateFallback: '/index.html', // IMPORTANTE: Sirve index.html para cualquier ruta desconocida (F5 offline)
+        navigateFallbackAllowlist: [/^(?!\/__).*/] // Ignorar rutas de Vite internas
       }
     })
   ],
