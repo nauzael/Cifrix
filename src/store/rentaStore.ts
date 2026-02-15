@@ -67,8 +67,13 @@ export const useRentaStore = create<RentaState>((set, get) => ({
     cargarDeclaraciones: async () => {
         set({ loading: true, error: null });
         try {
-            const orgId = useAuthStore.getState().currentOrganization?.id;
-            if (!orgId) throw new Error('No hay organización seleccionada');
+            const profile = useAuthStore.getState().profile;
+            const orgId = profile?.organizationId;
+            if (!orgId) {
+                const ex = new Error('No hay organización seleccionada');
+                set({ error: ex.message, loading: false });
+                throw ex;
+            }
 
             const declaraciones = await db.declaraciones_renta
                 .where({ organization_id: orgId })
@@ -119,7 +124,8 @@ export const useRentaStore = create<RentaState>((set, get) => ({
     crearDeclaracion: async (data: Partial<DeclaracionRenta>) => {
         set({ loading: true, error: null });
         try {
-            const orgId = useAuthStore.getState().currentOrganization?.id;
+            const profile = useAuthStore.getState().profile;
+            const orgId = profile?.organizationId;
             if (!orgId) throw new Error('No hay organización seleccionada');
 
             const nuevaDeclaracion: DeclaracionRenta = {
@@ -138,6 +144,7 @@ export const useRentaStore = create<RentaState>((set, get) => ({
                 creditos_tributarios: 0,
                 impuesto_neto: 0,
                 fecha_creacion: new Date().toISOString(),
+                created_at: new Date().toISOString(),
                 sync_status: 'pendiente',
                 ...data
             };
@@ -228,6 +235,7 @@ export const useRentaStore = create<RentaState>((set, get) => ({
                 monto: data.monto || 0,
                 retencion_aplicada: data.retencion_aplicada || 0,
                 mes: data.mes,
+                created_at: new Date().toISOString(),
                 sync_status: 'pendiente',
                 ...data
             };
@@ -289,6 +297,7 @@ export const useRentaStore = create<RentaState>((set, get) => ({
                 monto: data.monto || 0,
                 monto_deducido: data.monto_deducido,
                 documento_soporte: data.documento_soporte,
+                created_at: new Date().toISOString(),
                 sync_status: 'pendiente',
                 ...data
             };
@@ -345,8 +354,10 @@ export const useRentaStore = create<RentaState>((set, get) => ({
                 id: crypto.randomUUID(),
                 declaracion_id: declaracionId,
                 tipo: data.tipo || 'ACTIVO',
-                concepto: data.concepto || '',
+                categoria: data.categoria || '',
+                descripcion: data.descripcion || '',
                 valor: data.valor || 0,
+                created_at: new Date().toISOString(),
                 sync_status: 'pendiente',
                 ...data
             };

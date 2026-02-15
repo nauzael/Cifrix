@@ -10,10 +10,10 @@ import { IngresoRenta } from '@/lib/db';
 const TIPOS_INGRESO = [
     { value: 'LABORAL', label: 'Ingresos Laborales' },
     { value: 'HONORARIOS', label: 'Honorarios' },
-    { value: 'ARRENDAMIENTO', label: 'Arrendamientos' },
-    { value: 'FINANCIERO', label: 'Rendimientos Financieros' },
+    { value: 'RENTAS', label: 'Arrendamientos' },
+    { value: 'CAPITAL', label: 'Rendimientos Financieros' },
     { value: 'DIVIDENDOS', label: 'Dividendos' },
-    { value: 'OTRO', label: 'Otros Ingresos' }
+    { value: 'OTROS', label: 'Otros Ingresos' }
 ];
 
 export function IncomeManager() {
@@ -145,7 +145,7 @@ export function IncomeManager() {
                                 <label className="block text-sm font-medium text-gray-700">Tipo de Ingreso</label>
                                 <select
                                     value={formData.tipo_ingreso}
-                                    onChange={(e) => setFormData({ ...formData, tipo_ingreso: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, tipo_ingreso: e.target.value as any })}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     required
                                 >

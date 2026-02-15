@@ -9,13 +9,13 @@ import { BarChart3, PieChart, TrendingDown, TrendingUp } from 'lucide-react';
 export function ComparisonCharts() {
     const { reportes, inconsistencias } = useExogenosStore();
 
-    const totalReportado = reportes.reduce((sum, r) => sum + r.valor_reportado, 0);
-    const totalConciliado = inconsistencias
-        .filter(i => i.estado === 'RESUELTO')
-        .reduce((sum, i) => sum + i.valor_reportado, 0);
+    const totalReportado = reportes.reduce((sum, r) => sum + r.monto, 0);
+    const totalConciliado = reportes
+        .filter(r => inconsistencias.some(i => i.exogeno_id === r.id && i.resuelto))
+        .reduce((sum, r) => sum + r.monto, 0);
 
-    const pendientesCount = inconsistencias.filter(i => i.estado === 'PENDIENTE').length;
-    const resueltosCount = inconsistencias.filter(i => i.estado === 'RESUELTO').length;
+    const pendientesCount = inconsistencias.filter(i => !i.resuelto && i.estado_validacion === 'PENDIENTE').length;
+    const resueltosCount = inconsistencias.filter(i => i.resuelto).length;
 
     const formatMoney = (value: number) => {
         return new Intl.NumberFormat('es-CO', {

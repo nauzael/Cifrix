@@ -11,7 +11,7 @@ import { toast } from '@/store/toastStore';
 import { ComparisonCharts } from '@/components/exogenos/ComparisonCharts';
 
 export default function Exogenos() {
-    const { currentOrganization } = useAuthStore();
+    const { profile } = useAuthStore();
     const {
         reportes,
         inconsistencias,
@@ -27,17 +27,17 @@ export default function Exogenos() {
     const [activeTab, setActiveTab] = useState<'reportes' | 'inconsistencias'>('reportes');
 
     useEffect(() => {
-        if (currentOrganization?.id) {
-            cargarReportes(currentOrganization.id);
+        if (profile?.organizationId) {
+            cargarReportes(profile.organizationId);
         }
-    }, [currentOrganization?.id, cargarReportes]);
+    }, [profile?.organizationId, cargarReportes]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !currentOrganization?.id) return;
+        if (!file || !profile?.organizationId) return;
 
         try {
-            await importarArchivo(file, currentOrganization.id);
+            await importarArchivo(file, profile.organizationId);
             // Reset input
             e.target.value = '';
         } catch (error) {
@@ -61,8 +61,8 @@ export default function Exogenos() {
     };
 
     const filteredReportes = reportes.filter(r =>
-        r.tercero_nombre.toLowerCase().includes(filter.toLowerCase()) ||
-        r.tercero_id.includes(filter)
+        r.nombre_contribuyente.toLowerCase().includes(filter.toLowerCase()) ||
+        r.nit_contribuyente.includes(filter)
     );
 
     return (
@@ -117,11 +117,11 @@ export default function Exogenos() {
                         }`}
                 >
                     Inconsistencias
-                    <span className={`ml-2 px-2 py-0.5 rounded-md text-[10px] ${inconsistencias.some(i => i.estado === 'PENDIENTE')
+                    <span className={`ml-2 px-2 py-0.5 rounded-md text-[10px] ${inconsistencias.some(i => !i.resuelto)
                         ? 'bg-red-100 dark:bg-red-900/30 text-red-600'
                         : 'bg-slate-200 dark:bg-slate-600'
                         }`}>
-                        {inconsistencias.filter(i => i.estado === 'PENDIENTE').length}
+                        {inconsistencias.filter(i => !i.resuelto).length}
                     </span>
                 </button>
             </div>
@@ -177,22 +177,19 @@ export default function Exogenos() {
                                     filteredReportes.map((reporte) => (
                                         <tr key={reporte.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                             <td className="px-6 py-4">
-                                                <div className="font-bold text-slate-900 dark:text-white text-sm">{reporte.tercero_nombre}</div>
-                                                <div className="text-slate-500 text-xs font-medium uppercase tracking-tight">{reporte.tercero_id}</div>
+                                                <div className="font-bold text-slate-900 dark:text-white text-sm">{reporte.nombre_contribuyente}</div>
+                                                <div className="text-slate-500 text-xs font-medium uppercase tracking-tight">{reporte.nit_contribuyente}</div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{reporte.concepto}</span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${reporte.tipo_movimiento === 'INGRESO' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                    reporte.tipo_movimiento === 'EGRESO' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                                    }`}>
-                                                    {reporte.tipo_movimiento}
+                                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                                    {reporte.tipo_exogeno}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <span className="text-sm font-bold text-slate-900 dark:text-white">{formatMoney(reporte.valor_reportado)}</span>
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white">{formatMoney(reporte.monto)}</span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
@@ -217,40 +214,40 @@ export default function Exogenos() {
                             </div>
                         ) : (
                             inconsistencias.map((inc) => (
-                                <div key={inc.id} className={`p-4 rounded-2xl border transition-all ${inc.estado === 'RESUELTO'
+                                <div key={inc.id} className={`p-4 rounded-2xl border transition-all ${inc.resuelto
                                     ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-70'
                                     : 'bg-white dark:bg-slate-900 border-red-200 dark:border-red-900/30'
                                     }`}>
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-start gap-4">
-                                            <div className={`p-3 rounded-xl ${inc.estado === 'RESUELTO' ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-600'
+                                            <div className={`p-3 rounded-xl ${inc.resuelto ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-600'
                                                 }`}>
                                                 <AlertCircle className="size-6" />
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-900 dark:text-white mb-1">{inc.descripcion}</h4>
+                                                <h4 className="font-bold text-slate-900 dark:text-white mb-1">{inc.notas}</h4>
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                                                     <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Valor Reportado (Tercero)</p>
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{formatMoney(inc.valor_reportado)}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Monto Tercero</p>
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{formatMoney(reportes.find(r => r.id === inc.exogeno_id)?.monto || 0)}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Valor Interno (Contabilidad)</p>
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{formatMoney(inc.valor_contable)}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Estado</p>
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{inc.estado_validacion}</p>
                                                     </div>
                                                     <div>
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Diferencia</p>
-                                                        <p className="text-sm font-bold text-red-600">{formatMoney(inc.diferencia)}</p>
+                                                        <p className="text-sm font-bold text-red-600">{formatMoney(inc.diferencia_monto || 0)}</p>
                                                     </div>
                                                 </div>
-                                                {inc.explicacion_ajuste && (
+                                                {inc.resuelto && inc.notas && (
                                                     <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-medium border border-blue-100 dark:border-blue-900/30">
-                                                        <strong>Resolución:</strong> {inc.explicacion_ajuste}
+                                                        <strong>Resolución:</strong> {inc.notas}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
-                                        {inc.estado === 'PENDIENTE' && (
+                                        {!inc.resuelto && (
                                             <button
                                                 onClick={() => handleResolver(inc.id)}
                                                 className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"

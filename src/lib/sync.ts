@@ -141,7 +141,7 @@ async function syncFromCacheToSupabase() {
             error = rpcError;
           } else {
             // Si ya existe, un simple upsert/update
-            const { error: upsertError } = await supabase
+            const { error: upsertError } = await (supabase as any)
               .from('organizations')
               .upsert(dataToSync);
             error = upsertError;
@@ -154,12 +154,12 @@ async function syncFromCacheToSupabase() {
             await db.audit_logs.update(item.id, { sync_status: 'error' });
             continue;
           }
-          const { error: insertError } = await supabase.from('audit_logs').insert(dataToSync);
+          const { error: insertError } = await (supabase as any).from('audit_logs').insert(dataToSync);
           error = insertError;
         }
         // CASO NORMAL: Resto de tablas
         else {
-          const { error: upsertError } = await supabase
+          const { error: upsertError } = await (supabase as any)
             .from(tableName)
             .upsert(dataToSync);
           error = upsertError;

@@ -13,7 +13,7 @@ const TIPOS_DEDUCCION = [
     { value: 'EDUCACION', label: 'Educación', limite: '15% de ingresos' },
     { value: 'INTERESES_VIVIENDA', label: 'Intereses Vivienda', limite: '1200 UVT anuales' },
     { value: 'DEPENDIENTES', label: 'Dependientes', limite: '384 UVT por dependiente' },
-    { value: 'OTRO', label: 'Otra Deducción', limite: 'Variable' }
+    { value: 'OTROS', label: 'Otra Deducción', limite: 'Variable' }
 ];
 
 export function DeductionManager() {
@@ -159,7 +159,7 @@ export function DeductionManager() {
                             <label className="block text-sm font-medium text-gray-700">Tipo de Deducción</label>
                             <select
                                 value={formData.tipo_deduccion}
-                                onChange={(e) => setFormData({ ...formData, tipo_deduccion: e.target.value })}
+                                onChange={(e) => setFormData({ ...formData, tipo_deduccion: e.target.value as any })}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 required
                             >

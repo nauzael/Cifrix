@@ -14,16 +14,16 @@ interface DeclarationFormProps {
 
 export function DeclarationForm({ isNew = false, onSubmit, onCancel }: DeclarationFormProps) {
     const { declaracionActual, actualizarDeclaracion } = useRentaStore();
-    const { currentOrganization } = useAuthStore();
+    const { profile } = useAuthStore();
 
     const [formData, setFormData] = useState({
         periodo_fiscal: declaracionActual?.periodo_fiscal || new Date().getFullYear() - 1,
-        contribuyente_id: declaracionActual?.contribuyente_id || currentOrganization?.tax_id || '',
-        contribuyente_nombre: declaracionActual?.contribuyente_nombre || currentOrganization?.name || '',
+        contribuyente_id: declaracionActual?.contribuyente_id || profile?.organizationId || '',
+        contribuyente_nombre: declaracionActual?.contribuyente_nombre || profile?.organizationName || '',
         total_costos: declaracionActual?.total_costos || 0,
         total_gastos: declaracionActual?.total_gastos || 0,
         creditos_tributarios: declaracionActual?.creditos_tributarios || 0,
-        estado: declaracionActual?.estado || 'BORRADOR'
+        estado: (declaracionActual?.estado || 'BORRADOR') as 'BORRADOR' | 'PRESENTADA' | 'CORREGIDA' | 'ANULADA'
     });
 
     useEffect(() => {
@@ -71,7 +71,7 @@ export function DeclarationForm({ isNew = false, onSubmit, onCancel }: Declarati
                     <label className="block text-sm font-medium text-gray-700">Estado</label>
                     <select
                         value={formData.estado}
-                        onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, estado: e.target.value as any })}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         required
                     >

@@ -58,15 +58,19 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             const newReportes: Exogeno[] = rawRows.map(row => ({
                 id: crypto.randomUUID(),
                 organization_id: organizacionId,
-                tercero_id: row.nit_tercero,
-                tercero_nombre: row.nombre_tercero,
-                periodo_fiscal: new Date().getFullYear() - 1, // Default al año anterior
+                nit_informante: '', // TODO: Get from organization settings
+                nit_contribuyente: row.nit_contribuyente,
+                nombre_contribuyente: row.nombre_contribuyente,
+                periodo_fiscal: new Date().getFullYear() - 1,
                 concepto: row.concepto,
-                valor_reportado: row.valor,
-                tipo_movimiento: row.tipo_movimiento,
+                monto: row.monto,
+                retencion: 0,
+                fecha_movimiento: new Date().toISOString(),
+                tipo_exogeno: row.tipo_exogeno,
+                procesado: false,
+                validado: false,
                 created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                sync_status: 'pending'
+                sync_status: 'pendiente'
             }));
 
             await db.exogenos.bulkAdd(newReportes);
@@ -92,17 +96,13 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             if (result.hayInconsistencia) {
                 const inconsistencia: MapeoInconsistencia = {
                     id: crypto.randomUUID(),
-                    organization_id: reporte.organization_id,
                     exogeno_id: reporte.id,
-                    tipo_error: result.tipo,
-                    descripcion: result.descripcion,
-                    valor_reportado: result.valorReportado,
-                    valor_contable: result.valorInterno,
-                    diferencia: result.diferencia,
-                    estado: 'PENDIENTE',
+                    estado_validacion: 'PENDIENTE',
+                    diferencia_monto: result.diferencia,
+                    resuelto: false,
+                    notas: result.descripcion,
                     created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                    sync_status: 'pending'
+                    sync_status: 'pendiente'
                 };
 
                 await db.mapeo_inconsistencias.add(inconsistencia);
@@ -124,7 +124,7 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
         try {
             // Limpiar inconsistencias previas no resueltas
             const idsBorrar = get().inconsistencias
-                .filter(i => i.estado === 'PENDIENTE')
+                .filter(i => i.estado_validacion === 'PENDIENTE')
                 .map(i => i.id);
 
             await db.mapeo_inconsistencias.bulkDelete(idsBorrar);
@@ -145,15 +145,14 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
     resolverInconsistencia: async (id: string, comentario: string) => {
         try {
             await db.mapeo_inconsistencias.update(id, {
-                estado: 'RESUELTO',
-                explicacion_ajuste: comentario,
-                updated_at: new Date().toISOString(),
-                sync_status: 'pending'
+                resuelto: true,
+                notas: comentario,
+                sync_status: 'pendiente'
             });
 
             set(state => ({
                 inconsistencias: state.inconsistencias.map(inc =>
-                    inc.id === id ? { ...inc, estado: 'RESUELTO', explicacion_ajuste: comentario } : inc
+                    inc.id === id ? { ...inc, resuelto: true, notas: comentario } : inc
                 )
             }));
 

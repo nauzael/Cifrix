@@ -6,11 +6,11 @@
 import { Exogeno } from '@/lib/db';
 
 export interface ExogenoRow {
-    nit_tercero: string;
-    nombre_tercero: string;
+    nit_contribuyente: string;
+    nombre_contribuyente: string;
     concepto: string;
-    valor: number;
-    tipo_movimiento: 'INGRESO' | 'EGRESO' | 'PASIVO' | 'ACTIVO';
+    monto: number;
+    tipo_exogeno: '0210' | '0220' | '0230' | '0240' | '0250' | '0260';
 }
 
 export class ExogenosParser {
@@ -19,23 +19,21 @@ export class ExogenosParser {
      */
     async parseDIANXml(content: string): Promise<ExogenoRow[]> {
         // Implementación básica de parsing XML
-        // En un entorno productivo se usaría una librería como xml2js
         const rows: ExogenoRow[] = [];
 
         try {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(content, 'text/xml');
 
-            // Ejemplo de estructura DIAN (simplificada)
             const records = xmlDoc.getElementsByTagName('record');
             for (let i = 0; i < records.length; i++) {
                 const record = records[i];
                 rows.push({
-                    nit_tercero: record.getAttribute('nit') || '',
-                    nombre_tercero: record.getAttribute('nombre') || '',
+                    nit_contribuyente: record.getAttribute('nit') || '',
+                    nombre_contribuyente: record.getAttribute('nombre') || '',
                     concepto: record.getAttribute('concepto') || '',
-                    valor: parseFloat(record.getAttribute('valor') || '0'),
-                    tipo_movimiento: (record.getAttribute('tipo') as any) || 'INGRESO'
+                    monto: parseFloat(record.getAttribute('valor') || '0'),
+                    tipo_exogeno: '0210' // Default type for now, real parser would map this
                 });
             }
         } catch (error) {
@@ -60,11 +58,11 @@ export class ExogenosParser {
 
             const [nit, nombre, concepto, valor, tipo] = line.split(',');
             rows.push({
-                nit_tercero: nit?.trim(),
-                nombre_tercero: nombre?.trim(),
+                nit_contribuyente: nit?.trim(),
+                nombre_contribuyente: nombre?.trim(),
                 concepto: concepto?.trim(),
-                valor: parseFloat(valor?.trim() || '0'),
-                tipo_movimiento: (tipo?.trim().toUpperCase() as any) || 'INGRESO'
+                monto: parseFloat(valor?.trim() || '0'),
+                tipo_exogeno: '0210' // Default type
             });
         }
 
