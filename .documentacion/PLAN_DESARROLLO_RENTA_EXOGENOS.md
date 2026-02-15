@@ -40,7 +40,41 @@
 
 ---
 
-## 2. Arquitectura General del Sistema
+## 2. Análisis de Archivo Exógena (Excel)
+
+### Estructura del Archivo "Reporte de Exógena"
+Basado en el análisis de `reporteExogena2024.xlsx`:
+
+- **Formato:** Excel (.xlsx)
+- **Hoja Principal:** "Reporte"
+- **Encabezados:** Fila 14 (índice 13 en base 0)
+- **Datos:** A partir de la fila 20 (índice 19 en base 0)
+
+### Columnas Identificadas
+1. **NIT** (Index 0): NIT del reportante.
+2. **Nombre / Razón Social** (Index 1): Nombre del reportante (e.g., Bancos, Empresas).
+3. **NIT** (Index 2): NIT del contribuyente (usuario).
+4. **Nombre/Razón Social reportada** (Index 3): Nombre del contribuyente según el reporte.
+5. **Detalle** (Index 4): Descripción del concepto (e.g., "Saldo CDT", "Retención por servicios").
+6. **Valor** (Index 5): Monto monetario.
+7. **Uso declaración Sugerida** (Index 6): **CAMPO CLAVE**. Contiene códigos de renglón de la declaración sugerida (e.g., "R29 Patrimonio bruto", "R58 Ingresos brutos").
+8. **Información Adicional** (Index 7): Detalles extra.
+
+### Mapeo Preliminar (Códigos de Renglón detectados)
+| Código | Concepto | Destino en Sistema |
+|--------|----------|--------------------|
+| **R29** | Patrimonio Bruto | `ActivoPasivoRenta` (Tipo: ACTIVO) |
+| **R30** | Deudas | `ActivoPasivoRenta` (Tipo: PASIVO) |
+| **R43** | Honorarios/Servicios | `IngresoRenta` (Tipo: HONORARIOS) |
+| **R58** | Rentas de Capital | `IngresoRenta` (Tipo: CAPITAL) |
+| **R59** | Ingresos no constitutivos | `IngresoRenta` (Campo: es_no_constitutivo) |
+| **R74** | Rentas no laborales | `IngresoRenta` (Tipo: OTROS/OPERACIONAL) |
+| **R132**| Retenciones año gravable | `IngresoRenta.retencion_aplicada` o `Deduccion/Credito` |
+| **Tope X** | Información de Control | Informativo para obligación de declarar |
+
+---
+
+## 3. Arquitectura General del Sistema
 
 ```
 ┌─────────────────────────────────────────────────────────┐

@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useRentaStore } from '@/store/rentaStore';
-import { Plus, FileText, Calculator, CheckCircle, AlertTriangle, Download } from 'lucide-react';
+import { Plus, FileText, Calculator, CheckCircle, AlertTriangle, Download, FileSpreadsheet } from 'lucide-react';
 import { DeclarationList } from '@/components/renta/DeclarationList';
 import { DeclarationForm } from '@/components/renta/DeclarationForm';
 import { IncomeManager } from '@/components/renta/IncomeManager';
@@ -15,8 +15,9 @@ import { TaxCalculator } from '@/components/renta/TaxCalculator';
 import { DeclarationSummary } from '@/components/renta/DeclarationSummary';
 import { ObligacionChecker } from '@/components/renta/ObligacionChecker';
 import { rentaPDFGenerator, dianXMLGenerator } from '@/lib/renta';
+import { ExogenaImporter } from '@/components/renta/ExogenaImporter'; // Add import
 
-type TabType = 'general' | 'ingresos' | 'deducciones' | 'calculo' | 'resumen';
+type TabType = 'general' | 'ingresos' | 'deducciones' | 'calculo' | 'resumen' | 'exogena'; // Add exogena
 
 export default function Renta() {
     const navigate = useNavigate();
@@ -105,6 +106,7 @@ export default function Renta() {
 
     const tabs = [
         { id: 'general' as TabType, label: 'Datos Generales', icon: FileText },
+        { id: 'exogena' as TabType, label: 'Exógena', icon: FileSpreadsheet },
         { id: 'ingresos' as TabType, label: 'Ingresos', icon: Plus },
         { id: 'deducciones' as TabType, label: 'Deducciones', icon: AlertTriangle },
         { id: 'calculo' as TabType, label: 'Cálculo', icon: Calculator },
@@ -196,6 +198,7 @@ export default function Renta() {
                                     {/* Tab Content */}
                                     <div className="p-6">
                                         {activeTab === 'general' && <DeclarationForm />}
+                                        {activeTab === 'exogena' && <ExogenaImporter />}
                                         {activeTab === 'ingresos' && <IncomeManager />}
                                         {activeTab === 'deducciones' && <DeductionManager />}
                                         {activeTab === 'calculo' && <TaxCalculator />}
