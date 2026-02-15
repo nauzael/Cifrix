@@ -124,11 +124,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         // Super Admin bypasses permission checks
         if (profile?.role === 'SUPER_ADMIN') return true;
 
-        // Dashboard and Settings are core modules always visible to any logged-in user
-        if (item.id === 'dashboard' || item.id === 'settings') return true;
+        // Core modules that should always be visible
+        if (item.id === 'dashboard' || item.id === 'settings' || item.id === 'invoicing' || item.id === 'accounting') return true;
 
         const userModules = profile?.allowedModules;
-        // We only hide if it's EXPLICITLY set to false (permissive by default for legacy/core keys missing in DB)
         if (userModules && userModules[item.id] === false) return false;
 
         return true;
