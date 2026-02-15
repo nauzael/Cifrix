@@ -103,23 +103,70 @@ async function syncFromCacheToSupabase() {
       for (const item of pendingItems) {
         const { sync_status, ...dataToSync } = item;
 
+        // Limpiar campos vacíos para evitar errores de tipo en PostgreSQL
         Object.keys(dataToSync).forEach(key => {
           if (dataToSync[key] === "") {
             dataToSync[key] = null;
           }
         });
 
-        const { error } = await (supabase as any)
-          .from(tableName)
-          .upsert(dataToSync);
+        let error: any = null;
+
+        // CASO ESPECIAL: Organizaciones
+        if (tableName === 'organizations') {
+          // Verificar si ya existe en Supabase
+          const { data: existing } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('id', item.id)
+            .single();
+
+          if (!existing) {
+            // Si es nueva, usar RPC para asegurar que el creador quede como founder
+            dbLog(`Creating new organization via RPC: ${item.name}`);
+            const { error: rpcError } = await supabase.rpc('create_organization_with_founder', {
+              org_name: item.name,
+              org_type: item.type,
+              org_tax_id: item.tax_id,
+              org_id: item.id // Pasamos el ID local para mantener consistencia
+            });
+            error = rpcError;
+          } else {
+            // Si ya existe, un simple upsert/update
+            const { error: upsertError } = await supabase
+              .from('organizations')
+              .upsert(dataToSync);
+            error = upsertError;
+          }
+        }
+        // CASO ESPECIAL: Audit Logs (asegurar que tengan organization_id)
+        else if (tableName === 'audit_logs') {
+          if (!dataToSync.organization_id) {
+            console.warn('Skipping audit log sync: missing organization_id');
+            await db.audit_logs.update(item.id, { sync_status: 'error' });
+            continue;
+          }
+          const { error: insertError } = await supabase.from('audit_logs').insert(dataToSync);
+          error = insertError;
+        }
+        // CASO NORMAL: Resto de tablas
+        else {
+          const { error: upsertError } = await supabase
+            .from(tableName)
+            .upsert(dataToSync);
+          error = upsertError;
+        }
 
         if (!error) {
           await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
         } else {
+          console.error(`Sync error for ${tableName} (${item.id}):`, error);
           if (error.code === '42501') {
             console.warn(`RLS Permission denied for table ${tableName}. Stopping sync for this table.`);
             break;
           }
+          // Marcar como error para no reintentar infinitamente el mismo registro bloqueante
+          await (db as any)[tableName].update(item.id, { sync_status: 'error' });
         }
       }
     } catch (error) {
