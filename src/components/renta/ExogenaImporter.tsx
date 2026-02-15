@@ -22,7 +22,7 @@ export function ExogenaImporter() {
         setParsedData(null);
 
         try {
-            const data = await parseExogena(file);
+            const data = await parseExogena(file, declaracionActual.tipo_contribuyente);
             setParsedData(data);
         } catch (err) {
             console.error(err);
@@ -123,6 +123,9 @@ export function ExogenaImporter() {
                         <li>Ingresos encontrados: <strong>{parsedData.ingresos.length}</strong></li>
                         <li>Activos/Pasivos encontrados: <strong>{parsedData.activosPasivos.length}</strong></li>
                         <li>Retenciones totales: <strong>${parsedData.retenciones.toLocaleString()}</strong></li>
+                        <li className="text-gray-500 italic mt-1">
+                            Modo de análisis: {declaracionActual.tipo_contribuyente === 'PERSONA_NATURAL' ? 'Persona Natural' : 'Persona Jurídica'}
+                        </li>
                     </ul>
 
                     <div className="mt-4">

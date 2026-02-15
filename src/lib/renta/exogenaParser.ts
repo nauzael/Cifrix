@@ -10,7 +10,7 @@ export interface ExogenaParsedData {
     informacion: string[];
 }
 
-export const parseExogena = async (file: File): Promise<ExogenaParsedData> => {
+export const parseExogena = async (file: File, tipoContribuyente: 'PERSONA_NATURAL' | 'PERSONA_JURIDICA' = 'PERSONA_NATURAL'): Promise<ExogenaParsedData> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
 
@@ -57,16 +57,20 @@ export const parseExogena = async (file: File): Promise<ExogenaParsedData> => {
                     // const infoAdicional = row[7];
 
                     // Lógica de Mapeo
-                    if (usoSugerido.includes('R29') || usoSugerido.includes('Patrimonio bruto')) {
+                    // === LÓGICA DE MAPEO COMÚN (ACTIVOS/PASIVOS) ===
+                    if (usoSugerido.includes('R29') || usoSugerido.includes('Patrimonio bruto') || usoSugerido.includes('Saldo')) {
                         // Activo
                         result.activosPasivos.push({
                             tipo: 'ACTIVO',
                             categoria: 'PATRIMONIO_BRUTO',
                             descripcion: `${concepto} - ${nombreReportante} (${usoSugerido})`,
                             valor: valor,
-                            fecha_adquisicion: new Date().toISOString() // Fecha actual como referencia
+                            fecha_adquisicion: new Date().toISOString()
                         });
-                    } else if (usoSugerido.includes('R30') || usoSugerido.includes('Deudas')) {
+                        continue;
+                    }
+
+                    if (usoSugerido.includes('R30') || usoSugerido.includes('Deudas') || usoSugerido.includes('Pasivo')) {
                         // Pasivo
                         result.activosPasivos.push({
                             tipo: 'PASIVO',
@@ -74,8 +78,11 @@ export const parseExogena = async (file: File): Promise<ExogenaParsedData> => {
                             descripcion: `${concepto} - ${nombreReportante}`,
                             valor: valor
                         });
-                    } else if (usoSugerido.includes('R132') || usoSugerido.includes('Retenciones')) {
-                        // Retenciones
+                        continue;
+                    }
+
+                    // === LÓGICA DE MAPEO DE RETENCIONES ===
+                    if (usoSugerido.includes('R132') || usoSugerido.includes('Retenciones') || usoSugerido.includes('Retención')) {
                         result.retenciones += valor;
                         result.detalleRetenciones.push({
                             nit: nitReportante,
@@ -83,37 +90,44 @@ export const parseExogena = async (file: File): Promise<ExogenaParsedData> => {
                             valor: valor,
                             concepto: concepto
                         });
-                    } else if (usoSugerido.includes('R43') || usoSugerido.includes('honorarios')) {
-                        // Honorarios
+                        continue;
+                    }
+
+                    // === LÓGICA DE MAPEO DE INGRESOS (DIFERENCIADA) ===
+                    let tipoIngreso: any = 'OTROS';
+                    const esIngreso = usoSugerido.includes('Ingresos') || usoSugerido.includes('Rentas') || usoSugerido.includes('Honorarios') || usoSugerido.includes('Servicios') || usoSugerido.includes('Comisiones') || usoSugerido.includes('Dividendos') || usoSugerido.includes('Intereses');
+
+                    if (esIngreso) {
+                        if (tipoContribuyente === 'PERSONA_NATURAL') {
+                            if (usoSugerido.includes('R43') || usoSugerido.includes('honorarios') || usoSugerido.includes('servicios')) {
+                                tipoIngreso = 'HONORARIOS';
+                            } else if (usoSugerido.includes('R58') || usoSugerido.includes('rentas de capital') || usoSugerido.includes('Intereses') || usoSugerido.includes('Rendimientos')) {
+                                tipoIngreso = 'CAPITAL';
+                            } else if (usoSugerido.includes('laboral') || usoSugerido.includes('Salarios')) {
+                                tipoIngreso = 'LABORAL';
+                            } else if (usoSugerido.includes('Dividendos')) {
+                                tipoIngreso = 'DIVIDENDOS';
+                            }
+                        } else {
+                            // PERSONA JURIDICA
+                            if (usoSugerido.includes('Financiero') || usoSugerido.includes('Intereses') || usoSugerido.includes('Rendimientos')) {
+                                tipoIngreso = 'FINANCIERO';
+                            } else if (usoSugerido.includes('Dividendos')) {
+                                tipoIngreso = 'FINANCIERO'; // O DIVIDENDOS si existe
+                            } else if (usoSugerido.includes('Extraordinario') || usoSugerido.includes('recuperaciones')) {
+                                tipoIngreso = 'EXTRAORDINARIO';
+                            } else {
+                                // Por defecto asumimos Operacional para empresas si es ingreso genérico
+                                tipoIngreso = 'OPERACIONAL';
+                            }
+                        }
+
                         result.ingresos.push({
-                            tipo_ingreso: 'HONORARIOS',
+                            tipo_ingreso: tipoIngreso,
                             concepto: `${concepto} - ${nombreReportante}`,
                             monto: valor,
-                            retencion_aplicada: 0 // Se llenará si encontramos match o se deja en 0 y se usa el total de retenciones aparte
-                        });
-                    } else if (usoSugerido.includes('R58') || usoSugerido.includes('rentas de capital')) {
-                        // Rentas de Capital
-                        result.ingresos.push({
-                            tipo_ingreso: 'CAPITAL',
-                            concepto: `${concepto} - ${nombreReportante}`,
-                            monto: valor,
-                            retencion_aplicada: 0
-                        });
-                    } else if (usoSugerido.includes('R74') || usoSugerido.includes('no laborales')) {
-                        // No Laborales
-                        result.ingresos.push({
-                            tipo_ingreso: 'OTROS', // O mapear a NO_LABORALES si existiera
-                            concepto: `${concepto} - ${nombreReportante}`,
-                            monto: valor,
-                            retencion_aplicada: 0
-                        });
-                    } else if (usoSugerido.includes('Ingresos brutos')) {
-                        // Genérico Ingreso
-                        result.ingresos.push({
-                            tipo_ingreso: 'OTROS',
-                            concepto: `${concepto} - ${nombreReportante}`,
-                            monto: valor,
-                            retencion_aplicada: 0
+                            retencion_aplicada: 0,
+                            notas: `Importado de Exógena: ${usoSugerido}`
                         });
                     }
                     // TODO: Mapear más casos (R59: No constitutivos, etc.)
