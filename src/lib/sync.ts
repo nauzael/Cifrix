@@ -15,8 +15,16 @@ const TABLES_TO_SYNC = [
   'invoices',
   'invoice_items',
   'payments',
-  'audit_logs'
-] as const;
+  'audit_logs',
+  // Nuevas tablas - Módulo de Renta
+  'declaraciones_renta',
+  'ingresos_renta',
+  'deducciones_renta',
+  'activos_pasivos_renta',
+  // Nuevas tablas - Módulo de Exógenos
+  'exogenos',
+  'mapeo_inconsistencias'
+];
 
 /**
  * Sincronización en modo HÍBRIDO: Descarga datos de Supabase a caché local
@@ -28,7 +36,7 @@ async function syncFromSupabaseToCache(organizationId?: string) {
 
   for (const tableName of TABLES_TO_SYNC) {
     try {
-      let query = (supabase as any).from(tableName).select('*');
+      let query = (supabase as any).from(tableName as any).select('*');
 
       // Filtrar por organización si se proporciona
       if (organizationId && tableName !== 'organizations') {

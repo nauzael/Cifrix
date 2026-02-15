@@ -13,6 +13,8 @@ import {
   Church,
   Receipt,
   Building2,
+  FileSignature,
+  FileDown,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -82,6 +84,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         href: '/reports',
         icon: BarChart3,
         id: 'reports'
+      },
+      {
+        name: 'Impuesto Renta',
+        href: '/renta',
+        icon: FileSignature,
+        id: 'renta'
+      },
+      {
+        name: 'Reportes Exógenos',
+        href: '/exogenos',
+        icon: FileDown,
+        id: 'exogenos'
       },
       {
         name: 'Configuración',

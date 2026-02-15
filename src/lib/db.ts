@@ -206,7 +206,137 @@ export interface UserVaultEntry {
   created_at: string;               // Timestamp de creación de la entrada
 }
 
+// ============================================================================
+// INTERFACES - MÓDULO DE DECLARACIÓN DE RENTA
+// ============================================================================
+
+export interface DeclaracionRenta {
+  id: string;
+  organization_id: string;
+  periodo_fiscal: number;
+  contribuyente_id: string;
+  contribuyente_nombre: string;
+  estado: 'BORRADOR' | 'PRESENTADA' | 'CORREGIDA' | 'ANULADA';
+
+  // Montos principales
+  total_ingresos: number;
+  total_costos: number;
+  total_gastos: number;
+  total_deducciones: number;
+  base_gravable: number;
+  impuesto_calculado: number;
+  creditos_tributarios: number;
+  impuesto_neto: number;
+
+  // Metadata
+  fecha_creacion: string;
+  fecha_presentacion?: string;
+  json_calculado?: any;
+  xml_dian?: string;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+export interface IngresoRenta {
+  id: string;
+  declaracion_id: string;
+  tipo_ingreso: 'LABORAL' | 'HONORARIOS' | 'RENTAS' | 'CAPITAL' | 'DIVIDENDOS' | 'OTROS';
+  concepto: string;
+  monto: number;
+  mes?: number;
+  retencion_aplicada: number;
+  notas?: string;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+export interface DeduccionRenta {
+  id: string;
+  declaracion_id: string;
+  tipo_deduccion: 'SALUD' | 'EDUCACION' | 'INTERESES_VIVIENDA' | 'DEPENDIENTES' | 'OTROS';
+  concepto: string;
+  monto: number;
+  limite_aplicable?: number;
+  monto_deducido?: number;
+  documento_soporte?: string;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+export interface ActivoPasivoRenta {
+  id: string;
+  declaracion_id: string;
+  tipo: 'ACTIVO' | 'PASIVO';
+  categoria: string;
+  descripcion: string;
+  valor: number;
+  fecha_adquisicion?: string;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+// ============================================================================
+// INTERFACES - MÓDULO DE EXÓGENOS
+// ============================================================================
+
+export interface Exogeno {
+  id: string;
+  organization_id: string;
+  tipo_exogeno: '0210' | '0220' | '0230' | '0240' | '0250' | '0260';
+  periodo_fiscal: number;
+
+  // Datos del informante (quien reporta)
+  nit_informante: string;
+  nombre_informante?: string;
+
+  // Datos del contribuyente (sobre quien se reporta)
+  nit_contribuyente: string;
+  nombre_contribuyente?: string;
+
+  // Datos del movimiento
+  concepto: string;
+  monto: number;
+  retencion: number;
+  fecha_movimiento: string;
+
+  // Procesamiento
+  procesado: boolean;
+  validado: boolean;
+  inconsistencia?: string;
+
+  // Metadata
+  archivo_origen?: string;
+  linea_origen?: number;
+  datos_raw?: any;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+export interface MapeoInconsistencia {
+  id: string;
+  exogeno_id: string;
+
+  // Referencia a operación interna
+  entidad_tipo?: string; // 'INVOICE', 'PAYMENT', 'TRANSACTION', etc.
+  entidad_id?: string;
+
+  // Estado de validación
+  estado_validacion: 'VALIDADO' | 'DISCREPANCIA' | 'SIN_CORRESPONDENCIA' | 'PENDIENTE';
+  diferencia_monto?: number;
+  diferencia_fecha?: number; // días de diferencia
+
+  // Resolución
+  resuelto: boolean;
+  notas?: string;
+  responsable_resolucion?: string;
+  fecha_resolucion?: string;
+
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
 export class CifrixDB extends Dexie {
+  // Tablas existentes
   organizations!: Table<Organization>;
   members!: Table<Member>;
   transactions!: Table<Transaction>;
@@ -223,11 +353,22 @@ export class CifrixDB extends Dexie {
   deleted_records!: Table<DeletedRecord>;
   user_vault!: Table<UserVaultEntry>;
 
+  // Nuevas tablas - Módulo de Renta
+  declaraciones_renta!: Table<DeclaracionRenta>;
+  ingresos_renta!: Table<IngresoRenta>;
+  deducciones_renta!: Table<DeduccionRenta>;
+  activos_pasivos_renta!: Table<ActivoPasivoRenta>;
+
+  // Nuevas tablas - Módulo de Exógenos
+  exogenos!: Table<Exogeno>;
+  mapeo_inconsistencias!: Table<MapeoInconsistencia>;
+
   ignoreDeletions = false;
 
   constructor() {
     super('CifrixDatabase');
-    this.version(10).stores({
+    this.version(11).stores({
+      // Tablas existentes
       organizations: 'id, type, sync_status',
       members: 'id, organization_id, full_name, document_id, status, sync_status',
       transactions: 'id, organization_id, date, type, sync_status',
@@ -242,7 +383,17 @@ export class CifrixDB extends Dexie {
       invoice_items: 'id, invoice_id, sync_status',
       payments: 'id, organization_id, invoice_id, date, sync_status',
       deleted_records: 'id, table_name, sync_status',
-      user_vault: 'email, user_id, last_sync'
+      user_vault: 'email, user_id, last_sync',
+
+      // Nuevas tablas - Módulo de Renta
+      declaraciones_renta: 'id, organization_id, periodo_fiscal, estado, contribuyente_id, sync_status',
+      ingresos_renta: 'id, declaracion_id, tipo_ingreso, mes, sync_status',
+      deducciones_renta: 'id, declaracion_id, tipo_deduccion, sync_status',
+      activos_pasivos_renta: 'id, declaracion_id, tipo, sync_status',
+
+      // Nuevas tablas - Módulo de Exógenos
+      exogenos: 'id, organization_id, tipo_exogeno, periodo_fiscal, nit_contribuyente, procesado, validado, sync_status',
+      mapeo_inconsistencias: 'id, exogeno_id, estado_validacion, resuelto, sync_status'
     });
 
     // Hooks to track deletions
@@ -253,7 +404,10 @@ export class CifrixDB extends Dexie {
     const tablesToTrack = [
       'organizations', 'members', 'transactions', 'journal_entries',
       'accounts', 'contributions', 'projects', 'categories',
-      'customers', 'invoices', 'invoice_items', 'payments'
+      'customers', 'invoices', 'invoice_items', 'payments',
+      // Nuevas tablas de Renta y Exógenos
+      'declaraciones_renta', 'ingresos_renta', 'deducciones_renta', 'activos_pasivos_renta',
+      'exogenos', 'mapeo_inconsistencias'
     ];
 
     tablesToTrack.forEach(tableName => {

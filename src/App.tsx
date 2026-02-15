@@ -23,6 +23,9 @@ import { Communications } from './pages/superadmin/Communications';
 import { Reports as SuperAdminReports } from './pages/superadmin/Reports';
 import { Support as SuperAdminSupport } from './pages/superadmin/Support';
 
+import Renta from './pages/Renta';
+import Exogenos from './pages/Exogenos';
+
 import { ToastContainer } from './components/ui/Toast';
 import { GlobalConfirmModal } from './components/ui/GlobalConfirmModal';
 
@@ -45,6 +48,9 @@ function App() {
             <Route path="accounting" element={<Accounting />} />
             <Route path="invoicing" element={<Invoicing />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="renta" element={<Renta />} />
+            <Route path="renta/:id" element={<Renta />} />
+            <Route path="exogenos" element={<Exogenos />} />
             <Route path="support" element={<Support />} />
             <Route path="settings" element={<Settings />} />
           </Route>
