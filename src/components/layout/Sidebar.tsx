@@ -113,10 +113,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     ];
 
   const filteredNavigation = navigation.filter(item => {
-    // 1. Existing hidden check
+    // 1. Existing hidden check (used for church vs company logic)
     if (item.hidden) return false;
 
-    // 2. Organization Settings Check
+    // 2. Organization Settings Check (Global switch for the whole org)
     const orgModules = (organization?.settings as any)?.modules;
     if (orgModules && orgModules[item.id] === false) return false;
 
@@ -124,8 +124,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     // Super Admin bypasses permission checks
     if (profile?.role === 'SUPER_ADMIN') return true;
 
+    // Dashboard and Settings are core modules always visible to any logged-in user
+    if (item.id === 'dashboard' || item.id === 'settings') return true;
+
     const userModules = profile?.allowedModules;
-    if (userModules && userModules[item.id] === false) return false;
+    // If allowedModules exists, we use it as a strict allow-list
+    // If it's missing from the object or set to false, we hide it
+    if (userModules && userModules[item.id] !== true) return false;
 
     return true;
   });

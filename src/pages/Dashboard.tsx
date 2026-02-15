@@ -331,29 +331,53 @@ export function Dashboard() {
     return 'Buenas noches';
   };
 
-  const quickActions = [
-    { label: 'Transacción', icon: PlusCircle, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30', hover: 'hover:border-blue-500/50 hover:bg-blue-50/30', path: '/accounting' },
-    {
-      label: 'Diezmos',
-      icon: Heart,
-      color: 'text-rose-600',
-      bg: 'bg-rose-100 dark:bg-rose-900/30',
-      hover: 'hover:border-rose-500/50 hover:bg-rose-50/30',
-      path: '/diezmos',
-      hidden: organization?.type === 'EMPRESA'
-    },
-    { label: 'Reportes', icon: FileBarChart, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30', hover: 'hover:border-indigo-500/50 hover:bg-indigo-50/30', path: '/reports' },
-    {
-      label: 'Miembros',
-      icon: UserCheck,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-100 dark:bg-emerald-900/30',
-      hover: 'hover:border-emerald-500/50 hover:bg-emerald-50/30',
-      path: '/members',
-      hidden: organization?.type === 'EMPRESA'
-    },
-    { label: 'Ajustes', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-900/30', hover: 'hover:border-slate-500/50 hover:bg-slate-50/30', path: '/settings' },
-  ];
+  const quickActions = useMemo(() => {
+    const actions = [
+      { id: 'accounting', label: 'Transacción', icon: PlusCircle, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30', hover: 'hover:border-blue-500/50 hover:bg-blue-50/30', path: '/accounting' },
+      {
+        id: 'contributions',
+        label: 'Diezmos',
+        icon: Heart,
+        color: 'text-rose-600',
+        bg: 'bg-rose-100 dark:bg-rose-900/30',
+        hover: 'hover:border-rose-500/50 hover:bg-rose-50/30',
+        path: '/diezmos',
+        hidden: organization?.type === 'EMPRESA'
+      },
+      { id: 'reports', label: 'Reportes', icon: FileBarChart, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30', hover: 'hover:border-indigo-500/50 hover:bg-indigo-50/30', path: '/reports' },
+      {
+        id: 'members',
+        label: 'Miembros',
+        icon: UserCheck,
+        color: 'text-emerald-600',
+        bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+        hover: 'hover:border-emerald-500/50 hover:bg-emerald-50/30',
+        path: '/members',
+        hidden: organization?.type === 'EMPRESA'
+      },
+      { id: 'settings', label: 'Ajustes', icon: Settings, color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-900/30', hover: 'hover:border-slate-500/50 hover:bg-slate-50/30', path: '/settings' },
+    ];
+
+    return actions.filter(action => {
+      if (action.hidden) return false;
+
+      // Organization Check
+      const orgModules = (organization?.settings as any)?.modules;
+      if (orgModules && orgModules[action.id] === false) return false;
+
+      // Super Admin bypass
+      if (profile?.role === 'SUPER_ADMIN') return true;
+
+      // Settings is always available for management
+      if (action.id === 'settings') return true;
+
+      // User Permission Check
+      const userModules = profile?.allowedModules;
+      if (userModules && userModules[action.id] !== true) return false;
+
+      return true;
+    });
+  }, [organization, profile]);
 
   return (
     <div className="space-y-5 pb-8 animate-in fade-in duration-500">
@@ -571,7 +595,7 @@ export function Dashboard() {
 
           {/* Quick Actions Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {quickActions.filter(action => !action.hidden).map((action, i) => (
+            {quickActions.map((action, i) => (
               <button
                 key={i}
                 onClick={() => navigate(action.path)}
