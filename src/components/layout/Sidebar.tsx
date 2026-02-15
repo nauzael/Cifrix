@@ -128,9 +128,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         if (item.id === 'dashboard' || item.id === 'settings') return true;
 
         const userModules = profile?.allowedModules;
-        // If allowedModules exists, we use it as a strict allow-list
-        // If it's missing from the object or set to false, we hide it
-        if (userModules && userModules[item.id] !== true) return false;
+        // We only hide if it's EXPLICITLY set to false (permissive by default for legacy/core keys missing in DB)
+        if (userModules && userModules[item.id] === false) return false;
 
         return true;
     });

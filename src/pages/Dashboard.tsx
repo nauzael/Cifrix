@@ -35,7 +35,8 @@ import {
   Settings,
   Heart,
   Users,
-  Target
+  Target,
+  Receipt
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { OnboardingWizard } from '../components/onboarding/OnboardingWizard';
@@ -344,6 +345,15 @@ export function Dashboard() {
         path: '/diezmos',
         hidden: organization?.type === 'EMPRESA'
       },
+      {
+        id: 'invoicing',
+        label: 'Facturación',
+        icon: Receipt,
+        color: 'text-amber-600',
+        bg: 'bg-amber-100 dark:bg-amber-900/30',
+        hover: 'hover:border-amber-500/50 hover:bg-amber-50/30',
+        path: '/invoicing'
+      },
       { id: 'reports', label: 'Reportes', icon: FileBarChart, color: 'text-indigo-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30', hover: 'hover:border-indigo-500/50 hover:bg-indigo-50/30', path: '/reports' },
       {
         id: 'members',
@@ -373,7 +383,7 @@ export function Dashboard() {
 
       // User Permission Check
       const userModules = profile?.allowedModules;
-      if (userModules && userModules[action.id] !== true) return false;
+      if (userModules && userModules[action.id] === false) return false;
 
       return true;
     });

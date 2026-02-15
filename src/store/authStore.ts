@@ -56,11 +56,10 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
           const permissions = bootstrapData.module_permissions as Record<string, any>;
           for (const [moduleName, modulePerms] of Object.entries(permissions)) {
             if (typeof modulePerms === 'object' && modulePerms !== null) {
+              // Si no tiene acceso de lectura o el módulo está desactivado en la org, es false
               const userHasAccess = modulePerms.read === true;
               const orgHasModule = orgModules[moduleName] !== false;
-              if (userHasAccess && orgHasModule) {
-                finalProfile.allowedModules![moduleName] = true;
-              }
+              finalProfile.allowedModules![moduleName] = (userHasAccess && orgHasModule);
             }
           }
         }
@@ -110,10 +109,10 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
             if (typeof modulePerms === 'object' && modulePerms !== null) {
               const userHasAccess = modulePerms.read === true;
               const orgHasModule = orgModules[moduleName] !== false;
-
-              if (userHasAccess && orgHasModule) {
-                finalProfile.allowedModules![moduleName] = true;
-              }
+              finalProfile.allowedModules![moduleName] = (userHasAccess && orgHasModule);
+            } else {
+              // Si modulePerms no es un objeto válido, asumimos que no tiene acceso
+              finalProfile.allowedModules![moduleName] = false;
             }
           }
         }
