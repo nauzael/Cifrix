@@ -25,6 +25,7 @@ import { Support as SuperAdminSupport } from './pages/superadmin/Support';
 
 import Renta from './pages/Renta';
 import Exogenos from './pages/Exogenos';
+import { FinancialStatementsWizard } from './components/accounting/FinancialStatementsWizard';
 
 import { ToastContainer } from './components/ui/Toast';
 import { GlobalConfirmModal } from './components/ui/GlobalConfirmModal';
@@ -51,6 +52,7 @@ function App() {
             <Route path="renta" element={<Renta />} />
             <Route path="renta/:id" element={<Renta />} />
             <Route path="exogenos" element={<Exogenos />} />
+            <Route path="financial-statements" element={<FinancialStatementsWizard />} />
             <Route path="support" element={<Support />} />
             <Route path="settings" element={<Settings />} />
           </Route>

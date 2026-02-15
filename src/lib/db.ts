@@ -71,6 +71,7 @@ export interface Account {
   nature: 'DEBITO' | 'CREDITO';
   level: number;
   accepts_movement: boolean;
+  cash_flow_category?: 'OPERACION' | 'INVERSION' | 'FINANCIACION';
   created_at: string;
   sync_status?: SyncStatus;
 }
@@ -307,6 +308,38 @@ export interface ActivoPasivoRenta {
 }
 
 // ============================================================================
+// INTERFACES - ESTADOS FINANCIEROS Y CIERRE
+// ============================================================================
+
+export interface FiscalYear {
+  id: string;
+  organization_id: string;
+  year: number;
+  status: 'ABIERTO' | 'CERRADO';
+  normativo?: 'NIIF_COMPLETAS' | 'NIIF_PYMES' | 'CONTABILIDAD_SIMPLIFICADA';
+  cut_off_date?: string;
+  closed_at?: string;
+  closed_by?: string;
+  closing_entry_id?: string;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+export interface FinancialNote {
+  id: string;
+  organization_id: string;
+  period_id: string; // "YYYY" o "YYYY-MM"
+  report_type: 'BALANCE' | 'RESULTADOS' | 'PATRIMONIO' | 'FLUJO';
+  account_id?: string;
+  section_key?: string;
+  title: string;
+  content: string;
+  order: number;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+// ============================================================================
 // INTERFACES - MÓDULO DE EXÓGENOS
 // ============================================================================
 
@@ -394,6 +427,10 @@ export class CifrixDB extends Dexie {
   exogenos!: Table<Exogeno>;
   mapeo_inconsistencias!: Table<MapeoInconsistencia>;
 
+  // Nuevas tablas - Estados Financieros
+  fiscal_years!: Table<FiscalYear>;
+  financial_notes!: Table<FinancialNote>;
+
   ignoreDeletions = false;
 
   constructor() {
@@ -424,7 +461,11 @@ export class CifrixDB extends Dexie {
 
       // Nuevas tablas - Módulo de Exógenos
       exogenos: 'id, organization_id, tipo_exogeno, periodo_fiscal, nit_contribuyente, procesado, validado, sync_status',
-      mapeo_inconsistencias: 'id, exogeno_id, estado_validacion, resuelto, sync_status'
+      mapeo_inconsistencias: 'id, exogeno_id, estado_validacion, resuelto, sync_status',
+
+      // Nuevas tablas - Estados Financieros
+      fiscal_years: 'id, organization_id, year, status, sync_status',
+      financial_notes: 'id, organization_id, period_id, report_type, sync_status'
     });
 
     // Hooks to track deletions
@@ -437,8 +478,11 @@ export class CifrixDB extends Dexie {
       'accounts', 'contributions', 'projects', 'categories',
       'customers', 'invoices', 'invoice_items', 'payments',
       // Nuevas tablas de Renta y Exógenos
+      // Nuevas tablas de Renta y Exógenos
       'declaraciones_renta', 'ingresos_renta', 'deducciones_renta', 'activos_pasivos_renta',
-      'exogenos', 'mapeo_inconsistencias'
+      'exogenos', 'mapeo_inconsistencias',
+      // Nuevas tablas de Estados Financieros
+      'fiscal_years', 'financial_notes'
     ];
 
     tablesToTrack.forEach(tableName => {

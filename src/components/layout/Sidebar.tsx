@@ -15,6 +15,7 @@ import {
   Building2,
   FileSignature,
   FileDown,
+  FileText,
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -96,6 +97,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         href: '/exogenos',
         icon: FileDown,
         id: 'exogenos'
+      },
+      {
+        name: 'Estados Financieros',
+        href: '/financial-statements',
+        icon: FileText,
+        id: 'financial_statements'
       },
       {
         name: 'Configuración',
