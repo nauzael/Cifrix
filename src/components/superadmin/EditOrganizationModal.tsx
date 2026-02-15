@@ -20,6 +20,9 @@ const AVAILABLE_MODULES = [
   { id: 'invoicing', label: 'Facturación' },
   { id: 'accounting', label: 'Contabilidad' },
   { id: 'reports', label: 'Reportes y análisis' },
+  { id: 'renta', label: 'Impuesto Renta' },
+  { id: 'exogenos', label: 'Reportes Exógenos' },
+  { id: 'financial_statements', label: 'Estados Financieros' },
 ];
 
 export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization }: EditOrganizationModalProps) {
@@ -34,7 +37,10 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
     contributions: true,
     invoicing: true,
     accounting: true,
-    reports: true
+    reports: true,
+    renta: true,
+    exogenos: true,
+    financial_statements: true
   });
 
   useEffect(() => {
@@ -54,7 +60,10 @@ export function EditOrganizationModal({ isOpen, onClose, onSuccess, organization
           contributions: true,
           invoicing: true,
           accounting: true,
-          reports: true
+          reports: true,
+          renta: true,
+          exogenos: true,
+          financial_statements: true
         });
       }
     }

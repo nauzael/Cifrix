@@ -81,6 +81,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         id: 'accounting'
       },
       {
+        name: 'Configuración',
+        href: '/settings',
+        icon: Settings,
+        id: 'settings'
+      },
+      {
         name: 'Reportes',
         href: '/reports',
         icon: BarChart3,
@@ -103,12 +109,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         href: '/financial-statements',
         icon: FileText,
         id: 'financial_statements'
-      },
-      {
-        name: 'Configuración',
-        href: '/settings',
-        icon: Settings,
-        id: 'settings'
       },
     ];
 

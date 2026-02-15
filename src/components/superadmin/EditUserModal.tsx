@@ -26,6 +26,9 @@ const AVAILABLE_MODULES = [
   { id: 'invoicing', label: 'Facturación' },
   { id: 'accounting', label: 'Contabilidad' },
   { id: 'reports', label: 'Reportes' },
+  { id: 'renta', label: 'Renta' },
+  { id: 'exogenos', label: 'Exógenos' },
+  { id: 'financial_statements', label: 'E. Financieros' },
 ];
 
 export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModalProps) {
@@ -39,7 +42,10 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
     contributions: true,
     invoicing: true,
     accounting: true,
-    reports: true
+    reports: true,
+    renta: true,
+    exogenos: true,
+    financial_statements: true
   });
   const [organizations, setOrganizations] = useState<any[]>([]);
 
@@ -89,7 +95,10 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
             contributions: true,
             invoicing: true,
             accounting: true,
-            reports: true
+            reports: true,
+            renta: true,
+            exogenos: true,
+            financial_statements: true
           });
         })();
       }
