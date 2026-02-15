@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { db, Exogeno, MapeoInconsistencia } from '@/lib/db';
-import { exogenosService from '@/lib/exogenos';
+import { exogenosService } from '@/lib/exogenos';
 import { toast } from 'react-hot-toast';
 
 interface ExogenosState {
