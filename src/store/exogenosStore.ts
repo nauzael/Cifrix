@@ -61,10 +61,10 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
                 nit_informante: '', // TODO: Get from organization settings
                 nit_contribuyente: row.nit_contribuyente,
                 nombre_contribuyente: row.nombre_contribuyente,
-                periodo_fiscal: new Date().getFullYear() - 1,
+                periodo_fiscal: row.periodo_fiscal,
                 concepto: row.concepto,
                 monto: row.monto,
-                retencion: 0,
+                retencion: row.retencion,
                 fecha_movimiento: new Date().toISOString(),
                 tipo_exogeno: row.tipo_exogeno,
                 procesado: false,

@@ -10,6 +10,8 @@ export interface ExogenoRow {
     nombre_contribuyente: string;
     concepto: string;
     monto: number;
+    retencion: number;
+    periodo_fiscal: number;
     tipo_exogeno: '0210' | '0220' | '0230' | '0240' | '0250' | '0260';
 }
 
@@ -18,8 +20,8 @@ export class ExogenosParser {
      * Procesa un archivo XML de la DIAN (Formato estándar)
      */
     async parseDIANXml(content: string): Promise<ExogenoRow[]> {
-        // Implementación básica de parsing XML
         const rows: ExogenoRow[] = [];
+        const currentYear = new Date().getFullYear();
 
         try {
             const parser = new DOMParser();
@@ -33,7 +35,9 @@ export class ExogenosParser {
                     nombre_contribuyente: record.getAttribute('nombre') || '',
                     concepto: record.getAttribute('concepto') || '',
                     monto: parseFloat(record.getAttribute('valor') || '0'),
-                    tipo_exogeno: '0210' // Default type for now, real parser would map this
+                    retencion: parseFloat(record.getAttribute('retencion') || '0'),
+                    periodo_fiscal: parseInt(record.getAttribute('periodo') || (currentYear - 1).toString()),
+                    tipo_exogeno: '0210'
                 });
             }
         } catch (error) {
@@ -50,19 +54,22 @@ export class ExogenosParser {
     async parseCSV(content: string): Promise<ExogenoRow[]> {
         const rows: ExogenoRow[] = [];
         const lines = content.split('\n');
+        const currentYear = new Date().getFullYear();
 
-        // Asumimos primera línea es header: NIT,NOMBRE,CONCEPTO,VALOR,TIPO
+        // Asumimos primera línea es header: NIT,NOMBRE,CONCEPTO,VALOR,RETENCION,PERIODO
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
 
-            const [nit, nombre, concepto, valor, tipo] = line.split(',');
+            const [nit, nombre, concepto, valor, retencion, periodo] = line.split(',');
             rows.push({
                 nit_contribuyente: nit?.trim(),
                 nombre_contribuyente: nombre?.trim(),
                 concepto: concepto?.trim(),
                 monto: parseFloat(valor?.trim() || '0'),
-                tipo_exogeno: '0210' // Default type
+                retencion: parseFloat(retencion?.trim() || '0'),
+                periodo_fiscal: parseInt(periodo?.trim() || (currentYear - 1).toString()),
+                tipo_exogeno: '0210'
             });
         }
 
