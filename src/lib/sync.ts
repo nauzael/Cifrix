@@ -125,10 +125,10 @@ async function syncFromCacheToSupabase() {
             // Si es nueva, usar RPC para asegurar que el creador quede como founder
             dbLog(`Creating new organization via RPC: ${item.name}`);
             const { error: rpcError } = await supabase.rpc('create_organization_with_founder', {
-              org_name: item.name,
-              org_type: item.type,
-              org_tax_id: item.tax_id,
-              org_id: item.id // Pasamos el ID local para mantener consistencia
+              p_name: item.name,
+              p_type: item.type,
+              p_tax_id: item.tax_id,
+              p_id: item.id // Pasamos el ID local para mantener consistencia
             });
             error = rpcError;
           } else {

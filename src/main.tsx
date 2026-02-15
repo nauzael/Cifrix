@@ -6,6 +6,8 @@ import { syncToSupabase } from './lib/sync';
 import { APP_CONFIG, dbLog } from './lib/config';
 import './lib/reconnection'; // Registrar listener de reconexión automática
 import './lib/maintenance'; // Iniciar servicio de mantenimiento automático
+import { runOfflineSyncTest } from './test-sync';
+(window as any).runSyncTest = runOfflineSyncTest;
 
 // Initial sync solo si NO estamos en modo producción
 if (APP_CONFIG.DB_MODE !== 'production') {
