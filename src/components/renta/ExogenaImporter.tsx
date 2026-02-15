@@ -5,7 +5,7 @@ import { parseExogena, ExogenaParsedData } from '@/lib/renta/exogenaParser';
 import { Upload, FileSpreadsheet, Check, AlertCircle } from 'lucide-react';
 
 export function ExogenaImporter() {
-    const { declaracionActual, agregarIngreso, agregarDeduccion, agregarActivoPasivo, actualizarDeclaracion } = useRentaStore();
+    const { declaracionActual, agregarIngreso, agregarDeduccion, agregarActivoPasivo, actualizarDeclaracion, cargarDeclaracion } = useRentaStore();
     const [analyzing, setAnalyzing] = useState(false);
     const [parsedData, setParsedData] = useState<ExogenaParsedData | null>(null);
     const [importing, setImporting] = useState(false);
@@ -66,6 +66,9 @@ export function ExogenaImporter() {
                     creditos_tributarios: currentCreditos + parsedData.retenciones
                 });
             }
+
+            // Recargar declaración para asegurar que la UI se actualice
+            await cargarDeclaracion(declaracionActual.id);
 
             setSuccess(true);
             setParsedData(null); // Limpiar previo

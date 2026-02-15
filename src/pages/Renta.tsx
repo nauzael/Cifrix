@@ -6,18 +6,19 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useRentaStore } from '@/store/rentaStore';
-import { Plus, FileText, Calculator, CheckCircle, AlertTriangle, Download, FileSpreadsheet } from 'lucide-react';
+import { Plus, FileText, Calculator, CheckCircle, AlertTriangle, Download, FileSpreadsheet, Landmark } from 'lucide-react';
 import { DeclarationList } from '@/components/renta/DeclarationList';
 import { DeclarationForm } from '@/components/renta/DeclarationForm';
 import { IncomeManager } from '@/components/renta/IncomeManager';
 import { DeductionManager } from '@/components/renta/DeductionManager';
+import { AssetLiabilityManager } from '@/components/renta/AssetLiabilityManager';
 import { TaxCalculator } from '@/components/renta/TaxCalculator';
 import { DeclarationSummary } from '@/components/renta/DeclarationSummary';
 import { ObligacionChecker } from '@/components/renta/ObligacionChecker';
+import { ExogenaImporter } from '@/components/renta/ExogenaImporter';
 import { rentaPDFGenerator, dianXMLGenerator } from '@/lib/renta';
-import { ExogenaImporter } from '@/components/renta/ExogenaImporter'; // Add import
 
-type TabType = 'general' | 'ingresos' | 'deducciones' | 'calculo' | 'resumen' | 'exogena'; // Add exogena
+type TabType = 'general' | 'ingresos' | 'deducciones' | 'patrimonio' | 'calculo' | 'resumen' | 'exogena';
 
 export default function Renta() {
     const navigate = useNavigate();
@@ -36,7 +37,8 @@ export default function Renta() {
         cargarDeclaracion,
         crearDeclaracion,
         validarDeclaracion,
-        limpiarEstado
+        limpiarEstado,
+        eliminarDeclaracion
     } = useRentaStore();
 
     // Cargar declaraciones al montar
@@ -106,9 +108,10 @@ export default function Renta() {
 
     const tabs = [
         { id: 'general' as TabType, label: 'Datos Generales', icon: FileText },
-        { id: 'exogena' as TabType, label: 'Exógena', icon: FileSpreadsheet },
+        { id: 'patrimonio' as TabType, label: 'Patrimonio', icon: Landmark },
         { id: 'ingresos' as TabType, label: 'Ingresos', icon: Plus },
         { id: 'deducciones' as TabType, label: 'Deducciones', icon: AlertTriangle },
+        { id: 'exogena' as TabType, label: 'Exógena', icon: FileSpreadsheet },
         { id: 'calculo' as TabType, label: 'Cálculo', icon: Calculator },
         { id: 'resumen' as TabType, label: 'Resumen', icon: CheckCircle }
     ];
@@ -157,6 +160,7 @@ export default function Renta() {
                                 declaraciones={declaraciones}
                                 declaracionActual={declaracionActual}
                                 onSelect={(id) => navigate(`/renta/${id}`)}
+                                onDelete={eliminarDeclaracion}
                                 loading={loading}
                             />
                         </div>
@@ -198,9 +202,10 @@ export default function Renta() {
                                     {/* Tab Content */}
                                     <div className="p-6">
                                         {activeTab === 'general' && <DeclarationForm />}
-                                        {activeTab === 'exogena' && <ExogenaImporter />}
+                                        {activeTab === 'patrimonio' && <AssetLiabilityManager />}
                                         {activeTab === 'ingresos' && <IncomeManager />}
                                         {activeTab === 'deducciones' && <DeductionManager />}
+                                        {activeTab === 'exogena' && <ExogenaImporter />}
                                         {activeTab === 'calculo' && <TaxCalculator />}
                                         {activeTab === 'resumen' && <DeclarationSummary />}
                                     </div>

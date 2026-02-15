@@ -3,16 +3,17 @@
  */
 
 import { DeclaracionRenta } from '@/lib/db';
-import { FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { FileText, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
 interface DeclarationListProps {
     declaraciones: DeclaracionRenta[];
     declaracionActual: DeclaracionRenta | null;
     onSelect: (id: string) => void;
+    onDelete?: (id: string) => void;
     loading: boolean;
 }
 
-export function DeclarationList({ declaraciones, declaracionActual, onSelect, loading }: DeclarationListProps) {
+export function DeclarationList({ declaraciones, declaracionActual, onSelect, onDelete, loading }: DeclarationListProps) {
     const getEstadoIcon = (estado: string) => {
         switch (estado) {
             case 'BORRADOR':
@@ -64,12 +65,12 @@ export function DeclarationList({ declaraciones, declaracionActual, onSelect, lo
     return (
         <div className="divide-y divide-gray-200">
             {declaraciones.map((declaracion) => (
-                <button
+                <div
                     key={declaracion.id}
                     onClick={() => onSelect(declaracion.id)}
                     className={`
-            w-full text-left p-4 hover:bg-gray-50 transition-colors
-            ${declaracionActual?.id === declaracion.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}
+            w-full text-left p-4 hover:bg-gray-50 transition-colors cursor-pointer relative group
+            ${declaracionActual?.id === declaracion.id ? 'bg-blue-50 border-l-4 border-blue-500' : 'border-l-4 border-transparent'}
           `}
                 >
                     <div className="flex items-start justify-between">
@@ -88,12 +89,26 @@ export function DeclarationList({ declaraciones, declaracionActual, onSelect, lo
                             </p>
                         </div>
                     </div>
-                    <div className="mt-2">
+                    <div className="mt-2 flex justify-between items-center">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getEstadoColor(declaracion.estado)}`}>
                             {declaracion.estado}
                         </span>
+                        {onDelete && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm('¿Estás seguro de eliminar esta declaración? Esta acción no se puede deshacer.')) {
+                                        onDelete(declaracion.id);
+                                    }
+                                }}
+                                className="p-1 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-50 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                title="Eliminar declaración"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
-                </button>
+                </div>
             ))}
         </div>
     );
