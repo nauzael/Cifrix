@@ -85,6 +85,7 @@ export default function Renta() {
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Error al generar PDF:', error);
+            alert(`Error al generar el PDF: ${(error as Error).message}`);
         }
     };
 
@@ -103,6 +104,7 @@ export default function Renta() {
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Error al generar XML:', error);
+            alert(`Error al generar XML DIAN: ${(error as Error).message}`);
         }
     };
 

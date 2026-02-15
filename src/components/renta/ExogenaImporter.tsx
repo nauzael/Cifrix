@@ -26,7 +26,7 @@ export function ExogenaImporter() {
             setParsedData(data);
         } catch (err) {
             console.error(err);
-            setError('Error al analizar el archivo. Asegúrate de que sea un formato válido de Exógena.');
+            setError(`Error al analizar: ${(err as Error).message || 'Formato inválido'}`);
         } finally {
             setAnalyzing(false);
         }

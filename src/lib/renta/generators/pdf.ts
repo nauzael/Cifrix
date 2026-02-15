@@ -4,7 +4,7 @@
  */
 
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { db, DeclaracionRenta, IngresoRenta, DeduccionRenta } from '../../db';
 import { rentaCalculator, ResultadoCalculo } from '../calculator';
 
@@ -176,7 +176,7 @@ export class RentaPDFGenerator {
             ['Impuesto Neto a Pagar', this.formatMoney(declaracion.impuesto_neto)],
         ];
 
-        doc.autoTable({
+        autoTable(doc, {
             startY: y,
             head: [tableData[0]],
             body: tableData.slice(1),
@@ -223,7 +223,7 @@ export class RentaPDFGenerator {
             this.formatMoney(ing.retencion_aplicada)
         ]);
 
-        doc.autoTable({
+        autoTable(doc, {
             startY: y,
             head: [['Tipo', 'Concepto', 'Período', 'Monto', 'Retención']],
             body: tableData,
@@ -262,7 +262,7 @@ export class RentaPDFGenerator {
             ded.documento_soporte || 'N/A'
         ]);
 
-        doc.autoTable({
+        autoTable(doc, {
             startY: y,
             head: [['Tipo', 'Concepto', 'Solicitado', 'Deducido', 'Soporte']],
             body: tableData,
@@ -307,7 +307,7 @@ export class RentaPDFGenerator {
             this.formatMoney(tramo.impuestoTramo)
         ]);
 
-        doc.autoTable({
+        autoTable(doc, {
             startY: y,
             head: [['Tramo (UVT)', 'Base en Tramo', 'Tarifa', 'Impuesto']],
             body: tableData,

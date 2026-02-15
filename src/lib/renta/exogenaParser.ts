@@ -1,6 +1,16 @@
 
-import { read, utils } from 'xlsx';
+import * as XLSX from 'xlsx';
 import { IngresoRenta, ActivoPasivoRenta, DeduccionRenta } from '@/lib/db';
+
+const getXLSX = () => {
+    // @ts-ignore
+    const lib = XLSX.read ? XLSX : (XLSX.default || window.XLSX);
+    if (!lib || !lib.read) {
+        console.error('XLSX Library not loaded correctly', XLSX);
+        throw new Error('Error crítico: Librería XLSX no cargada correctamente. Intente recargar la página.');
+    }
+    return lib;
+};
 
 export interface ExogenaParsedData {
     ingresos: Partial<IngresoRenta>[];
@@ -17,14 +27,15 @@ export const parseExogena = async (file: File, tipoContribuyente: 'PERSONA_NATUR
         reader.onload = (e) => {
             try {
                 const data = e.target?.result;
-                const workbook = read(data, { type: 'array' });
+                const lib = getXLSX();
+                const workbook = lib.read(data, { type: 'array' });
 
                 // Asumimos que la hoja relevante es la primera o se llama 'Reporte'
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
 
                 // Convertir a JSON array de arrays
-                const rows = utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+                const rows = lib.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
 
                 const result: ExogenaParsedData = {
                     ingresos: [],
