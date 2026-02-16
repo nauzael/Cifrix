@@ -236,7 +236,7 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
                   // Delete duplicate
                   await db.accounts.delete(dup.id);
                   await db.deleted_records.add({
-                    id: dup.id,
+                    record_id: dup.id,
                     table_name: 'accounts',
                     sync_status: 'pendiente',
                     deleted_at: new Date().toISOString()

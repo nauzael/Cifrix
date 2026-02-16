@@ -146,7 +146,7 @@ export async function deleteRecord(
         // Modo Offline: Marcar para eliminación en la tabla de registros eliminados
         await (db as any)[tableName].delete(id);
         await db.deleted_records.put({
-            id,
+            record_id: id,
             table_name: tableName,
             deleted_at: new Date().toISOString(),
             sync_status: 'pendiente'
@@ -225,7 +225,7 @@ export async function syncFromSupabase(
                 .where('table_name')
                 .equals(tableName)
                 .toArray();
-            const deletedIds = new Set(deletedLocalRecords.map(d => d.id));
+            const deletedIds = new Set(deletedLocalRecords.map(d => d.record_id));
 
             const itemsToCache = data
                 .filter((item: any) => !deletedIds.has(item.id))
