@@ -153,10 +153,11 @@ async function syncFromSupabaseToCache(organizationId?: string) {
       if (data) {
         const mappedData = data.map((item: any) => mapTableSchema(tableName, item, false));
 
-        // Optimización masiva: obtener IDs locales conflictivos de una vez
         const deletedLocalRecords = await db.deleted_records
-          .where('table_name')
-          .equals(tableName)
+          .where('[table_name+sync_status]')
+          .equals([tableName, 'pendiente'])
+          .or('[table_name+sync_status]')
+          .equals([tableName, 'sincronizado'])
           .toArray();
         const deletedIds = new Set(deletedLocalRecords.map(d => d.id));
 
@@ -172,17 +173,7 @@ async function syncFromSupabaseToCache(organizationId?: string) {
           .map((item: any) => ({ ...item, sync_status: 'sincronizado' }));
 
         if (itemsToCache.length > 0) {
-          await db.transaction('rw', (db as any)[tableName], db.deleted_records, async () => {
-            // Re-verificar eliminaciones en la transacción para evitar condiciones de carrera
-            const currentDeleted = await db.deleted_records.where('table_name').equals(tableName).toArray();
-            const currentDeletedIds = new Set(currentDeleted.map(d => d.id));
-
-            const finalItems = itemsToCache.filter(item => !currentDeletedIds.has(item.id));
-
-            if (finalItems.length > 0) {
-              await (db as any)[tableName].bulkPut(finalItems);
-            }
-          });
+          await (db as any)[tableName].bulkPut(itemsToCache);
         }
 
         // GARBAGE COLLECTION
@@ -197,11 +188,11 @@ async function syncFromSupabaseToCache(organizationId?: string) {
               .toArray();
 
             const orphansToDelete = localRecords
-              .filter((l: any) => l.sync_status === 'sincronizado' && !remoteIds.has(l.id))
+              .filter((l: any) => l.sync_status !== 'pendiente' && !remoteIds.has(l.id))
               .map((l: any) => l.id);
 
             if (orphansToDelete.length > 0) {
-              console.log(`[GC] Deleting ${orphansToDelete.length} stale records from ${tableName}`);
+              console.log(`[GC] Cloud Priority: Deleting ${orphansToDelete.length} records from ${tableName} (not in cloud)`);
               await (db as any)[tableName].bulkDelete(orphansToDelete);
 
               if (tableName === 'transactions') {
@@ -212,20 +203,20 @@ async function syncFromSupabaseToCache(organizationId?: string) {
                 }
               }
             }
+          }
 
-            // DEEP CLEAN (GHOST ENTRIES)
-            if (tableName === 'transactions') {
-              const allEntries = await db.journal_entries.toArray();
-              if (allEntries.length > 0) {
-                const allTxIds = new Set(await db.transactions.toCollection().primaryKeys());
-                const ghostEntryIds = allEntries
-                  .filter(e => !allTxIds.has(e.transaction_id) && e.sync_status === 'sincronizado')
-                  .map(e => e.id);
+          // DEEP CLEAN (GHOST ENTRIES)
+          if (tableName === 'transactions') {
+            const allEntries = await db.journal_entries.toArray();
+            if (allEntries.length > 0) {
+              const allTxIds = new Set(await db.transactions.toCollection().primaryKeys());
+              const ghostEntryIds = allEntries
+                .filter(e => !allTxIds.has(e.transaction_id) && e.sync_status === 'sincronizado')
+                .map(e => e.id);
 
-                if (ghostEntryIds.length > 0) {
-                  console.log(`[GC] Found ${ghostEntryIds.length} ghost journal entries. Deleting...`);
-                  await db.journal_entries.bulkDelete(ghostEntryIds);
-                }
+              if (ghostEntryIds.length > 0) {
+                console.log(`[GC] Found ${ghostEntryIds.length} ghost journal entries. Deleting...`);
+                await db.journal_entries.bulkDelete(ghostEntryIds);
               }
             }
           }
@@ -264,9 +255,12 @@ async function syncFromCacheToSupabase() {
       for (const table of tablesInReverse) {
         if (deletionsByTable[table]?.length > 0) {
           const ids = deletionsByTable[table];
+          console.log(`[Sync] Pushing ${ids.length} deletions to ${table}...`);
           const { error } = await (supabase as any).from(table).delete().in('id', ids);
           if (!error) {
             await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
+          } else {
+            console.error(`[Sync] Error deleting from ${table}:`, error);
           }
         }
       }
@@ -371,7 +365,10 @@ export async function syncToSupabase(organizationId?: string) {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   if (!supabaseUrl || supabaseUrl.includes('placeholder')) return;
 
+  // 1. Enviar cambios locales primero (Garantiza que lo nuevo se suba)
   await syncFromCacheToSupabase();
+
+  // 2. Descargar datos de la nube (Garantiza que la nube sea la prioridad)
   await syncFromSupabaseToCache(organizationId);
 }
 

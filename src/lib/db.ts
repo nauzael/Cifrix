@@ -435,7 +435,7 @@ export class CifrixDB extends Dexie {
 
   constructor() {
     super('CifrixDatabase');
-    this.version(12).stores({
+    this.version(13).stores({
       // Tablas existentes
       organizations: 'id, type, sync_status',
       members: 'id, organization_id, full_name, document_id, status, sync_status',
@@ -450,7 +450,7 @@ export class CifrixDB extends Dexie {
       invoices: 'id, organization_id, customer_id, number, date, status, dian_status, cufe, sync_status',
       invoice_items: 'id, invoice_id, sync_status',
       payments: 'id, organization_id, invoice_id, date, sync_status',
-      deleted_records: 'id, table_name, sync_status',
+      deleted_records: 'id, table_name, sync_status, [table_name+sync_status]',
       user_vault: 'email, user_id, last_sync',
 
       // Nuevas tablas - Módulo de Renta
