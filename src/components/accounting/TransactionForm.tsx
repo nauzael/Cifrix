@@ -13,6 +13,7 @@ import { SearchableSelect } from '../ui/SearchableSelect';
 import { useAccountingStore } from '../../store/accountingStore';
 import { Modal } from '../ui/Modal';
 import { toast } from '../../store/toastStore';
+import { syncToSupabase } from '../../lib/sync';
 
 const entrySchema = z.object({
   account_id: z.string().min(1, 'Seleccione una cuenta'),
@@ -234,6 +235,10 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
       });
 
       toast.success(transactionId ? 'Asiento actualizado correctamente' : 'Asiento creado correctamente');
+
+      // Trigger immediate sync
+      syncToSupabase(orgId).catch(console.error);
+
       onSuccess();
       onClose();
     } catch (error) {
