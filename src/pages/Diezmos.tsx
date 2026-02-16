@@ -51,7 +51,7 @@ type ContributionForm = z.infer<typeof contributionSchema>;
 
 export function Diezmos() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, profile } = useAuthStore();
   const [orgId, setOrgId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'registro' | 'proyectos' | 'reportes'>('registro');
   const [members, setMembers] = useState<Member[]>([]);
@@ -65,16 +65,18 @@ export function Diezmos() {
   const [dailyCount, setDailyCount] = useState(0);
 
   useEffect(() => {
-    const fetchOrg = async () => {
-      if (user) {
-        let orgs = await db.organizations.toArray();
+    if (profile?.organizationId) {
+      setOrgId(profile.organizationId);
+    } else if (user) {
+      const fetchOrg = async () => {
+        const orgs = await db.organizations.toArray();
         if (orgs.length > 0) {
           setOrgId(orgs[0].id);
         }
-      }
-    };
-    fetchOrg();
-  }, [user]);
+      };
+      fetchOrg();
+    }
+  }, [user, profile]);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ContributionForm>({
     resolver: zodResolver(contributionSchema) as any,
