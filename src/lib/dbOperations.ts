@@ -32,6 +32,12 @@ function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
     if (!data) return data;
     const mapped = { ...data };
 
+    // Siempre eliminar campos de control local antes de enviar a Supabase
+    if (toRemote) {
+        delete mapped.sync_status;
+        // Si hay otros campos locales como updated_at que no están en Supabase, borrarlos aquí
+    }
+
     if (tableName === 'members') {
         const statusMap: Record<string, string> = { 'activo': 'active', 'inactivo': 'inactive', 'visitante': 'active' };
         const revMap: Record<string, string> = { 'active': 'activo', 'inactive': 'inactivo', 'transferred': 'inactivo' };
