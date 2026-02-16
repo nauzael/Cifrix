@@ -17,45 +17,101 @@ export const TABLES_TO_SYNC = [
   'invoice_items',
   'payments',
   'audit_logs',
-  // Nuevas tablas - Módulo de Renta
   'declaraciones_renta',
   'ingresos_renta',
   'deducciones_renta',
   'activos_pasivos_renta',
-  // Nuevas tablas - Módulo de Exógenos
   'exogenos',
-  'mapeo_inconsistencias'
+  'mapeo_inconsistencias',
+  'fiscal_years',
+  'financial_notes'
+];
+
+// Tablas que NO tienen índice organization_id en Dexie (evita SchemaError)
+const TABLES_WITHOUT_ORG_INDEX = [
+  'organizations',
+  'audit_logs',
+  'journal_entries',
+  'invoice_items',
+  'ingresos_renta',
+  'deducciones_renta',
+  'activos_pasivos_renta',
+  'mapeo_inconsistencias',
+  'financial_notes'
 ];
 
 /**
  * Mapea datos entre el esquema local (Dexie) y el remoto (Supabase)
+ * Resuelve discrepancias de nombres de columnas y valores de enums (idioma)
  */
 function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
+  if (!data) return data;
+  const mapped = { ...data };
+
+  // 1. MIEMBROS
   if (tableName === 'members') {
+    const statusMap: Record<string, string> = { 'activo': 'active', 'inactivo': 'inactive', 'visitante': 'active' };
+    const revMap: Record<string, string> = { 'active': 'activo', 'inactive': 'inactivo', 'transferred': 'inactivo' };
+
     if (toRemote) {
-      // De Local a Supabase
-      const mapped = { ...data };
-      if ('status' in mapped) mapped.membership_status = mapped.status;
+      if ('status' in mapped) mapped.membership_status = statusMap[mapped.status] || 'active';
       if ('entry_date' in mapped) mapped.membership_date = mapped.entry_date;
-
-      // Eliminar campos que NO existen en Supabase
-      delete mapped.status;
-      delete mapped.entry_date;
-      delete mapped.pledge_amount;
-      delete mapped.pledge_period;
-      delete mapped.ministry;
-      delete mapped.photo_url;
-
-      return mapped;
+      // Eliminar campos locales que no existen en Supabase para evitar 400
+      ['status', 'entry_date', 'pledge_amount', 'pledge_period', 'ministry', 'photo_url'].forEach(k => delete mapped[k]);
     } else {
-      // De Supabase a Local
-      const mapped = { ...data };
-      if ('membership_status' in mapped) mapped.status = mapped.membership_status;
+      if ('membership_status' in mapped) mapped.status = revMap[mapped.membership_status] || 'activo';
       if ('membership_date' in mapped) mapped.entry_date = mapped.membership_date;
-      return mapped;
     }
   }
-  return data;
+
+  // 2. CONTRIBUCIONES / DIEZMOS
+  else if (tableName === 'contributions') {
+    if (toRemote) {
+      if ('category' in mapped) mapped.contribution_type = mapped.category;
+      if ('date' in mapped) mapped.contribution_date = mapped.date;
+      if ('method' in mapped) mapped.payment_method = mapped.method.toLowerCase();
+      ['category', 'date', 'method'].forEach(k => delete mapped[k]);
+    } else {
+      if ('contribution_type' in mapped) mapped.category = mapped.contribution_type;
+      if ('contribution_date' in mapped) mapped.date = mapped.contribution_date;
+      if ('payment_method' in mapped) mapped.method = (mapped.payment_method || 'CASH').toUpperCase();
+    }
+  }
+
+  // 3. FACTURAS
+  else if (tableName === 'invoices') {
+    const statusMap: Record<string, string> = { 'borrador': 'draft', 'enviada': 'sent', 'pagada': 'paid', 'vencida': 'overdue', 'anulada': 'cancelled' };
+    const revMap: Record<string, string> = { 'draft': 'borrador', 'sent': 'enviada', 'paid': 'pagada', 'overdue': 'vencida', 'cancelled': 'anulada' };
+
+    if (toRemote) {
+      if ('number' in mapped) mapped.invoice_number = mapped.number;
+      if ('date' in mapped) mapped.invoice_date = mapped.date;
+      if ('tax' in mapped) mapped.tax_amount = mapped.tax;
+      if ('total' in mapped) mapped.total_amount = mapped.total;
+      if ('status' in mapped) mapped.status = statusMap[mapped.status] || 'draft';
+      ['number', 'date', 'tax', 'total'].forEach(k => delete mapped[k]);
+    } else {
+      if ('invoice_number' in mapped) mapped.number = mapped.invoice_number;
+      if ('invoice_date' in mapped) mapped.date = mapped.invoice_date;
+      if ('tax_amount' in mapped) mapped.tax = mapped.tax_amount;
+      if ('total_amount' in mapped) mapped.total = mapped.total_amount;
+      if ('status' in mapped) mapped.status = revMap[mapped.status] || 'borrador';
+    }
+  }
+
+  // 4. ITEMS DE FACTURA
+  else if (tableName === 'invoice_items') {
+    if (toRemote) {
+      if ('tax_percent' in mapped) mapped.tax_rate = mapped.tax_percent;
+      if ('discount_percent' in mapped) mapped.discount_rate = mapped.discount_percent;
+      ['tax_percent', 'discount_percent'].forEach(k => delete mapped[k]);
+    } else {
+      if ('tax_rate' in mapped) mapped.tax_percent = mapped.tax_rate;
+      if ('discount_rate' in mapped) mapped.discount_percent = mapped.discount_rate;
+    }
+  }
+
+  return mapped;
 }
 
 /**
@@ -125,14 +181,7 @@ async function syncFromSupabaseToCache(organizationId?: string) {
 
         // GARBAGE COLLECTION
         if (organizationId && data !== null) {
-          const isFullSetFetch = tableName !== 'organizations' &&
-            tableName !== 'audit_logs' &&
-            tableName !== 'journal_entries' &&
-            tableName !== 'invoice_items' &&
-            tableName !== 'ingresos_renta' &&
-            tableName !== 'deducciones_renta' &&
-            tableName !== 'activos_pasivos_renta' &&
-            tableName !== 'mapeo_inconsistencias';
+          const isFullSetFetch = !TABLES_WITHOUT_ORG_INDEX.includes(tableName);
 
           if (isFullSetFetch) {
             const remoteIds = new Set(data.map((d: any) => d.id));
