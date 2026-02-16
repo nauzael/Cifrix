@@ -83,15 +83,26 @@ function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
 
   // 2. CONTRIBUCIONES / DIEZMOS
   else if (tableName === 'contributions') {
+    const methodMap: Record<string, string> = {
+      'EFECTIVO': 'CASH',
+      'TARJETA': 'CARD',
+      'TRANSFERENCIA': 'TRANSFER'
+    };
+    const revMethodMap: Record<string, string> = {
+      'CASH': 'EFECTIVO',
+      'CARD': 'TARJETA',
+      'TRANSFER': 'TRANSFERENCIA'
+    };
+
     if (toRemote) {
       if ('category' in mapped) mapped.contribution_type = mapped.category;
       if ('date' in mapped) mapped.contribution_date = mapped.date;
-      if ('method' in mapped) mapped.payment_method = mapped.method.toLowerCase();
+      if ('method' in mapped) mapped.payment_method = methodMap[mapped.method.toUpperCase()] || 'CASH';
       ['category', 'date', 'method', 'fund_id', 'project_id'].forEach(k => delete mapped[k]);
     } else {
       if ('contribution_type' in mapped) mapped.category = mapped.contribution_type;
       if ('contribution_date' in mapped) mapped.date = mapped.contribution_date;
-      if ('payment_method' in mapped) mapped.method = (mapped.payment_method || 'CASH').toUpperCase();
+      if ('payment_method' in mapped) mapped.method = revMethodMap[mapped.payment_method.toUpperCase()] || 'EFECTIVO';
     }
   }
 
