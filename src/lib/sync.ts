@@ -53,7 +53,15 @@ function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
 
     if (toRemote) {
       if ('status' in mapped) mapped.membership_status = statusMap[mapped.status] || 'active';
-      if ('entry_date' in mapped) mapped.membership_date = mapped.entry_date;
+      if ('entry_date' in mapped) mapped.membership_date = mapped.entry_date || null;
+      if ('birth_date' in mapped) mapped.birth_date = mapped.birth_date || null;
+      if ('baptism_date' in mapped) mapped.baptism_date = mapped.baptism_date || null;
+      if ('email' in mapped) mapped.email = mapped.email || null;
+      if ('document_id' in mapped) mapped.document_id = mapped.document_id || null;
+      if ('phone' in mapped) mapped.phone = mapped.phone || null;
+      if ('address' in mapped) mapped.address = mapped.address || null;
+      if (mapped.is_active === undefined) mapped.is_active = mapped.membership_status === 'active';
+
       // Eliminar campos locales que no existen en Supabase para evitar 400
       ['status', 'entry_date', 'pledge_amount', 'pledge_period', 'ministry', 'photo_url'].forEach(k => delete mapped[k]);
     } else {
@@ -317,6 +325,10 @@ async function syncFromCacheToSupabase() {
           });
 
           const { error } = await (supabase as any).from(tableName).upsert(cleanedData);
+          if (tableName === 'members' && error) {
+            console.warn(`[Sync Debug] Members upsert error:`, error, "Data sent:", cleanedData);
+          }
+
           if (!error) {
             const ids = chunk.map(i => i.id);
             await (db as any)[tableName].where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
@@ -329,6 +341,10 @@ async function syncFromCacheToSupabase() {
               if (!indError) {
                 await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
               } else {
+                if (tableName === 'members') {
+                  console.error(`[Sync ERROR] Individual member sync failed for ${item.full_name}:`, indError, "Object:", mappedItem);
+                }
+
                 if (tableName === 'audit_logs' && indError.code === '42501') {
                   // RLS Error on audit_logs, mark as sync'd to avoid stalling, but maybe log it
                   await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
