@@ -3,6 +3,8 @@ import { supabase } from './supabase';
 import { APP_CONFIG, dbLog } from './config';
 import { toast } from '../store/toastStore';
 
+let syncInProgress = false;
+
 export const TABLES_TO_SYNC = [
   'organizations',
   'accounts',
@@ -153,13 +155,12 @@ async function syncFromSupabaseToCache(organizationId?: string) {
       if (data) {
         const mappedData = data.map((item: any) => mapTableSchema(tableName, item, false));
 
-        const deletedLocalRecords = await db.deleted_records
-          .where('[table_name+sync_status]')
-          .equals([tableName, 'pendiente'])
-          .or('[table_name+sync_status]')
-          .equals([tableName, 'sincronizado'])
+        // OBTENCIÓN ATÓMICA DE IDS BORRADOS (Garantiza que no vuelvan a aparecer)
+        const deletedEntries = await db.deleted_records
+          .where('table_name')
+          .equals(tableName)
           .toArray();
-        const deletedIds = new Set(deletedLocalRecords.map(d => d.id));
+        const deletedIds = new Set(deletedEntries.map(d => d.id));
 
         const pendingLocalItems = await (db as any)[tableName]
           .where('sync_status')
@@ -187,12 +188,15 @@ async function syncFromSupabaseToCache(organizationId?: string) {
               .equals(organizationId)
               .toArray();
 
+            // PRIORIDAD NUBE ABSOLUTA: 
+            // Borra localmente cualquier cosa que venga de la nube pero que no esté en el paquete remoto,
+            // SIEMPRE que no sea un registro nuevo creado localmente (pendiente).
             const orphansToDelete = localRecords
               .filter((l: any) => l.sync_status !== 'pendiente' && !remoteIds.has(l.id))
               .map((l: any) => l.id);
 
             if (orphansToDelete.length > 0) {
-              console.log(`[GC] Cloud Priority: Deleting ${orphansToDelete.length} records from ${tableName} (not in cloud)`);
+              console.log(`[GC] Cloud Priority Triggered: Removing ${orphansToDelete.length} stale/phantom records from ${tableName}`);
               await (db as any)[tableName].bulkDelete(orphansToDelete);
 
               if (tableName === 'transactions') {
@@ -360,16 +364,21 @@ async function syncFromCacheToSupabase() {
  * Función principal de sincronización
  */
 export async function syncToSupabase(organizationId?: string) {
-  if (APP_CONFIG.DB_MODE === 'production' || !navigator.onLine) return;
+  if (APP_CONFIG.DB_MODE === 'production' || !navigator.onLine || syncInProgress) return;
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   if (!supabaseUrl || supabaseUrl.includes('placeholder')) return;
 
-  // 1. Enviar cambios locales primero (Garantiza que lo nuevo se suba)
-  await syncFromCacheToSupabase();
+  syncInProgress = true;
+  try {
+    // 1. Enviar cambios locales primero (Garantiza que lo nuevo se suba)
+    await syncFromCacheToSupabase();
 
-  // 2. Descargar datos de la nube (Garantiza que la nube sea la prioridad)
-  await syncFromSupabaseToCache(organizationId);
+    // 2. Descargar datos de la nube (Garantiza que la nube sea la prioridad)
+    await syncFromSupabaseToCache(organizationId);
+  } finally {
+    syncInProgress = false;
+  }
 }
 
 // --------------------------------------------------------
