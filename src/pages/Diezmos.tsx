@@ -32,6 +32,10 @@ import {
 } from 'lucide-react';
 import { toast } from '../store/toastStore';
 import { syncToSupabase } from '../lib/sync';
+import {
+  insertRecord,
+  getFromCacheOrSupabase
+} from '../lib/dbOperations';
 
 const contributionSchema = z.object({
   amount: z.string().min(1, 'El monto es requerido').transform((val) => Number(val)),
@@ -83,13 +87,13 @@ export function Diezmos() {
   const loadData = async () => {
     if (!orgId) return;
     try {
-      const allMembers = await db.members.where('organization_id').equals(orgId).toArray();
+      const allMembers = await getFromCacheOrSupabase<Member>('members', orgId);
       setMembers(allMembers.sort((a, b) => a.full_name.localeCompare(b.full_name)));
 
-      const allProjects = await db.projects.where('organization_id').equals(orgId).toArray();
+      const allProjects = await getFromCacheOrSupabase<Project>('projects', orgId);
       setProjects(allProjects);
 
-      // Load daily stats
+      // Load daily stats from cache (instant)
       const today = new Date().toISOString().split('T')[0];
       const todayContribs = await db.contributions
         .where('organization_id').equals(orgId)
@@ -185,11 +189,18 @@ export function Diezmos() {
         }
       ];
 
-      await db.transaction('rw', [db.transactions, db.contributions, db.journal_entries], async () => {
-        await db.transactions.add(transaction);
-        await db.contributions.add(contribution);
-        await db.journal_entries.bulkAdd(entries);
-      });
+      // Usamos insertRecord para asegurar prioridad en la nube
+      const results = await Promise.all([
+        insertRecord('transactions', transaction),
+        insertRecord('contributions', contribution),
+        ...entries.map(e => insertRecord('journal_entries', e))
+      ]);
+
+      const hasError = results.some(r => r.error);
+      if (hasError) {
+        const firstError = results.find(r => r.error)?.error;
+        throw firstError;
+      }
 
       reset();
       setSelectedMember(null);

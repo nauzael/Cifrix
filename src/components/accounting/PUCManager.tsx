@@ -14,7 +14,7 @@ import PUC_MD from '../../../.documentacion/PUC.md?raw';
 import { Modal } from '../ui/Modal';
 import { toast } from '../../store/toastStore';
 import { confirm } from '../../store/confirmStore';
-import { deleteRecord } from '../../lib/dbOperations';
+import { insertRecord, deleteRecord } from '../../lib/dbOperations';
 
 const accountSchema = z.object({
   code: z.string().min(1, 'El código es requerido'),
@@ -113,7 +113,7 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
   const onSubmit = async (data: AccountFormData) => {
     if (!orgId) return;
     try {
-      await db.accounts.add({
+      const { error } = await insertRecord('accounts', {
         id: uuidv4(),
         organization_id: orgId,
         code: data.code,
@@ -123,9 +123,11 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
         level: data.code.length,
         accepts_movement: data.accepts_movement,
         parent_id: data.parent_id === "" ? null : data.parent_id,
-        created_at: new Date().toISOString(),
-        sync_status: 'pendiente'
+        created_at: new Date().toISOString()
       });
+
+      if (error) throw error;
+
       setIsModalOpen(false);
       reset();
       toast.success('Cuenta guardada exitosamente');

@@ -247,18 +247,19 @@ export async function getFromCacheOrSupabase<T>(
     tableName: string,
     organizationId?: string
 ): Promise<T[]> {
-    // 1. Obtener desde Dexie (Caché local)
-    let cachedData = organizationId
+    // 1. Si estamos online, refrescar desde la nube para asegurar prioridad de datos
+    if (navigator.onLine) {
+        try {
+            await syncFromSupabase(tableName, organizationId);
+        } catch (error) {
+            console.warn(`[DB] Falló refresco desde nube para ${tableName}, usando caché:`, error);
+        }
+    }
+
+    // 2. Obtener desde Dexie (Caché local actualizada o fallback)
+    const cachedData = organizationId
         ? await (db as any)[tableName].where('organization_id').equals(organizationId).toArray()
         : await (db as any)[tableName].toArray();
-
-    // 2. Si hay internet y la caché está vacía, refrescar desde la nube
-    if (navigator.onLine && (!cachedData || cachedData.length === 0)) {
-        await syncFromSupabase(tableName, organizationId);
-        cachedData = organizationId
-            ? await (db as any)[tableName].where('organization_id').equals(organizationId).toArray()
-            : await (db as any)[tableName].toArray();
-    }
 
     return cachedData as T[];
 }

@@ -15,7 +15,7 @@ export const APP_CONFIG = {
      * 'hybrid' = Escrituras en Supabase + Caché local para lecturas
      * 'offline' = Modo offline-first (legacy)
      */
-    DB_MODE: 'offline' as 'production' | 'hybrid' | 'offline',
+    DB_MODE: 'hybrid' as 'production' | 'hybrid' | 'offline',
 
     /**
      * Si está habilitado, se usará la base de datos local (Dexie) como caché

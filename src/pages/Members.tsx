@@ -32,6 +32,12 @@ import { generateDonationCertificate } from '../lib/certificates';
 import { toast } from '../store/toastStore';
 import { confirm } from '../store/confirmStore';
 import { syncToSupabase } from '../lib/sync';
+import {
+  insertRecord,
+  updateRecord,
+  deleteRecord,
+  getFromCacheOrSupabase
+} from '../lib/dbOperations';
 
 const memberSchema = z.object({
   full_name: z.string().min(3, 'El nombre es requerido'),
@@ -87,11 +93,11 @@ export function Members() {
   const fetchMembers = async () => {
     if (!orgId) return;
     try {
-      let query = db.members.where('organization_id').equals(orgId);
-      let results = await query.toArray();
+      const results = await getFromCacheOrSupabase<Member>('members', orgId);
+      let filtered = [...results];
 
       if (searchTerm) {
-        results = results.filter(m =>
+        filtered = filtered.filter(m =>
           m.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           m.document_id?.includes(searchTerm) ||
           m.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -99,10 +105,10 @@ export function Members() {
       }
 
       if (statusFilter !== 'all') {
-        results = results.filter(m => m.status === statusFilter);
+        filtered = filtered.filter(m => m.status === statusFilter);
       }
 
-      setMembers(results.sort((a, b) => a.full_name.localeCompare(b.full_name)));
+      setMembers(filtered.sort((a, b) => a.full_name.localeCompare(b.full_name)));
     } catch (error) {
       console.error("Error fetching members:", error);
       toast.error('Error al cargar miembros.');
@@ -145,11 +151,12 @@ export function Members() {
     if (!orgId) return;
     try {
       if (editingMember) {
-        await db.members.update(editingMember.id, {
+        const { error } = await updateRecord('members', editingMember.id, {
           ...data,
-          is_active: data.status === 'activo',
-          sync_status: 'pendiente'
+          is_active: data.status === 'activo'
         });
+
+        if (error) throw error;
 
         await logActivity({
           organization_id: orgId,
@@ -163,7 +170,7 @@ export function Members() {
         toast.success('Miembro actualizado correctamente');
       } else {
         const memberId = uuidv4();
-        const newMember: Member = {
+        const { error } = await insertRecord('members', {
           id: memberId,
           organization_id: orgId,
           ...data,
@@ -176,10 +183,10 @@ export function Members() {
           baptism_date: data.baptism_date || null,
           photo_url: null,
           is_active: data.status === 'activo',
-          created_at: new Date().toISOString(),
-          sync_status: 'pendiente'
-        };
-        await db.members.add(newMember);
+          created_at: new Date().toISOString()
+        });
+
+        if (error) throw error;
 
         await logActivity({
           organization_id: orgId,
@@ -208,11 +215,15 @@ export function Members() {
 
   const toggleStatus = async (member: Member) => {
     const nextStatus = member.status === 'activo' ? 'inactivo' : 'activo';
-    await db.members.update(member.id, {
+    const { error } = await updateRecord('members', member.id, {
       status: nextStatus,
-      is_active: nextStatus === 'activo',
-      sync_status: 'pendiente'
+      is_active: nextStatus === 'activo'
     });
+
+    if (error) {
+      toast.error('Error al actualizar estado');
+      return;
+    }
 
     await logActivity({
       organization_id: orgId,
@@ -243,7 +254,8 @@ export function Members() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await db.members.delete(id);
+          const { error } = await deleteRecord('members', id);
+          if (error) throw error;
 
           await logActivity({
             organization_id: orgId,
