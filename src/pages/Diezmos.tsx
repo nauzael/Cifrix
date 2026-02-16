@@ -191,18 +191,24 @@ export function Diezmos() {
         }
       ];
 
-      // Usamos insertRecord para asegurar prioridad en la nube
-      const results = await Promise.all([
-        insertRecord('transactions', transaction),
-        insertRecord('contributions', contribution),
-        ...entries.map(e => insertRecord('journal_entries', e))
-      ]);
+      // 1. Insertar Transacción primero (El Padre)
+      const txnResult = await insertRecord('transactions', transaction);
+      if (txnResult.error) throw txnResult.error;
 
-      const hasError = results.some(r => r.error);
-      if (hasError) {
-        const firstError = results.find(r => r.error)?.error;
-        throw firstError;
+      // 2. Insertar Aporte/Contribución (El Hijo - depende de txn)
+      const contribResult = await insertRecord('contributions', contribution);
+      if (contribResult.error) {
+        // Si falla, idealmente deberíamos hacer rollback de txn, pero en este MVP offline-first,
+        // simplemente reportamos el error.
+        throw contribResult.error;
       }
+
+      // 3. Insertar Asientos (Los Nietos - dependen de txn)
+      // Estos sí pueden ir en paralelo entre ellos
+      const entryResults = await Promise.all(entries.map(e => insertRecord('journal_entries', e)));
+
+      const firstEntryError = entryResults.find(r => r.error)?.error;
+      if (firstEntryError) throw firstEntryError;
 
       reset();
       setSelectedMember(null);
