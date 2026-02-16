@@ -234,30 +234,48 @@ export function Accounting() {
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Gestión financiera y libros oficiales</p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
-          {[
-            { id: 'journal', label: 'Libro Diario', icon: BookOpen },
-            { id: 'ledger', label: 'Mayor', icon: Library },
-            { id: 'trial_balance', label: 'Balance Prueba', icon: Scale },
-            { id: 'financial_statements', label: 'Estados Fin.', icon: FileBarChart },
-            { id: 'reconciliation', label: 'Conciliación', icon: Building2 },
-            { id: 'categories', label: 'Categorías', icon: Tags },
-            { id: 'puc', label: 'PUC', icon: ListTree },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5",
-                activeTab === tab.id
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-              )}
-            >
-              <tab.icon className="size-4" />
-              <span className={cn(activeTab === tab.id ? "inline" : "hidden sm:inline")}>{tab.label}</span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              toast.info('Iniciando sincronización completa...');
+              try {
+                await syncToSupabase(orgId);
+                toast.success('Sincronización finalizada correctamente');
+              } catch (error) {
+                console.error(error);
+                toast.error('Error al sincronizar');
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg text-xs font-bold transition-all border border-emerald-200 dark:border-emerald-500/20 shadow-sm"
+          >
+            <CloudFog className="size-4" />
+            <span className="hidden sm:inline">SINCRONIZAR</span>
+          </button>
+          <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
+            {[
+              { id: 'journal', label: 'Libro Diario', icon: BookOpen },
+              { id: 'ledger', label: 'Mayor', icon: Library },
+              { id: 'trial_balance', label: 'Balance Prueba', icon: Scale },
+              { id: 'financial_statements', label: 'Estados Fin.', icon: FileBarChart },
+              { id: 'reconciliation', label: 'Conciliación', icon: Building2 },
+              { id: 'categories', label: 'Categorías', icon: Tags },
+              { id: 'puc', label: 'PUC', icon: ListTree },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5",
+                  activeTab === tab.id
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                )}
+              >
+                <tab.icon className="size-4" />
+                <span className={cn(activeTab === tab.id ? "inline" : "hidden sm:inline")}>{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -291,22 +309,8 @@ export function Accounting() {
                     className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
                     placeholder="Descripción o referencia..."
                   />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
-                    <button
-                      onClick={async () => {
-                        toast.info('Sincronizando con la nube...');
-                        try {
-                          await syncToSupabase(orgId);
-                          toast.success('Sincronización completada');
-                        } catch (error) {
-                          toast.error('Error al sincronizar');
-                        }
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                      title="Forzar Sincronización"
-                    >
-                      <CloudFog size={16} />
-                    </button>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center pr-2">
+                    <CloudFog className="text-emerald-500/30 size-4" />
                   </div>
                 </div>
               </div>

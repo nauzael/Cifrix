@@ -128,6 +128,24 @@ async function syncFromSupabaseToCache(organizationId?: string) {
                 }
               }
             }
+
+            // [NUEVO] Limpieza Profunda de Huérfanos (Deep Clean)
+            // Si el usuario reporta que "siguen apareciendo", es probable que sean asientos sin cabecera (Ghost Entries)
+            // Esto escanea TODOS los asientos locales y borra los que no tienen padre local.
+            if (tableName === 'transactions') {
+              const allEntries = await db.journal_entries.toArray();
+              if (allEntries.length > 0) {
+                const allTxIds = new Set(await db.transactions.toCollection().primaryKeys());
+                const ghostEntryIds = allEntries
+                  .filter(e => !allTxIds.has(e.transaction_id) && e.sync_status === 'sincronizado') // Solo borrar sincronizados (no pendientes de subir)
+                  .map(e => e.id);
+
+                if (ghostEntryIds.length > 0) {
+                  console.log(`[GC] Found ${ghostEntryIds.length} ghost journal entries (no parent transaction). Deleting...`);
+                  await db.journal_entries.bulkDelete(ghostEntryIds);
+                }
+              }
+            }
           }
         }
       }
