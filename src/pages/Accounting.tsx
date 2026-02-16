@@ -217,6 +217,11 @@ export function Accounting() {
             await db.transactions.delete(id);
           });
           toast.success('Asiento eliminado correctamente');
+
+          // Trigger sync immediately to push the deletion to the cloud
+          if (orgId) {
+            syncToSupabase(orgId);
+          }
         } catch (error) {
           console.error('Error deleting transaction:', error);
           toast.error('Error al eliminar el asiento');
