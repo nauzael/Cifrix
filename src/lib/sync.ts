@@ -32,56 +32,49 @@ const TABLES_TO_SYNC = [
 async function syncFromSupabaseToCache(organizationId?: string) {
   if (!APP_CONFIG.USE_LOCAL_CACHE && APP_CONFIG.DB_MODE !== 'offline') return;
 
-  dbLog('Syncing FROM Supabase TO local cache...');
+  dbLog('Syncing FROM Supabase TO local cache (PARALLEL)...');
 
-  for (const tableName of TABLES_TO_SYNC) {
+  // Procesar todas las tablas en paralelo para máxima velocidad
+  const syncPromises = TABLES_TO_SYNC.map(async (tableName) => {
     try {
       let query = (supabase as any).from(tableName as any).select('*');
 
-      // Filtrar por organización si se proporciona
       if (organizationId && tableName !== 'organizations' && tableName !== 'audit_logs') {
         query = query.eq('organization_id', organizationId);
       }
 
       const { data, error } = await query;
-
-      if (error) {
-        console.error(`Error fetching ${tableName} from Supabase:`, error);
-        continue;
-      }
+      if (error) throw error;
 
       if (data && data.length > 0) {
-        // Obtener IDs eliminados localmente para esta tabla para no volver a descargarlos
+        // Optimización masiva: obtener IDs locales conflictivos de una vez
         const deletedLocalRecords = await db.deleted_records
           .where('table_name')
           .equals(tableName)
           .toArray();
         const deletedIds = new Set(deletedLocalRecords.map(d => d.id));
 
-        // RECONCILIACIÓN SEGURA: No sobrescribir registros con cambios locales pendientes
-        await db.transaction('rw', (db as any)[tableName], async () => {
-          for (const remoteItem of data) {
-            // Saltar si el registro fue eliminado localmente
-            if (deletedIds.has(remoteItem.id)) continue;
+        const pendingLocalItems = await (db as any)[tableName]
+          .where('sync_status')
+          .equals('pendiente')
+          .toArray();
+        const pendingIds = new Set(pendingLocalItems.map((item: any) => item.id));
 
-            const localItem = await (db as any)[tableName].get(remoteItem.id);
+        // Filtrar y preparar para bulkPut
+        const itemsToCache = data
+          .filter((remoteItem: any) => !deletedIds.has(remoteItem.id) && !pendingIds.has(remoteItem.id))
+          .map((item: any) => ({ ...item, sync_status: 'sincronizado' }));
 
-            // Solo sobrescribir si el registro no existe localmente o NO tiene cambios pendientes
-            if (!localItem || localItem.sync_status !== 'pendiente') {
-              await (db as any)[tableName].put({
-                ...remoteItem,
-                sync_status: 'sincronizado'
-              });
-            }
-          }
-        });
-        dbLog(`Synced ${data.length} records for ${tableName}`);
+        if (itemsToCache.length > 0) {
+          await (db as any)[tableName].bulkPut(itemsToCache);
+        }
       }
     } catch (error) {
-      console.error(`Error syncing ${tableName}:`, error);
+      console.error(`Error syncing table ${tableName}:`, error);
     }
-  }
+  });
 
+  await Promise.all(syncPromises);
   dbLog('Pull sync completed');
 }
 
@@ -89,103 +82,107 @@ async function syncFromSupabaseToCache(organizationId?: string) {
  * Sincronización en modo OFFLINE: Sube datos pendientes a Supabase
  */
 async function syncFromCacheToSupabase() {
-  dbLog('Syncing FROM local cache TO Supabase...');
-  // ... (rest of syncFromCacheToSupabase remains same, but I'll provide the whole block for context)
-  // Process deletions first
+  dbLog('Syncing FROM local cache TO Supabase (BATCHED)...');
+
+  // 1. ELIMINACIONES MASIVAS
   try {
     const pendingDeletions = await db.deleted_records
       .where('sync_status')
       .equals('pendiente')
       .toArray();
 
-    for (const record of pendingDeletions) {
-      const { error } = await (supabase as any)
-        .from(record.table_name)
-        .delete()
-        .eq('id', record.id);
+    if (pendingDeletions.length > 0) {
+      const deletionsByTable: Record<string, string[]> = {};
+      pendingDeletions.forEach(d => {
+        if (!deletionsByTable[d.table_name]) deletionsByTable[d.table_name] = [];
+        deletionsByTable[d.table_name].push(d.id);
+      });
 
-      if (!error) {
-        await db.deleted_records.update(record.id, { sync_status: 'sincronizado' });
+      for (const [table, ids] of Object.entries(deletionsByTable)) {
+        const { error } = await (supabase as any)
+          .from(table)
+          .delete()
+          .in('id', ids);
+
+        if (!error) {
+          await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
+        }
       }
     }
   } catch (error) {
-    console.error('Error syncing deletions:', error);
+    console.error('Error in batched deletions:', error);
   }
 
+  // 2. SUBIDAS MASIVAS (BATCH UPSERT)
   for (const tableName of TABLES_TO_SYNC) {
     try {
-      let query = (db as any)[tableName]
+      const pendingItems = await (db as any)[tableName]
         .where('sync_status')
-        .equals('pendiente');
-
-      const pendingItems = tableName === 'accounts'
-        ? await query.sortBy('level')
-        : await query.toArray();
+        .equals('pendiente')
+        .toArray();
 
       if (pendingItems.length === 0) continue;
 
-      dbLog(`Syncing ${pendingItems.length} items for ${tableName}...`);
+      // Organizaciones y Cuentas siguen lógica individual por dependencias críticas
+      if (tableName === 'organizations' || tableName === 'accounts') {
+        const sortedItems = tableName === 'accounts' ? pendingItems.sort((a, b) => a.level - b.level) : pendingItems;
+        for (const item of sortedItems) {
+          const { sync_status, ...dataToSync } = item;
+          Object.keys(dataToSync).forEach(k => { if (dataToSync[k] === "") dataToSync[k] = null; });
 
-      for (const item of pendingItems) {
-        const { sync_status, ...dataToSync } = item;
-
-        // Limpiar campos vacíos para evitar errores de tipo en PostgreSQL
-        Object.keys(dataToSync).forEach(key => {
-          if (dataToSync[key] === "") {
-            dataToSync[key] = null;
-          }
-        });
-
-        let error: any = null;
-
-        // CASO ESPECIAL: Organizaciones
-        if (tableName === 'organizations') {
-          // Verificar si ya existe en Supabase
-          const { data: existing } = await supabase
-            .from('organizations')
-            .select('id')
-            .eq('id', item.id)
-            .single();
-
-          if (!existing) {
-            // Si es nueva, usar RPC para asegurar que el creador quede como founder
-            dbLog(`Creating new organization via RPC: ${item.name}`);
-            const { error: rpcError } = await supabase.rpc('create_organization_with_founder', {
-              p_name: item.name,
-              p_type: item.type,
-              p_tax_id: item.tax_id,
-              p_id: item.id // Pasamos el ID local para mantener consistencia
-            });
-            error = rpcError;
+          let error = null;
+          if (tableName === 'organizations') {
+            const { data: existing } = await supabase.from('organizations').select('id').eq('id', item.id).single();
+            if (!existing) {
+              const { error: rpcError } = await supabase.rpc('create_organization_with_founder', {
+                p_name: item.name, p_type: item.type, p_tax_id: item.tax_id, p_id: item.id
+              });
+              error = rpcError;
+            } else {
+              const { error: uError } = await (supabase as any).from('organizations').upsert(dataToSync);
+              error = uError;
+            }
           } else {
-            // Si ya existe, un simple upsert/update
-            const { error: upsertError } = await (supabase as any)
-              .from('organizations')
-              .upsert(dataToSync);
-            error = upsertError;
+            const { error: uError } = await (supabase as any).from(tableName).upsert(dataToSync);
+            error = uError;
           }
+          if (!error) await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
         }
-        // CASO NORMAL: Resto de tablas
-        else {
-          const { error: upsertError } = await (supabase as any)
-            .from(tableName)
-            .upsert(dataToSync);
-          error = upsertError;
+      } else {
+        // BATCH UPSERT para el resto de tablas (Transacciones, Asientos, Miembros, etc.)
+        const chunks = [];
+        for (let i = 0; i < pendingItems.length; i += 50) {
+          chunks.push(pendingItems.slice(i, i + 50));
         }
 
-        if (!error) {
-          await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
-        } else {
-          console.error(`Sync error for ${tableName} (${item.id}):`, error);
-          if (error.code === '42501') {
-            console.warn(`RLS Permission denied for table ${tableName}. Stopping sync for this table.`);
-            break;
+        for (const chunk of chunks) {
+          const cleanedData = chunk.map(item => {
+            const { sync_status, ...data } = item;
+            Object.keys(data).forEach(k => { if (data[k] === "") data[k] = null; });
+            return data;
+          });
+
+          const { error } = await (supabase as any).from(tableName).upsert(cleanedData);
+
+          if (!error) {
+            const ids = chunk.map(i => i.id);
+            await (db as any)[tableName].where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
+          } else {
+            // Fallback individual solo si el batch falla
+            for (const item of chunk) {
+              const { sync_status, ...dt } = item;
+              const { error: indError } = await (supabase as any).from(tableName).upsert(dt);
+              if (!indError) {
+                await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
+              } else {
+                await (db as any)[tableName].update(item.id, { sync_status: 'error' });
+              }
+            }
           }
-          await (db as any)[tableName].update(item.id, { sync_status: 'error' });
         }
       }
     } catch (error) {
-      console.error(`Error in sync process for ${tableName}:`, error);
+      console.error(`Error syncing table ${tableName}:`, error);
     }
   }
 }
