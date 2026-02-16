@@ -57,11 +57,11 @@ function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
             if ('category' in mapped) mapped.contribution_type = mapped.category;
             if ('date' in mapped) mapped.contribution_date = mapped.date;
             const methodMap: Record<string, string> = {
-                'EFECTIVO': 'CASH',
-                'TARJETA': 'CARD',
-                'TRANSFERENCIA': 'TRANSFER'
+                'EFECTIVO': 'cash',
+                'TARJETA': 'card',
+                'TRANSFERENCIA': 'transfer'
             };
-            if ('method' in mapped) mapped.payment_method = methodMap[mapped.method.toUpperCase()] || 'CASH';
+            if ('method' in mapped) mapped.payment_method = methodMap[mapped.method.toUpperCase()] || 'cash';
             ['category', 'date', 'method', 'fund_id', 'project_id'].forEach(k => delete mapped[k]);
         } else {
             const revMethodMap: Record<string, string> = {
@@ -71,7 +71,7 @@ function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
             };
             if ('contribution_type' in mapped) mapped.category = mapped.contribution_type;
             if ('contribution_date' in mapped) mapped.date = mapped.contribution_date;
-            if ('payment_method' in mapped) mapped.method = revMethodMap[mapped.payment_method.toUpperCase()] || 'EFECTIVO';
+            if ('payment_method' in mapped) mapped.method = revMethodMap[mapped.payment_method.toLowerCase()] || 'EFECTIVO';
         }
     }
 
