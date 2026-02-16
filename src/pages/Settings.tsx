@@ -27,6 +27,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from '../store/toastStore';
 import { confirm } from '../store/confirmStore';
+import { supabase } from '../lib/supabase';
 
 const orgSchema = z.object({
   name: z.string().min(3, 'El nombre es requerido'),
@@ -75,7 +76,7 @@ export function Settings() {
     if (!org) return;
     setIsSaving(true);
     try {
-      await db.organizations.update(org.id, {
+      const updatedOrg = {
         name: data.name,
         tax_id: data.tax_id,
         type: data.type,
@@ -85,12 +86,29 @@ export function Settings() {
           phone: data.phone,
           email: data.email
         },
-        sync_status: 'pendiente'
+        address: data.address, // Update top-level columns too
+        phone: data.phone,
+        email: data.email
+      };
+
+      // 1. Intentar guardar en la nube (Enfoque A: Directo)
+      const { error: cloudError } = await supabase
+        .from('organizations')
+        .update(updatedOrg)
+        .eq('id', org.id);
+
+      if (cloudError) throw cloudError;
+
+      // 2. Si tiene éxito en la nube, actualizar local
+      await db.organizations.update(org.id, {
+        ...updatedOrg,
+        sync_status: 'sincronizado'
       });
-      toast.success('Configuración guardada correctamente');
+
+      toast.success('Configuración sincronizada correctamente');
     } catch (error) {
       console.error('Error saving settings:', error);
-      toast.error('Error al guardar la configuración');
+      toast.error('Error al sincronizar con la nube. Verifique su conexión.');
     } finally {
       setIsSaving(false);
     }
@@ -275,13 +293,27 @@ export function Settings() {
                                     const reader = new FileReader();
                                     reader.onloadend = async () => {
                                       const base64 = reader.result as string;
-                                      await db.organizations.update(org.id, {
-                                        settings: {
-                                          ...org.settings,
-                                          logo_url: base64
-                                        },
-                                        sync_status: 'pendiente'
-                                      });
+
+                                      toast.info('Subiendo logo a la nube...');
+                                      try {
+                                        const { error: cloudError } = await supabase
+                                          .from('organizations')
+                                          .update({
+                                            settings: { ...org.settings, logo_url: base64 }
+                                          })
+                                          .eq('id', org.id);
+
+                                        if (cloudError) throw cloudError;
+
+                                        await db.organizations.update(org.id, {
+                                          settings: { ...org.settings, logo_url: base64 },
+                                          sync_status: 'sincronizado'
+                                        });
+                                        toast.success('Logo actualizado correctamente');
+                                      } catch (error) {
+                                        console.error('Error uploading logo:', error);
+                                        toast.error('No se pudo subir el logo a la nube');
+                                      }
                                     };
                                     reader.readAsDataURL(file);
                                   }
@@ -301,13 +333,24 @@ export function Settings() {
                                     confirmText: 'SÍ, ELIMINAR',
                                     type: 'danger',
                                     onConfirm: async () => {
-                                      await db.organizations.update(org!.id, {
-                                        settings: {
-                                          ...org!.settings,
-                                          logo_url: null
-                                        },
-                                        sync_status: 'pendiente'
-                                      });
+                                      try {
+                                        const { error: cloudError } = await supabase
+                                          .from('organizations')
+                                          .update({
+                                            settings: { ...org!.settings, logo_url: null }
+                                          })
+                                          .eq('id', org!.id);
+
+                                        if (cloudError) throw cloudError;
+
+                                        await db.organizations.update(org!.id, {
+                                          settings: { ...org!.settings, logo_url: null },
+                                          sync_status: 'sincronizado'
+                                        });
+                                        toast.success('Logo eliminado');
+                                      } catch (error) {
+                                        toast.error('Error al eliminar el logo de la nube');
+                                      }
                                     }
                                   });
                                 }}

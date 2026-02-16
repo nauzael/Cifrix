@@ -56,7 +56,7 @@ async function syncFromSupabaseToCache(organizationId?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      if (data && data.length > 0) {
+      if (data) {
         // Optimización masiva: obtener IDs locales conflictivos de una vez
         const deletedLocalRecords = await db.deleted_records
           .where('table_name')
@@ -78,7 +78,6 @@ async function syncFromSupabaseToCache(organizationId?: string) {
         if (itemsToCache.length > 0) {
           await db.transaction('rw', (db as any)[tableName], db.deleted_records, async () => {
             // Re-verificar eliminaciones en la transacción para evitar condiciones de carrera
-            // (Si el usuario borró algo mientras descargábamos de Supabase)
             const currentDeleted = await db.deleted_records.where('table_name').equals(tableName).toArray();
             const currentDeletedIds = new Set(currentDeleted.map(d => d.id));
 
@@ -90,25 +89,19 @@ async function syncFromSupabaseToCache(organizationId?: string) {
           });
         }
 
-        // --------------------------------------------------------
-        // GARBAGE COLLECTION: Eliminar registros locales que ya no existen en Supabase
-        // (Solo para tablas filtradas por organización, donde tenemos el set completo)
-        // --------------------------------------------------------
-        if (organizationId && data) {
+        // GARBAGE COLLECTION
+        if (organizationId && data !== null) {
           const isFullSetFetch = tableName !== 'organizations' &&
             tableName !== 'audit_logs' &&
-            tableName !== 'journal_entries' && // No tiene org_id
-            tableName !== 'invoice_items'; // No tiene org_id
+            tableName !== 'journal_entries' &&
+            tableName !== 'invoice_items';
 
           if (isFullSetFetch) {
-            const remoteIds = new Set(data.map(d => d.id));
-
-            // Obtener todos los IDs locales para esta organización que están marcados como 'sincronizado'
-            // (Ignoramos 'pendiente' porque son creaciones offline que aun no están en la nube)
+            const remoteIds = new Set(data.map((d: any) => d.id));
             const localRecords = await (db as any)[tableName]
               .where('organization_id')
               .equals(organizationId)
-              .toArray(); // Optimization: could use keys() but need sync_status check
+              .toArray();
 
             const orphansToDelete = localRecords
               .filter((l: any) => l.sync_status === 'sincronizado' && !remoteIds.has(l.id))
@@ -118,9 +111,7 @@ async function syncFromSupabaseToCache(organizationId?: string) {
               console.log(`[GC] Deleting ${orphansToDelete.length} stale records from ${tableName}`);
               await (db as any)[tableName].bulkDelete(orphansToDelete);
 
-              // Hook especial para cascada manual si es necesario
               if (tableName === 'transactions') {
-                // Si borramos transacciones, borrar sus detalles también
                 const entries = await db.journal_entries.where('transaction_id').anyOf(orphansToDelete).toArray();
                 const entryIds = entries.map(e => e.id);
                 if (entryIds.length > 0) {
@@ -129,19 +120,17 @@ async function syncFromSupabaseToCache(organizationId?: string) {
               }
             }
 
-            // [NUEVO] Limpieza Profunda de Huérfanos (Deep Clean)
-            // Si el usuario reporta que "siguen apareciendo", es probable que sean asientos sin cabecera (Ghost Entries)
-            // Esto escanea TODOS los asientos locales y borra los que no tienen padre local.
+            // DEEP CLEAN (GHOST ENTRIES)
             if (tableName === 'transactions') {
               const allEntries = await db.journal_entries.toArray();
               if (allEntries.length > 0) {
                 const allTxIds = new Set(await db.transactions.toCollection().primaryKeys());
                 const ghostEntryIds = allEntries
-                  .filter(e => !allTxIds.has(e.transaction_id) && e.sync_status === 'sincronizado') // Solo borrar sincronizados (no pendientes de subir)
+                  .filter(e => !allTxIds.has(e.transaction_id) && e.sync_status === 'sincronizado')
                   .map(e => e.id);
 
                 if (ghostEntryIds.length > 0) {
-                  console.log(`[GC] Found ${ghostEntryIds.length} ghost journal entries (no parent transaction). Deleting...`);
+                  console.log(`[GC] Found ${ghostEntryIds.length} ghost journal entries. Deleting...`);
                   await db.journal_entries.bulkDelete(ghostEntryIds);
                 }
               }
@@ -178,35 +167,22 @@ async function syncFromCacheToSupabase() {
         deletionsByTable[d.table_name].push(d.id);
       });
 
-      // Enforce strict deletion order (reverse of dependency order) to avoid FK constraint errors
-      // e.g. Delete journal_entries BEFORE transactions
-      const tablesInReverseHeader = [...TABLES_TO_SYNC].reverse();
-
-      for (const table of tablesInReverseHeader) {
-        if (deletionsByTable[table] && deletionsByTable[table].length > 0) {
+      const tablesInReverse = [...TABLES_TO_SYNC].reverse();
+      for (const table of tablesInReverse) {
+        if (deletionsByTable[table]?.length > 0) {
           const ids = deletionsByTable[table];
-
-          const { error } = await (supabase as any)
-            .from(table)
-            .delete()
-            .in('id', ids);
-
+          const { error } = await (supabase as any).from(table).delete().in('id', ids);
           if (!error) {
             await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
-          } else {
-            console.error(`Error deleting from ${table}:`, error);
-            // Si hay error (ej: FK), no marcamos como error inmediatamente para permitir reintentos,
-            // pero si es persistente, debería ser revisado.
-            // Para "transactions", si falla por FK, es crítico.
           }
         }
       }
     }
   } catch (error) {
-    console.error('Error in batched deletions:', error);
+    console.error('Error in batch deletions:', error);
   }
 
-  // 2. SUBIDAS MASIVAS (BATCH UPSERT)
+  // 2. SUBIDAS MASIVAS
   for (const tableName of TABLES_TO_SYNC) {
     try {
       const pendingItems = await (db as any)[tableName]
@@ -216,7 +192,6 @@ async function syncFromCacheToSupabase() {
 
       if (pendingItems.length === 0) continue;
 
-      // Organizaciones y Cuentas siguen lógica individual por dependencias críticas
       if (tableName === 'organizations' || tableName === 'accounts') {
         const sortedItems = tableName === 'accounts' ? pendingItems.sort((a, b) => a.level - b.level) : pendingItems;
         for (const item of sortedItems) {
@@ -232,26 +207,22 @@ async function syncFromCacheToSupabase() {
               });
               error = rpcError;
             } else {
-              const { error: uError } = await (supabase as any).from('organizations').upsert(dataToSync);
-              error = uError;
+              error = (await (supabase as any).from('organizations').upsert(dataToSync)).error;
             }
           } else {
-            const { error: uError } = await (supabase as any).from(tableName).upsert(dataToSync);
-            error = uError;
+            error = (await (supabase as any).from(tableName).upsert(dataToSync)).error;
           }
+
           if (!error) {
             await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
           } else {
-            console.error(`Error syncing ${tableName} ${item.id}:`, error);
+            console.error(`Sync error ${tableName}:`, error);
             await (db as any)[tableName].update(item.id, { sync_status: 'error' });
           }
         }
       } else {
-        // BATCH UPSERT para el resto de tablas (Transacciones, Asientos, Miembros, etc.)
         const chunks = [];
-        for (let i = 0; i < pendingItems.length; i += 50) {
-          chunks.push(pendingItems.slice(i, i + 50));
-        }
+        for (let i = 0; i < pendingItems.length; i += 50) chunks.push(pendingItems.slice(i, i + 50));
 
         for (const chunk of chunks) {
           const cleanedData = chunk.map(item => {
@@ -261,76 +232,44 @@ async function syncFromCacheToSupabase() {
           });
 
           const { error } = await (supabase as any).from(tableName).upsert(cleanedData);
-
           if (!error) {
             const ids = chunk.map(i => i.id);
             await (db as any)[tableName].where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
-            console.log(`[Sync Success] ${tableName}: Synced ${ids.length} records.`);
           } else {
-            console.error(`[Sync Error] ${tableName} batch failed:`, error);
-            toast.error(`Error de sincronización en ${tableName}: ${(error as any).message || 'Error desconocido'}`);
-
-            // Fallback individual solo si el batch falla
             for (const item of chunk) {
               const { sync_status, ...dt } = item;
               const { error: indError } = await (supabase as any).from(tableName).upsert(dt);
               if (!indError) {
                 await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
-              } else {
-                console.error(`[Sync Single Error] ${tableName} ${item.id}:`, indError);
-                await (db as any)[tableName].update(item.id, { sync_status: 'error' });
               }
             }
           }
         }
       }
-    } catch (error) {
-      console.error(`Error syncing table ${tableName}:`, error);
-      toast.error(`Error crítico sincronizando ${tableName}`);
+    } catch (e) {
+      console.error(`Batch error ${tableName}:`, e);
     }
   }
 }
 
 /**
  * Función principal de sincronización
- * Detecta el modo y ejecuta la sincronización apropiada
  */
 export async function syncToSupabase(organizationId?: string) {
-  // ⚠️ MODO PRODUCCIÓN: No sincronizar porque todo va directo a Supabase
-  if (APP_CONFIG.DB_MODE === 'production') {
-    dbLog('Sync skipped - Running in PRODUCTION mode (direct to Supabase)');
-    return;
-  }
-
-  if (!navigator.onLine) {
-    dbLog('Sync skipped - No internet connection');
-    return;
-  }
+  if (APP_CONFIG.DB_MODE === 'production' || !navigator.onLine) return;
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
-    dbLog('Sync skipped - Supabase not configured');
-    return;
-  }
+  if (!supabaseUrl || supabaseUrl.includes('placeholder')) return;
 
-  // 1. PRIMERO SIEMPRE SUBIR CAMBIOS LOCALES (Evita que el PULL los sobrescriba si no son 'pendiente')
   await syncFromCacheToSupabase();
-
-  // 2. DESCARGAR CAMBIOS REMOTOS (Bidireccional)
-  // Tanto en modo 'hybrid' como 'offline' queremos que la caché local esté al día
   await syncFromSupabaseToCache(organizationId);
 }
 
-// Solo habilitar sincronización automática si NO estamos en modo producción
+// Sincronización automática
 if (APP_CONFIG.DB_MODE === 'offline' && APP_CONFIG.AUTO_SYNC_ENABLED) {
   setInterval(syncToSupabase, APP_CONFIG.SYNC_INTERVAL_MS);
   window.addEventListener('online', () => syncToSupabase());
-  dbLog('Background sync enabled (offline mode)');
 } else if (APP_CONFIG.DB_MODE === 'hybrid') {
-  // En modo híbrido, sincronizar cada 2 minutos para mantener caché actualizada
   setInterval(() => syncToSupabase(), 2 * 60 * 1000);
   window.addEventListener('online', () => syncToSupabase());
-  dbLog('Background cache refresh enabled (hybrid mode - every 2 min)');
-} else {
-  dbLog('Background sync DISABLED - Running in production mode');
 }
