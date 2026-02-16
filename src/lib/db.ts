@@ -489,15 +489,17 @@ export class CifrixDB extends Dexie {
       (this as any)[tableName].hook('deleting', (id: string, obj: any) => {
         if (this.ignoreDeletions) return;
 
-        // Only track if it was already synchronized or at least exists
-        // If it's a new record not yet synced, we don't strictly need to track it for Supabase
-        // but tracking everything is safer.
-        this.deleted_records.add({
+        // Usar .put en lugar de .add para evitar errores de llave duplicada si ya existe el rastro
+        this.deleted_records.put({
           id,
           table_name: tableName,
           deleted_at: new Date().toISOString(),
           sync_status: 'pendiente'
-        }).catch(err => console.error(`Error tracking deletion for ${tableName}:`, err));
+        }).catch(err => {
+          // Si es un error de "Database is closed" o similar, no podemos hacer mucho, 
+          // pero evitamos el crash silencioso 'c'
+          console.warn(`[DB] Error tracking deletion for ${tableName} (${id}):`, err);
+        });
       });
     });
   }

@@ -182,8 +182,19 @@ export function Dashboard() {
   // Auto-seed accounts if missing (con tiempo de gracia)
   useEffect(() => {
     const checkAndSeedAccounts = async () => {
+      // Solo sembrar si ha pasado el tiempo de gracia, no hay sync activo, 
+      // y la lista de cuentas está vacía.
       if (initialCheckDone && !isSyncing && orgId && organization && accounts !== undefined && accounts.length === 0) {
-        await seedDefaultAccounts(orgId);
+        // Verificar si hay rastro de que se borraron cuentas (significa que el usuario no las quiere)
+        // o si hay algún movimiento contable (aunque no haya cuentas, lo cual sería raro, pero cautela)
+        const hasDeletedRecords = await db.deleted_records
+          .where('table_name')
+          .equals('accounts')
+          .count() > 0;
+
+        if (!hasDeletedRecords) {
+          await seedDefaultAccounts(orgId);
+        }
       }
     };
     checkAndSeedAccounts();

@@ -166,9 +166,15 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await db.accounts.where('organization_id').equals(orgId).delete();
+          const accountsToDelete = await db.accounts.where('organization_id').equals(orgId).toArray();
+          await db.transaction('rw', db.accounts, db.deleted_records, async () => {
+            for (const acc of accountsToDelete) {
+              await db.accounts.delete(acc.id);
+            }
+          });
           toast.success('PUC limpiado correctamente.');
         } catch (error) {
+          console.error('Error clearing PUC:', error);
           toast.error('Error al limpiar el PUC.');
         }
       }
