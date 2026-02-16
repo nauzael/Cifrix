@@ -87,7 +87,7 @@ function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
       if ('category' in mapped) mapped.contribution_type = mapped.category;
       if ('date' in mapped) mapped.contribution_date = mapped.date;
       if ('method' in mapped) mapped.payment_method = mapped.method.toLowerCase();
-      ['category', 'date', 'method', 'fund_id'].forEach(k => delete mapped[k]);
+      ['category', 'date', 'method', 'fund_id', 'project_id'].forEach(k => delete mapped[k]);
     } else {
       if ('contribution_type' in mapped) mapped.category = mapped.contribution_type;
       if ('contribution_date' in mapped) mapped.date = mapped.contribution_date;
