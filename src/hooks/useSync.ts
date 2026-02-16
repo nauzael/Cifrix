@@ -136,9 +136,9 @@ export function useSync() {
     setError(null);
     const errors: string[] = [];
 
-    const safeSync = async (name: string, table: any) => {
+    const safeSync = async (name: string, table: any, orgId?: string) => {
       try {
-        await syncTable(name, table, forceOrganizationId);
+        await syncTable(name, table, orgId);
       } catch (err: any) {
         errors.push(`${name}: ${err.message}`);
       }
@@ -175,20 +175,20 @@ export function useSync() {
         if (orgs.length > 0) targetOrgId = orgs[0].id;
       }
 
-      await safeSync('accounts', db.accounts);
-      await safeSync('categories', db.categories);
-      await safeSync('projects', db.projects);
-      await safeSync('members', db.members);
-      await safeSync('customers', db.customers);
+      await safeSync('accounts', db.accounts, targetOrgId);
+      await safeSync('categories', db.categories, targetOrgId);
+      await safeSync('projects', db.projects, targetOrgId);
+      await safeSync('members', db.members, targetOrgId);
+      await safeSync('customers', db.customers, targetOrgId);
 
-      await safeSync('transactions', db.transactions);
-      await safeSync('journal_entries', db.journal_entries);
+      await safeSync('transactions', db.transactions, targetOrgId);
+      await safeSync('journal_entries', db.journal_entries, targetOrgId);
 
-      await safeSync('contributions', db.contributions);
-      await safeSync('invoices', db.invoices);
-      await safeSync('invoice_items', db.invoice_items);
-      await safeSync('payments', db.payments);
-      await safeSync('audit_logs', db.audit_logs);
+      await safeSync('contributions', db.contributions, targetOrgId);
+      await safeSync('invoices', db.invoices, targetOrgId);
+      await safeSync('invoice_items', db.invoice_items, targetOrgId);
+      await safeSync('payments', db.payments, targetOrgId);
+      await safeSync('audit_logs', db.audit_logs, targetOrgId);
 
       if (errors.length > 0) {
         console.warn("Sync completed with errors:", errors);

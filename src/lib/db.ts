@@ -489,15 +489,13 @@ export class CifrixDB extends Dexie {
       (this as any)[tableName].hook('deleting', (id: string, obj: any) => {
         if (this.ignoreDeletions) return;
 
-        // Usar .put en lugar de .add para evitar errores de llave duplicada si ya existe el rastro
-        this.deleted_records.put({
+        // RETORNAR la promesa para que Dexie espere a que se registre el rastro antes de completar el borrado
+        return this.deleted_records.put({
           id,
           table_name: tableName,
           deleted_at: new Date().toISOString(),
           sync_status: 'pendiente'
         }).catch(err => {
-          // Si es un error de "Database is closed" o similar, no podemos hacer mucho, 
-          // pero evitamos el crash silencioso 'c'
           console.warn(`[DB] Error tracking deletion for ${tableName} (${id}):`, err);
         });
       });

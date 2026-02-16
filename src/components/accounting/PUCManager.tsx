@@ -14,6 +14,7 @@ import PUC_MD from '../../../.documentacion/PUC.md?raw';
 import { Modal } from '../ui/Modal';
 import { toast } from '../../store/toastStore';
 import { confirm } from '../../store/confirmStore';
+import { deleteRecord } from '../../lib/dbOperations';
 
 const accountSchema = z.object({
   code: z.string().min(1, 'El código es requerido'),
@@ -148,7 +149,7 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await db.accounts.delete(id);
+          await deleteRecord('accounts', id);
           toast.success('Cuenta eliminada correctamente.');
         } catch (error) {
           toast.error('Error al eliminar la cuenta.');

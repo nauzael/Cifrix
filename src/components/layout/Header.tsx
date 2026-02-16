@@ -11,7 +11,7 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
-  const { signOut } = useAuthStore();
+  const { signOut, profile } = useAuthStore();
   const navigate = useNavigate();
   const { syncAll, isSyncing } = useSync();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
@@ -64,7 +64,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         <button
-          onClick={() => syncAll()}
+          onClick={() => syncAll(profile?.organizationId)}
           disabled={isSyncing}
           className={`touch-target p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all ${isSyncing ? 'animate-spin text-blue-500' : ''}`}
           title="Sincronizar datos"

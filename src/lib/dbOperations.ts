@@ -220,9 +220,20 @@ export async function syncFromSupabase(
         if (error) throw error;
 
         if (data && data.length > 0) {
-            await (db as any)[tableName].bulkPut(
-                data.map((item: any) => ({ ...item, sync_status: 'sincronizado' }))
-            );
+            // Obtener registros eliminados localmente para filtrar
+            const deletedLocalRecords = await db.deleted_records
+                .where('table_name')
+                .equals(tableName)
+                .toArray();
+            const deletedIds = new Set(deletedLocalRecords.map(d => d.id));
+
+            const itemsToCache = data
+                .filter((item: any) => !deletedIds.has(item.id))
+                .map((item: any) => ({ ...item, sync_status: 'sincronizado' }));
+
+            if (itemsToCache.length > 0) {
+                await (db as any)[tableName].bulkPut(itemsToCache);
+            }
         }
     } catch (error) {
         console.error(`Error in syncFromSupabase for ${tableName}:`, error);
