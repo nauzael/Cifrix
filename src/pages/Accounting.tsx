@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, Organization } from '../lib/db';
+import { supabase } from '../lib/supabase';
+import { syncToSupabase } from '../lib/sync';
 import { useAuthStore } from '../store/authStore';
 import { useAccountingStore } from '../store/accountingStore';
 import { PUCManager } from '../components/accounting/PUCManager';
@@ -56,10 +58,37 @@ export function Accounting() {
   useEffect(() => {
     if (location.state?.targetTab) {
       setActiveTab(location.state.targetTab);
-      // Clean up state to prevent stuck navigation (optional, but good practice if using history.replace)
-      // For now, just setting it is enough as it runs on mount/location change
     }
   }, [location, setActiveTab]);
+
+  // Realtime Subscription
+  useEffect(() => {
+    if (!orgId) return;
+
+    const channel = supabase
+      .channel('accounting-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions', filter: `organization_id=eq.${orgId}` },
+        () => {
+          console.log('Realtime change detected in TRANSACTIONS. Optimistic UI update or Sync...');
+          syncToSupabase(orgId);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'journal_entries' },
+        () => {
+          console.log('Realtime change detected in JOURNAL ENTRIES.');
+          syncToSupabase(orgId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [orgId]);
 
   useEffect(() => {
     const fetchOrg = async () => {
@@ -247,203 +276,220 @@ export function Accounting() {
 
               <div className="lg:col-span-3 relative z-10">
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Buscar Asiento</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
-                  <input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
-                    placeholder="Descripción o referencia..."
-                  />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+                <input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+                  placeholder="Descripción o referencia..."
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+                  <button
+                    onClick={() => {
+                      toast.promise(syncToSupabase(orgId), {
+                        loading: 'Sincronizando con la nube...',
+                        success: 'Sincronización completada',
+                        error: 'Error al sincronizar'
+                      });
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                    title="Forzar Sincronización"
+                  >
+                    <CloudFog size={16} />
+                  </button>
                 </div>
               </div>
+            </div>
 
-              <div className="lg:col-span-2 relative z-10">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Fecha Desde</label>
-                <input
-                  type="date"
-                  value={dateRange.start}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
-                />
-              </div>
+            <div className="lg:col-span-2 relative z-10">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Fecha Desde</label>
+              <input
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+              />
+            </div>
 
-              <div className="lg:col-span-2 relative z-10">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Fecha Hasta</label>
-                <input
-                  type="date"
-                  value={dateRange.end}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
-                />
-              </div>
+            <div className="lg:col-span-2 relative z-10">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Fecha Hasta</label>
+              <input
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+              />
+            </div>
 
-              <div className="lg:col-span-2 relative z-10">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Filtrar Cuenta</label>
-                <select
-                  value={selectedAccount}
-                  onChange={(e) => setSelectedAccount(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
-                >
-                  <option value="">Todas las cuentas</option>
-                  {accounts
-                    ?.sort((a, b) => a.code.localeCompare(b.code))
-                    // Deduplicate by code for the dropdown
-                    .filter((acc, index, self) => index === self.findIndex(t => t.code === acc.code))
-                    .map(acc => (
-                      <option key={acc.id} value={acc.id}>{acc.code} - {acc.name}</option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="lg:col-span-2 relative z-10">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Proyecto/Meta</label>
-                <select
-                  value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
-                >
-                  <option value="">General</option>
-                  {projects?.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+            <div className="lg:col-span-2 relative z-10">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Filtrar Cuenta</label>
+              <select
+                value={selectedAccount}
+                onChange={(e) => setSelectedAccount(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+              >
+                <option value="">Todas las cuentas</option>
+                {accounts
+                  ?.sort((a, b) => a.code.localeCompare(b.code))
+                  // Deduplicate by code for the dropdown
+                  .filter((acc, index, self) => index === self.findIndex(t => t.code === acc.code))
+                  .map(acc => (
+                    <option key={acc.id} value={acc.id}>{acc.code} - {acc.name}</option>
                   ))}
-                </select>
-              </div>
+              </select>
+            </div>
 
-              <div className="lg:col-span-1 relative z-10">
-                <button
-                  onClick={() => {
-                    setEditingTransactionId(null);
-                    setIsTransactionModalOpen(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-black shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all h-[42px]"
-                >
-                  <Plus className="size-5" />
-                  <span className="lg:hidden xl:inline uppercase tracking-tighter">Nuevo</span>
-                </button>
-              </div>
+            <div className="lg:col-span-2 relative z-10">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Proyecto/Meta</label>
+              <select
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+              >
+                <option value="">General</option>
+                {projects?.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="lg:col-span-1 relative z-10">
+              <button
+                onClick={() => {
+                  setEditingTransactionId(null);
+                  setIsTransactionModalOpen(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-black shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all h-[42px]"
+              >
+                <Plus className="size-5" />
+                <span className="lg:hidden xl:inline uppercase tracking-tighter">Nuevo</span>
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Journal Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto scrollbar-hide">
-              <table className="w-full text-left border-collapse min-w-[1000px]">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                    <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Fecha / Referencia</th>
-                    <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Detalle del Asiento Contable</th>
-                    <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">Débitos</th>
-                    <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">Créditos</th>
-                    <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-center">Gestión</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {(!transactions || transactions.length === 0) ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-20 text-center">
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="size-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4 border border-dashed border-slate-200 dark:border-slate-700">
-                            <History className="size-10 text-slate-300 dark:text-slate-600" />
-                          </div>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">No se encontraron asientos</h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">Prueba ajustando los filtros o realiza tu primer registro contable hoy.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : transactions.map(tx => {
-                    const entries = getEntriesForTransaction(tx.id);
-                    const totalDebit = entries.reduce((sum, e) => sum + e.debit, 0);
-                    const totalCredit = entries.reduce((sum, e) => sum + e.credit, 0);
+      {/* Journal Table */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto scrollbar-hide">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Fecha / Referencia</th>
+                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Detalle del Asiento Contable</th>
+                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">Débitos</th>
+                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">Créditos</th>
+                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-center">Gestión</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {(!transactions || transactions.length === 0) ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="size-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4 border border-dashed border-slate-200 dark:border-slate-700">
+                        <History className="size-10 text-slate-300 dark:text-slate-600" />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">No se encontraron asientos</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">Prueba ajustando los filtros o realiza tu primer registro contable hoy.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : transactions.map(tx => {
+                const entries = getEntriesForTransaction(tx.id);
+                const totalDebit = entries.reduce((sum, e) => sum + e.debit, 0);
+                const totalCredit = entries.reduce((sum, e) => sum + e.credit, 0);
 
-                    return (
-                      <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                        <td className="px-4 sm:px-6 py-4 align-top w-32 sm:w-40">
-                          <p className="text-xs sm:text-sm font-bold whitespace-nowrap">{formatDate(tx.date)}</p>
-                          {tx.reference_no && <p className="text-[10px] sm:text-xs text-slate-500 mt-1 truncate max-w-[100px] sm:max-w-none">Ref: {tx.reference_no}</p>}
-                          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-2 truncate">{tx.id.substring(0, 8)}...</p>
-                        </td>
-                        <td className="px-4 sm:px-6 py-4 align-top min-w-[200px]">
-                          <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-2 line-clamp-2">{tx.description}</p>
-                          <div className="space-y-1">
-                            {entries.map(entry => (
-                              <div key={entry.id} className="flex justify-between text-[10px] sm:text-xs border-b border-slate-100 dark:border-slate-800 last:border-0 pb-1">
-                                <span className="text-slate-600 dark:text-slate-400 font-mono truncate max-w-[150px] sm:max-w-none">
-                                  {getAccountInfo(entry.account_id)}
-                                </span>
-                                <div className="flex gap-2 sm:gap-4 whitespace-nowrap ml-2">
-                                  {entry.debit > 0 && <span className="text-slate-900 dark:text-slate-200 font-medium w-20 sm:w-24 text-right">D: {formatCurrency(entry.debit)}</span>}
-                                  {entry.credit > 0 && <span className="text-slate-900 dark:text-slate-200 font-medium w-20 sm:w-24 text-right">C: {formatCurrency(entry.credit)}</span>}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-4 sm:px-6 py-4 text-right align-top font-mono text-xs sm:text-sm text-slate-900 dark:text-white whitespace-nowrap">
-                          $ {formatCurrency(totalDebit)}
-                        </td>
-                        <td className="px-4 sm:px-6 py-4 text-right align-top font-mono text-xs sm:text-sm text-slate-900 dark:text-white whitespace-nowrap">
-                          $ {formatCurrency(totalCredit)}
-                        </td>
-                        <td className="px-4 sm:px-6 py-4 text-center align-top">
-                          <div className="flex flex-col items-center gap-2">
-                            <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-wide ${tx.sync_status === 'sincronizado'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-blue-50 text-blue-600 border border-blue-100'
-                              }`}>
-                              {tx.sync_status === 'sincronizado' ? 'Sincronizado' : 'Solo Local'}
+                return (
+                  <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                    <td className="px-4 sm:px-6 py-4 align-top w-32 sm:w-40">
+                      <p className="text-xs sm:text-sm font-bold whitespace-nowrap">{formatDate(tx.date)}</p>
+                      {tx.reference_no && <p className="text-[10px] sm:text-xs text-slate-500 mt-1 truncate max-w-[100px] sm:max-w-none">Ref: {tx.reference_no}</p>}
+                      <p className="text-[9px] sm:text-[10px] text-slate-400 mt-2 truncate">{tx.id.substring(0, 8)}...</p>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 align-top min-w-[200px]">
+                      <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-2 line-clamp-2">{tx.description}</p>
+                      <div className="space-y-1">
+                        {entries.map(entry => (
+                          <div key={entry.id} className="flex justify-between text-[10px] sm:text-xs border-b border-slate-100 dark:border-slate-800 last:border-0 pb-1">
+                            <span className="text-slate-600 dark:text-slate-400 font-mono truncate max-w-[150px] sm:max-w-none">
+                              {getAccountInfo(entry.account_id)}
                             </span>
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => {
-                                  setEditingTransactionId(tx.id);
-                                  setIsTransactionModalOpen(true);
-                                }}
-                                className="p-1.5 sm:p-1 text-slate-400 sm:text-slate-300 hover:text-blue-500 transition-colors"
-                                title="Editar asiento"
-                              >
-                                <Edit size={14} />
-                              </button>
-                              <button
-                                onClick={() => deleteTransaction(tx.id, tx.date)}
-                                className="p-1.5 sm:p-1 text-slate-400 sm:text-slate-300 hover:text-red-500 transition-colors"
-                                title="Eliminar asiento"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                            <div className="flex gap-2 sm:gap-4 whitespace-nowrap ml-2">
+                              {entry.debit > 0 && <span className="text-slate-900 dark:text-slate-200 font-medium w-20 sm:w-24 text-right">D: {formatCurrency(entry.debit)}</span>}
+                              {entry.credit > 0 && <span className="text-slate-900 dark:text-slate-200 font-medium w-20 sm:w-24 text-right">C: {formatCurrency(entry.credit)}</span>}
                             </div>
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {(!transactions || transactions.length === 0) && (
-                    <tr>
-                      <td colSpan={5} className="text-center py-12 text-slate-400">
-                        No hay asientos registrados aún.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-right align-top font-mono text-xs sm:text-sm text-slate-900 dark:text-white whitespace-nowrap">
+                      $ {formatCurrency(totalDebit)}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-right align-top font-mono text-xs sm:text-sm text-slate-900 dark:text-white whitespace-nowrap">
+                      $ {formatCurrency(totalCredit)}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 text-center align-top">
+                      <div className="flex flex-col items-center gap-2">
+                        <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-wide ${tx.sync_status === 'sincronizado'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-blue-50 text-blue-600 border border-blue-100'
+                          }`}>
+                          {tx.sync_status === 'sincronizado' ? 'Sincronizado' : 'Solo Local'}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingTransactionId(tx.id);
+                              setIsTransactionModalOpen(true);
+                            }}
+                            className="p-1.5 sm:p-1 text-slate-400 sm:text-slate-300 hover:text-blue-500 transition-colors"
+                            title="Editar asiento"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
+                            onClick={() => deleteTransaction(tx.id, tx.date)}
+                            className="p-1.5 sm:p-1 text-slate-400 sm:text-slate-300 hover:text-red-500 transition-colors"
+                            title="Eliminar asiento"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {(!transactions || transactions.length === 0) && (
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-slate-400">
+                    No hay asientos registrados aún.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  )
+}
 
-      {isTransactionModalOpen && (
-        <TransactionForm
-          organizationId={orgId}
-          transactionId={editingTransactionId}
-          onClose={() => {
-            setIsTransactionModalOpen(false);
-            setEditingTransactionId(null);
-          }}
-          onSuccess={() => {
-            setSearchTerm(''); // Clear search to show the new entry
-          }}
-        />
-      )}
-    </div>
+{
+  isTransactionModalOpen && (
+    <TransactionForm
+      organizationId={orgId}
+      transactionId={editingTransactionId}
+      onClose={() => {
+        setIsTransactionModalOpen(false);
+        setEditingTransactionId(null);
+      }}
+      onSuccess={() => {
+        setSearchTerm(''); // Clear search to show the new entry
+      }}
+    />
+  )
+}
+    </div >
   );
 }
