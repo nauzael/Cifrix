@@ -40,7 +40,16 @@ async function syncFromSupabaseToCache(organizationId?: string) {
     try {
       let query = (supabase as any).from(tableName as any).select('*');
 
-      if (organizationId && tableName !== 'organizations' && tableName !== 'audit_logs') {
+      if (organizationId
+        && tableName !== 'organizations'
+        && tableName !== 'audit_logs'
+        && tableName !== 'journal_entries'
+        && tableName !== 'invoice_items'
+        && tableName !== 'ingresos_renta'
+        && tableName !== 'deducciones_renta'
+        && tableName !== 'activos_pasivos_renta'
+        && tableName !== 'mapeo_inconsistencias'
+      ) {
         query = query.eq('organization_id', organizationId);
       }
 
