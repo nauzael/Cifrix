@@ -25,12 +25,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Zap,
-  Target,
-  LayoutGrid,
-  FileText,
   Heart,
-  FileBarChart
+  FileBarChart,
+  CloudFog,
+  Target
 } from 'lucide-react';
 import { toast } from '../store/toastStore';
 import { syncToSupabase } from '../lib/sync';
@@ -218,21 +216,40 @@ export function Diezmos() {
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">Módulo Ministerial</h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Gestión de diezmos, ofrendas y proyectos.</p>
         </div>
-        <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
-          {[
-            { id: 'registro', label: 'Aportes', icon: Heart },
-            { id: 'proyectos', label: 'Proyectos', icon: Target },
-            { id: 'reportes', label: 'Reportes', icon: FileBarChart },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${activeTab === tab.id ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
-            >
-              <tab.icon className="size-4" />
-              <span>{tab.label}</span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              toast.info('Iniciando sincronización completa...');
+              try {
+                await syncToSupabase(orgId);
+                toast.success('Sincronización finalizada correctamente');
+                loadData(); // Actualizar datos locales
+              } catch (error) {
+                console.error(error);
+                toast.error('Error al sincronizar');
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg text-xs font-bold transition-all border border-emerald-200 dark:border-emerald-500/20 shadow-sm h-fit"
+          >
+            <CloudFog className="size-4" />
+            <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">Sincronizar</span>
+          </button>
+          <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
+            {[
+              { id: 'registro', label: 'Aportes', icon: Heart },
+              { id: 'proyectos', label: 'Proyectos', icon: Target },
+              { id: 'reportes', label: 'Reportes', icon: FileBarChart },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${activeTab === tab.id ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
+              >
+                <tab.icon className="size-4" />
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

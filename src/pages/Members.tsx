@@ -17,7 +17,8 @@ import {
   Save,
   CheckCircle,
   XCircle,
-  FileText
+  FileText,
+  CloudFog
 } from 'lucide-react';
 import { formatDate } from '../lib/utils';
 import { db, Member } from '../lib/db';
@@ -322,13 +323,32 @@ export function Members() {
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">Directorio</h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Gestión de membresía y contactos.</p>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-600/25 hover:bg-blue-700 transition-all w-full sm:w-auto uppercase tracking-tight text-sm"
-        >
-          <UserPlus className="size-4" />
-          Nuevo Miembro
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              toast.info('Iniciando sincronización completa...');
+              try {
+                await syncToSupabase(orgId);
+                toast.success('Sincronización finalizada correctamente');
+                fetchMembers(); // Actualizar lista local después de sync
+              } catch (error) {
+                console.error(error);
+                toast.error('Error al sincronizar');
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-lg text-xs font-bold transition-all border border-emerald-200 dark:border-emerald-500/20 shadow-sm"
+          >
+            <CloudFog className="size-4" />
+            <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">Sincronizar</span>
+          </button>
+          <button
+            onClick={() => openModal()}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-600/25 hover:bg-blue-700 transition-all w-full sm:w-auto uppercase tracking-tight text-sm"
+          >
+            <UserPlus className="size-4" />
+            Nuevo Miembro
+          </button>
+        </div>
       </div>
 
       {/* Main Content Card */}
