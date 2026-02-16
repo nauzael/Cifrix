@@ -51,9 +51,19 @@ async function syncFromSupabaseToCache(organizationId?: string) {
       }
 
       if (data && data.length > 0) {
+        // Obtener IDs eliminados localmente para esta tabla para no volver a descargarlos
+        const deletedLocalRecords = await db.deleted_records
+          .where('table_name')
+          .equals(tableName)
+          .toArray();
+        const deletedIds = new Set(deletedLocalRecords.map(d => d.id));
+
         // RECONCILIACIÓN SEGURA: No sobrescribir registros con cambios locales pendientes
         await db.transaction('rw', (db as any)[tableName], async () => {
           for (const remoteItem of data) {
+            // Saltar si el registro fue eliminado localmente
+            if (deletedIds.has(remoteItem.id)) continue;
+
             const localItem = await (db as any)[tableName].get(remoteItem.id);
 
             // Solo sobrescribir si el registro no existe localmente o NO tiene cambios pendientes

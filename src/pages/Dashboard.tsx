@@ -60,8 +60,15 @@ export function Dashboard() {
   const { user, profile } = useAuthStore();
   const { syncAll, isSyncing } = useSync();
   const [orgId, setOrgId] = useState<string>('');
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Dar un tiempo de gracia de 5 segundos al iniciar para que la sincronización traiga las cuentas
+  // Esto evita que se genere un PUC por defecto si el usuario ya tiene uno en la nube.
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialCheckDone(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [stats, setStats] = useState({
     income: 0,
@@ -87,52 +94,33 @@ export function Dashboard() {
 
       // MEJORA: En lugar de retornar si no hay profile, esperamos un poco
       // para dar tiempo al authStore a cargar el perfil desde Supabase
-      // Si después de 2 segundos no hay perfil, procedemos de todas formas
       let waitedForProfile = false;
       if (!profile && !isSyncing) {
-        // Esperamos un máximo de 2 segundos para el profile
         await new Promise(resolve => setTimeout(resolve, 500));
-        // Verificar de nuevo después del delay
         const currentState = useAuthStore.getState();
         if (!currentState.profile) {
-          console.log('Profile aún no cargado después de esperar, intentando sincronizar de todas formas...');
           waitedForProfile = true;
         }
       }
 
       let orgs = await db.organizations.toArray();
-
-      // Obtener profile del estado más actualizado
       const currentProfile = useAuthStore.getState().profile || profile;
       const profileOrgId = currentProfile?.organizationId;
-
-      // Use profile org if available locally, otherwise first available
       const localOrgId = orgs.find(o => o.id === profileOrgId)?.id || orgs[0]?.id;
-
-      // Allow Super Admin to view other organizations without forcing a resync
       const isSuperAdmin = currentProfile?.role === 'SUPER_ADMIN' || user?.email === 'superadmin@cifrix.com';
 
-      // ⚠️ FIX: No borrar nunca la base de datos automáticamente aquí. 
-      // Es muy peligroso si hay cambios locales 'pendiente' que no se han subido.
       if (!isSuperAdmin && profileOrgId && (!localOrgId || localOrgId !== profileOrgId)) {
-        console.log('Organization mismatch or missing data locally. Syncing data for:', profileOrgId);
-        // En lugar de borrar, simplemente intentamos sincronizar lo que falta
         await syncAll(profileOrgId);
         orgs = await db.organizations.toArray();
       }
 
       if (orgs.length > 0) {
-        // If we have a profile org, try to select it
         const preferredOrg = orgs.find(o => o.id === profileOrgId) || orgs[0];
         setOrgId(preferredOrg.id);
       } else if (!isSyncing && profileOrgId) {
-        // Try to sync specifically for this user's org if we have nothing
         await syncAll(profileOrgId);
       } else if (!isSyncing && !profileOrgId) {
-        // Fallback sync - only if we truly have no profile ID after waiting
         await syncAll();
-
-        // Después de la sincronización, verificar si ahora tenemos organizaciones
         const postSyncOrgs = await db.organizations.toArray();
         if (postSyncOrgs.length > 0) {
           setOrgId(postSyncOrgs[0].id);
@@ -142,6 +130,7 @@ export function Dashboard() {
     fetchOrg();
   }, [user, profile]);
 
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const handleOnboardingComplete = (id: string) => {
     setOrgId(id);
     setShowOnboarding(false);
@@ -190,19 +179,15 @@ export function Dashboard() {
     [orgId]
   );
 
-  // Auto-seed accounts if missing
+  // Auto-seed accounts if missing (con tiempo de gracia)
   useEffect(() => {
     const checkAndSeedAccounts = async () => {
-      if (orgId && organization && accounts !== undefined) {
-        // Seed cuentas base universales si no existen aún
-        if (accounts.length === 0) {
-          await seedDefaultAccounts(orgId);
-        }
+      if (initialCheckDone && !isSyncing && orgId && organization && accounts !== undefined && accounts.length === 0) {
+        await seedDefaultAccounts(orgId);
       }
     };
-
     checkAndSeedAccounts();
-  }, [orgId, organization, accounts]);
+  }, [orgId, organization, accounts, isSyncing, initialCheckDone]);
 
   const chartData = useMemo(() => {
     if (!orgId || !journalEntries || !accounts || !monthTransactions) return null;
