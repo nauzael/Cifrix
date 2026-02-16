@@ -51,7 +51,7 @@ const memberSchema = z.object({
 type MemberForm = z.infer<typeof memberSchema>;
 
 export function Members() {
-  const { user } = useAuthStore();
+  const { user, profile } = useAuthStore();
   const [orgId, setOrgId] = useState<string>('');
   const [members, setMembers] = useState<Member[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,16 +62,19 @@ export function Members() {
   const [activeTab, setActiveTab] = useState<'personal' | 'ministerial' | 'financial'>('personal');
 
   useEffect(() => {
-    const fetchOrg = async () => {
-      if (user) {
+    if (profile?.organizationId) {
+      setOrgId(profile.organizationId);
+    } else if (user) {
+      // Fallback a la primera organización local solo si no hay perfil
+      const fetchOrg = async () => {
         let orgs = await db.organizations.toArray();
         if (orgs.length > 0) {
           setOrgId(orgs[0].id);
         }
-      }
-    };
-    fetchOrg();
-  }, [user]);
+      };
+      fetchOrg();
+    }
+  }, [user, profile]);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(memberSchema),
