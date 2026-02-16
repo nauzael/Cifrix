@@ -435,14 +435,14 @@ export class CifrixDB extends Dexie {
 
   constructor() {
     super('CifrixDatabase');
-    this.version(11).stores({
+    this.version(12).stores({
       // Tablas existentes
       organizations: 'id, type, sync_status',
       members: 'id, organization_id, full_name, document_id, status, sync_status',
       transactions: 'id, organization_id, date, type, sync_status',
       journal_entries: 'id, transaction_id, account_id, sync_status',
       accounts: 'id, organization_id, code, type, sync_status',
-      contributions: 'id, organization_id, member_id, date, category, project_id, sync_status',
+      contributions: 'id, organization_id, member_id, transaction_id, date, category, project_id, sync_status',
       projects: 'id, organization_id, status, sync_status',
       audit_logs: 'id, organization_id, user_id, action, entity_type, created_at, sync_status',
       categories: 'id, organization_id, type, parent_id, sync_status',
