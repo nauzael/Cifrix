@@ -2,7 +2,7 @@ import { db } from './db';
 import { supabase } from './supabase';
 import { APP_CONFIG, dbLog } from './config';
 
-const TABLES_TO_SYNC = [
+export const TABLES_TO_SYNC = [
   'organizations',
   'accounts',
   'categories',
@@ -151,7 +151,12 @@ async function syncFromCacheToSupabase() {
             const { error: uError } = await (supabase as any).from(tableName).upsert(dataToSync);
             error = uError;
           }
-          if (!error) await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
+          if (!error) {
+            await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
+          } else {
+            console.error(`Error syncing ${tableName} ${item.id}:`, error);
+            await (db as any)[tableName].update(item.id, { sync_status: 'error' });
+          }
         }
       } else {
         // BATCH UPSERT para el resto de tablas (Transacciones, Asientos, Miembros, etc.)

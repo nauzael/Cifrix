@@ -167,6 +167,8 @@ export function resetReconnectionAttempts(): void {
     isReconnecting = false;
 }
 
+import { TABLES_TO_SYNC } from './sync';
+
 /**
  * Verifica si hay datos pendientes de sincronización
  * 
@@ -177,21 +179,7 @@ export async function getPendingSyncCount(): Promise<number> {
 
     let total = 0;
 
-    const tables = [
-        'organizations',
-        'members',
-        'transactions',
-        'journal_entries',
-        'accounts',
-        'contributions',
-        'projects',
-        'categories',
-        'customers',
-        'invoices',
-        'invoice_items',
-        'payments',
-        'audit_logs'
-    ];
+    const tables = TABLES_TO_SYNC;
 
     for (const tableName of tables) {
         try {
@@ -199,8 +187,9 @@ export async function getPendingSyncCount(): Promise<number> {
                 .where('sync_status')
                 .equals('pendiente')
                 .count();
+
             if (count > 0) {
-                console.log(`[Sync Debug] Table '${tableName}' has ${count} pending records`);
+                console.warn(`[Sync Debug] Stalled table detected: ${tableName} (${count} items)`);
                 total += count;
             }
         } catch (error) {
