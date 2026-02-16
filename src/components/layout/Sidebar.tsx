@@ -55,20 +55,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }> = [
             { name: 'Inicio', href: '/', icon: LayoutDashboard, id: 'dashboard' },
             {
-                name: 'Miembros',
-                href: '/members',
-                icon: Users,
-                id: 'members',
-                hidden: isCompany
-            },
-            {
-                name: 'Diezmos',
-                href: '/diezmos',
-                icon: Heart,
-                id: 'contributions',
-                hidden: isCompany
-            },
-            {
                 name: 'Facturación',
                 href: '/invoicing',
                 icon: Receipt,
@@ -81,16 +67,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 id: 'accounting'
             },
             {
-                name: 'Configuración',
-                href: '/settings',
-                icon: Settings,
-                id: 'settings'
+                name: 'Miembros',
+                href: '/members',
+                icon: Users,
+                id: 'members',
+                hidden: isCompany
             },
             {
-                name: 'Reportes',
-                href: '/reports',
-                icon: BarChart3,
-                id: 'reports'
+                name: 'Diezmos',
+                href: '/diezmos',
+                icon: Heart,
+                id: 'contributions',
+                hidden: isCompany
             },
             {
                 name: 'Impuesto Renta',
@@ -109,6 +97,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 href: '/financial-statements',
                 icon: FileText,
                 id: 'financial_statements'
+            },
+            {
+                name: 'Reportes',
+                href: '/reports',
+                icon: BarChart3,
+                id: 'reports'
+            },
+            {
+                name: 'Configuración',
+                href: '/settings',
+                icon: Settings,
+                id: 'settings'
             },
         ];
 
