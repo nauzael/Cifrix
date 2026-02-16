@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import {
   History,
   Plus,
@@ -61,8 +62,23 @@ export function Diezmos() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExpressMode, setIsExpressMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dailyTotal, setDailyTotal] = useState(0);
-  const [dailyCount, setDailyCount] = useState(0);
+
+  const dailyStats = useLiveQuery(async () => {
+    if (!orgId) return { total: 0, count: 0 };
+    const today = new Date().toISOString().split('T')[0];
+    const todayContribs = await db.contributions
+      .where('organization_id').equals(orgId)
+      .filter(c => c.date.startsWith(today))
+      .toArray();
+
+    return {
+      total: todayContribs.reduce((sum, c) => sum + c.amount, 0),
+      count: todayContribs.length
+    };
+  }, [orgId]);
+
+  const dailyTotal = dailyStats?.total || 0;
+  const dailyCount = dailyStats?.count || 0;
 
   useEffect(() => {
     if (profile?.organizationId) {
@@ -94,16 +110,6 @@ export function Diezmos() {
 
       const allProjects = await getFromCacheOrSupabase<Project>('projects', orgId);
       setProjects(allProjects);
-
-      // Load daily stats from cache (instant)
-      const today = new Date().toISOString().split('T')[0];
-      const todayContribs = await db.contributions
-        .where('organization_id').equals(orgId)
-        .filter(c => c.date.startsWith(today))
-        .toArray();
-
-      setDailyTotal(todayContribs.reduce((sum, c) => sum + c.amount, 0));
-      setDailyCount(todayContribs.length);
 
       setIsLoading(false);
     } catch (error) {
