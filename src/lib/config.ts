@@ -32,7 +32,7 @@ export const APP_CONFIG = {
     /**
      * Intervalo de sincronización en milisegundos
      */
-    SYNC_INTERVAL_MS: 5 * 60 * 1000, // 5 minutos
+    SYNC_INTERVAL_MS: 3 * 60 * 1000, // 3 minutos (Punto óptimo entre frescura y rendimiento)
 
     /**
      * Habilitar logs de depuración para operaciones de BD

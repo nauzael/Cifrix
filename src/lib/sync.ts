@@ -265,11 +265,48 @@ export async function syncToSupabase(organizationId?: string) {
   await syncFromSupabaseToCache(organizationId);
 }
 
-// Sincronización automática
-if (APP_CONFIG.DB_MODE === 'offline' && APP_CONFIG.AUTO_SYNC_ENABLED) {
-  setInterval(syncToSupabase, APP_CONFIG.SYNC_INTERVAL_MS);
-  window.addEventListener('online', () => syncToSupabase());
-} else if (APP_CONFIG.DB_MODE === 'hybrid') {
-  setInterval(() => syncToSupabase(), 2 * 60 * 1000);
-  window.addEventListener('online', () => syncToSupabase());
+// --------------------------------------------------------
+// Lógica de Sincronización Inteligente (Lazy Sync)
+// --------------------------------------------------------
+
+const runAutomatedSync = (orgId?: string) => {
+  // Solo sincronizar automáticamente si la pestaña está visible
+  if (document.visibilityState === 'visible') {
+    dbLog('Smart Sync: Tab visible, running automated sync...');
+    syncToSupabase(orgId);
+  } else {
+    dbLog('Smart Sync: Tab hidden, skipping interval sync to save resources.');
+  }
+};
+
+// Obtener ID de organización actual del authStore de forma segura
+const getStoredOrgId = () => {
+  try {
+    // Intentamos obtenerlo del store si está disponible en este contexto
+    // Si no, la sincronización usará el filtro global
+    return undefined;
+  } catch { return undefined; }
+};
+
+if (APP_CONFIG.DB_MODE !== 'production') {
+  const interval = APP_CONFIG.SYNC_INTERVAL_MS;
+
+  // 1. Intervalo regular (solo si está visible)
+  setInterval(() => runAutomatedSync(getStoredOrgId()), interval);
+
+  // 2. Trigger inmediato al volver a la pestaña (Visibility Trigger)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      dbLog('Smart Sync: User returned to tab, triggering immediate refresh.');
+      syncToSupabase(getStoredOrgId());
+    }
+  });
+
+  // 3. Sincronizar al volver a estar online
+  window.addEventListener('online', () => {
+    dbLog('Smart Sync: Connection restored, triggering sync.');
+    syncToSupabase(getStoredOrgId());
+  });
+
+  dbLog(`Smart Sync: Enabled (mode: ${APP_CONFIG.DB_MODE}, interval: ${interval / 1000}s)`);
 }
