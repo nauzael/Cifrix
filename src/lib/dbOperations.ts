@@ -25,6 +25,44 @@ function shouldAttemptOnline(): boolean {
 }
 
 /**
+ * Mapea datos entre el esquema local (Dexie) y el remoto (Supabase)
+ * Copiado/adaptado de sync.ts para consistencia en operaciones directas
+ */
+function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
+    if (!data) return data;
+    const mapped = { ...data };
+
+    if (tableName === 'members') {
+        const statusMap: Record<string, string> = { 'activo': 'active', 'inactivo': 'inactive', 'visitante': 'active' };
+        const revMap: Record<string, string> = { 'active': 'activo', 'inactive': 'inactivo', 'transferred': 'inactivo' };
+
+        if (toRemote) {
+            if ('status' in mapped) mapped.membership_status = statusMap[mapped.status] || 'active';
+            if ('entry_date' in mapped) mapped.membership_date = mapped.entry_date || null;
+            if ('birth_date' in mapped) mapped.birth_date = mapped.birth_date || null;
+            if (mapped.is_active === undefined) mapped.is_active = mapped.membership_status === 'active';
+            ['status', 'entry_date', 'pledge_amount', 'pledge_period', 'ministry', 'photo_url'].forEach(k => delete mapped[k]);
+        } else {
+            if ('membership_status' in mapped) mapped.status = revMap[mapped.membership_status] || 'activo';
+            if ('membership_date' in mapped) mapped.entry_date = mapped.membership_date;
+        }
+    } else if (tableName === 'contributions') {
+        if (toRemote) {
+            if ('category' in mapped) mapped.contribution_type = mapped.category;
+            if ('date' in mapped) mapped.contribution_date = mapped.date;
+            if ('method' in mapped) mapped.payment_method = mapped.method.toLowerCase();
+            ['category', 'date', 'method'].forEach(k => delete mapped[k]);
+        } else {
+            if ('contribution_type' in mapped) mapped.category = mapped.contribution_type;
+            if ('contribution_date' in mapped) mapped.date = mapped.contribution_date;
+            if ('payment_method' in mapped) mapped.method = (mapped.payment_method || 'CASH').toUpperCase();
+        }
+    }
+
+    return mapped;
+}
+
+/**
  * Inserta un registro. Soporta modo offline automático.
  */
 export async function insertRecord<T extends Record<string, any>>(
@@ -34,29 +72,26 @@ export async function insertRecord<T extends Record<string, any>>(
     try {
         dbLog(`INSERT ${tableName}`, { id: (record as any).id });
 
-        // 1. Si estamos online y no es modo offline estricto, intentamos Supabase
         if (shouldAttemptOnline()) {
+            const mappedToRemote = mapTableSchema(tableName, record, true);
             const { data, error } = await (supabase as any)
                 .from(tableName)
-                .insert(record)
+                .insert(mappedToRemote)
                 .select()
                 .single();
 
             if (!error) {
-                // Éxito en la nube -> Guardar en local como sincronizado
-                await (db as any)[tableName].put({ ...data, sync_status: 'sincronizado' });
-                return { data, error: null, offline: false };
+                const mappedToLocal = mapTableSchema(tableName, data, false);
+                await (db as any)[tableName].put({ ...mappedToLocal, sync_status: 'sincronizado' });
+                return { data: mappedToLocal, error: null, offline: false };
             }
 
-            // Si el error es de red, continuamos hacia la lógica offline
-            if (error.message?.includes('Fetch') || error.code === 'PGRST100') {
-                dbLog(`Network error in insertRecord, switching to offline mode`);
-            } else {
+            if (!(error.message?.includes('Fetch') || error.code === 'PGRST100')) {
                 return { data: null, error, offline: false };
             }
+            dbLog(`Network error in insertRecord, switching to offline mode`);
         }
 
-        // 2. Lógica Offline: Guardar en Dexie con estado 'pendiente'
         const offlineRecord = {
             ...record,
             sync_status: 'pendiente',
@@ -64,8 +99,6 @@ export async function insertRecord<T extends Record<string, any>>(
         };
 
         await (db as any)[tableName].put(offlineRecord);
-        dbLog(`Record saved OFFLINE in ${tableName}`, { id: (record as any).id });
-
         return { data: offlineRecord as any, error: null, offline: true };
     } catch (error) {
         console.error(`Error in insertRecord for ${tableName}:`, error);
@@ -85,16 +118,18 @@ export async function updateRecord<T extends Record<string, any>>(
         dbLog(`UPDATE ${tableName}`, { id, updates });
 
         if (shouldAttemptOnline()) {
+            const mappedToRemote = mapTableSchema(tableName, updates, true);
             const { data, error } = await (supabase as any)
                 .from(tableName)
-                .update(updates)
+                .update(mappedToRemote)
                 .eq('id', id)
                 .select()
                 .single();
 
             if (!error) {
-                await (db as any)[tableName].update(id, { ...updates, sync_status: 'sincronizado' });
-                return { data, error: null, offline: false };
+                const mappedToLocal = mapTableSchema(tableName, data, false);
+                await (db as any)[tableName].update(id, { ...mappedToLocal, sync_status: 'sincronizado' });
+                return { data: mappedToLocal, error: null, offline: false };
             }
 
             if (!(error.message?.includes('Fetch') || error.code === 'PGRST100')) {
@@ -102,7 +137,6 @@ export async function updateRecord<T extends Record<string, any>>(
             }
         }
 
-        // Modo Offline / Fallback
         await (db as any)[tableName].update(id, {
             ...updates,
             sync_status: 'pendiente',
@@ -143,7 +177,6 @@ export async function deleteRecord(
             }
         }
 
-        // Modo Offline: Marcar para eliminación en la tabla de registros eliminados
         await (db as any)[tableName].delete(id);
         await db.deleted_records.put({
             record_id: id,
@@ -152,7 +185,6 @@ export async function deleteRecord(
             sync_status: 'pendiente'
         });
 
-        dbLog(`Record marked for OFFLINE deletion in ${tableName}`, { id });
         return { data: null, error: null, offline: true };
     } catch (error) {
         console.error(`Error in deleteRecord for ${tableName}:`, error);
@@ -171,15 +203,17 @@ export async function upsertRecord<T extends Record<string, any>>(
         dbLog(`UPSERT ${tableName}`, { id: (record as any).id });
 
         if (shouldAttemptOnline()) {
+            const mappedToRemote = mapTableSchema(tableName, record, true);
             const { data, error } = await (supabase as any)
                 .from(tableName)
-                .upsert(record)
+                .upsert(mappedToRemote)
                 .select()
                 .single();
 
             if (!error) {
-                await (db as any)[tableName].put({ ...data, sync_status: 'sincronizado' });
-                return { data, error: null, offline: false };
+                const mappedToLocal = mapTableSchema(tableName, data, false);
+                await (db as any)[tableName].put({ ...mappedToLocal, sync_status: 'sincronizado' });
+                return { data: mappedToLocal, error: null, offline: false };
             }
 
             if (!(error.message?.includes('Fetch') || error.code === 'PGRST100')) {
@@ -187,7 +221,6 @@ export async function upsertRecord<T extends Record<string, any>>(
             }
         }
 
-        // Modo Offline
         const offlineRecord = {
             ...record,
             sync_status: 'pendiente',
@@ -229,7 +262,10 @@ export async function syncFromSupabase(
 
             const itemsToCache = data
                 .filter((item: any) => !deletedIds.has(item.id))
-                .map((item: any) => ({ ...item, sync_status: 'sincronizado' }));
+                .map((item: any) => {
+                    const mapped = mapTableSchema(tableName, item, false);
+                    return { ...mapped, sync_status: 'sincronizado' };
+                });
 
             if (itemsToCache.length > 0) {
                 await (db as any)[tableName].bulkPut(itemsToCache);

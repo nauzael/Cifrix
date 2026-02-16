@@ -25,6 +25,7 @@ export interface Member {
   baptism_date: string | null;
   ministry: string[] | null;
   status: 'activo' | 'inactivo' | 'visitante';
+  membership_status?: 'active' | 'inactive' | 'transferred'; // Compatible with Supabase column
   is_active: boolean;
   photo_url: string | null;
   pledge_amount?: number;
@@ -498,6 +499,12 @@ export class CifrixDB extends Dexie {
       mapeo_inconsistencias: 'id, exogeno_id, estado_validacion, resuelto, sync_status',
       fiscal_years: 'id, organization_id, year, status, sync_status',
       financial_notes: 'id, organization_id, period_id, report_type, sync_status'
+    });
+
+    // Versión 17 - Sincronizar con esquema de Supabase y corregir campos de miembros
+    this.version(17).stores({
+      members: 'id, organization_id, full_name, document_id, status, is_active, entry_date, birth_date, sync_status',
+      deleted_records: '++id, record_id, table_name, sync_status, [table_name+record_id]'
     });
 
     // Hooks to track deletions

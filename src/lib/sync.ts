@@ -65,6 +65,10 @@ function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
       if (mapped.is_active === undefined) mapped.is_active = mapped.membership_status === 'active';
 
       // Eliminar campos locales que no existen en Supabase para evitar 400
+      // entry_date NO se borra aquí porque ya se mapeó a membership_date arriba, 
+      // y no queremos duplicados a menos que el servidor los ignore.
+      // Pero el error dice que no encuentra 'entry_date' en el SCHEMA CACHE de PostgREST, 
+      // lo cual confirma que Supabase NO lo tiene.
       ['status', 'entry_date', 'pledge_amount', 'pledge_period', 'ministry', 'photo_url'].forEach(k => delete mapped[k]);
     } else {
       if ('membership_status' in mapped) mapped.status = revMap[mapped.membership_status] || 'activo';
