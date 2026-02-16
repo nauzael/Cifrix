@@ -199,7 +199,10 @@ export async function getPendingSyncCount(): Promise<number> {
                 .where('sync_status')
                 .equals('pendiente')
                 .count();
-            total += count;
+            if (count > 0) {
+                console.log(`[Sync Debug] Table '${tableName}' has ${count} pending records`);
+                total += count;
+            }
         } catch (error) {
             console.error(`Error contando pendientes en ${tableName}:`, error);
         }
@@ -211,6 +214,11 @@ export async function getPendingSyncCount(): Promise<number> {
             .where('sync_status')
             .equals('pendiente')
             .count();
+        if (deletedCount > 0) {
+            console.log(`[Sync Debug] Table 'deleted_records' has ${deletedCount} pending records`);
+            const pendingDeletes = await db.deleted_records.where('sync_status').equals('pendiente').toArray();
+            console.log('[Sync Debug] Pending deletions:', pendingDeletes);
+        }
         total += deletedCount;
     } catch (error) {
         console.error('Error contando eliminaciones pendientes:', error);

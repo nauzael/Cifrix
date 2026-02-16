@@ -106,6 +106,11 @@ async function syncFromCacheToSupabase() {
 
         if (!error) {
           await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
+        } else {
+          console.error(`Error deleting from ${table}:`, error);
+          // Marcar como error para evitar bucle infinito
+          // Si es por FK, el usuario tendría que resolver la dependencia primero
+          await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'error' });
         }
       }
     }
