@@ -205,9 +205,16 @@ export function Accounting() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await db.transaction('rw', [db.transactions, db.journal_entries], async () => {
+          await db.transaction('rw', [db.transactions, db.journal_entries, db.deleted_records], async () => {
+            // Eliminar detalles primero (para asegurar tracking correcto)
+            const entries = await db.journal_entries.where('transaction_id').equals(id).toArray();
+            const entryIds = entries.map(e => e.id);
+            if (entryIds.length > 0) {
+              await db.journal_entries.bulkDelete(entryIds);
+            }
+
+            // Eliminar transacción
             await db.transactions.delete(id);
-            await db.journal_entries.where('transaction_id').equals(id).delete();
           });
           toast.success('Asiento eliminado correctamente');
         } catch (error) {
