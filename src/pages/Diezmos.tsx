@@ -33,6 +33,7 @@ import {
   FileBarChart
 } from 'lucide-react';
 import { toast } from '../store/toastStore';
+import { syncToSupabase } from '../lib/sync';
 
 const contributionSchema = z.object({
   amount: z.string().min(1, 'El monto es requerido').transform((val) => Number(val)),
@@ -196,6 +197,11 @@ export function Diezmos() {
       setSelectedMember(null);
       await loadData();
       toast.success('Aporte registrado correctamente en contabilidad.');
+
+      // Push inmediato a la nube
+      if (orgId) {
+        syncToSupabase(orgId);
+      }
     } catch (error: any) {
       console.error('Error saving contribution:', error);
       toast.error(error.message || 'Error al guardar');

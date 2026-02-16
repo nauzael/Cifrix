@@ -30,6 +30,7 @@ import { logActivity } from '../lib/audit';
 import { generateDonationCertificate } from '../lib/certificates';
 import { toast } from '../store/toastStore';
 import { confirm } from '../store/confirmStore';
+import { syncToSupabase } from '../lib/sync';
 
 const memberSchema = z.object({
   full_name: z.string().min(3, 'El nombre es requerido'),
@@ -190,6 +191,11 @@ export function Members() {
       await fetchMembers();
       setIsModalOpen(false);
       reset();
+
+      // Push inmediato a la nube
+      if (orgId) {
+        syncToSupabase(orgId);
+      }
     } catch (error: any) {
       console.error("Error saving member:", error);
       toast.error('Error al guardar: ' + error.message);
@@ -215,6 +221,11 @@ export function Members() {
 
     toast.info(`Estado de ${member.full_name} cambiado a ${nextStatus}`);
     fetchMembers();
+
+    // Push inmediato a la nube
+    if (orgId) {
+      syncToSupabase(orgId);
+    }
   };
 
   const deleteMember = async (id: string) => {
@@ -241,6 +252,11 @@ export function Members() {
 
           toast.success('Miembro eliminado correctamente');
           fetchMembers();
+
+          // Push inmediato a la nube
+          if (orgId) {
+            syncToSupabase(orgId);
+          }
         } catch (error: any) {
           toast.error('Error al eliminar: ' + error.message);
         }
