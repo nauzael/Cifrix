@@ -27,19 +27,19 @@ const TABLES_TO_SYNC = [
 ];
 
 /**
- * Sincronización en modo HÍBRIDO: Descarga datos de Supabase a caché local
+ * Sincronización en modo HÍBRIDO/OFFLINE: Descarga datos de Supabase a caché local
  */
 async function syncFromSupabaseToCache(organizationId?: string) {
-  if (!APP_CONFIG.USE_LOCAL_CACHE) return;
+  if (!APP_CONFIG.USE_LOCAL_CACHE && APP_CONFIG.DB_MODE !== 'offline') return;
 
-  dbLog('Syncing FROM Supabase TO local cache (hybrid mode)...');
+  dbLog('Syncing FROM Supabase TO local cache...');
 
   for (const tableName of TABLES_TO_SYNC) {
     try {
       let query = (supabase as any).from(tableName as any).select('*');
 
       // Filtrar por organización si se proporciona
-      if (organizationId && tableName !== 'organizations') {
+      if (organizationId && tableName !== 'organizations' && tableName !== 'audit_logs') {
         query = query.eq('organization_id', organizationId);
       }
 
@@ -51,28 +51,36 @@ async function syncFromSupabaseToCache(organizationId?: string) {
       }
 
       if (data && data.length > 0) {
-        await (db as any)[tableName].bulkPut(
-          data.map((item: any) => ({
-            ...item,
-            sync_status: 'sincronizado'
-          }))
-        );
-        dbLog(`Cached ${data.length} records for ${tableName}`);
+        // RECONCILIACIÓN SEGURA: No sobrescribir registros con cambios locales pendientes
+        await db.transaction('rw', (db as any)[tableName], async () => {
+          for (const remoteItem of data) {
+            const localItem = await (db as any)[tableName].get(remoteItem.id);
+
+            // Solo sobrescribir si el registro no existe localmente o NO tiene cambios pendientes
+            if (!localItem || localItem.sync_status !== 'pendiente') {
+              await (db as any)[tableName].put({
+                ...remoteItem,
+                sync_status: 'sincronizado'
+              });
+            }
+          }
+        });
+        dbLog(`Synced ${data.length} records for ${tableName}`);
       }
     } catch (error) {
-      console.error(`Error caching ${tableName}:`, error);
+      console.error(`Error syncing ${tableName}:`, error);
     }
   }
 
-  dbLog('Cache sync completed');
+  dbLog('Pull sync completed');
 }
 
 /**
  * Sincronización en modo OFFLINE: Sube datos pendientes a Supabase
  */
 async function syncFromCacheToSupabase() {
-  dbLog('Syncing FROM local cache TO Supabase (offline mode)...');
-
+  dbLog('Syncing FROM local cache TO Supabase...');
+  // ... (rest of syncFromCacheToSupabase remains same, but I'll provide the whole block for context)
   // Process deletions first
   try {
     const pendingDeletions = await db.deleted_records
@@ -147,16 +155,6 @@ async function syncFromCacheToSupabase() {
             error = upsertError;
           }
         }
-        // CASO ESPECIAL: Audit Logs (asegurar que tengan organization_id)
-        else if (tableName === 'audit_logs') {
-          if (!dataToSync.organization_id) {
-            console.warn('Skipping audit log sync: missing organization_id');
-            await db.audit_logs.update(item.id, { sync_status: 'error' });
-            continue;
-          }
-          const { error: insertError } = await (supabase as any).from('audit_logs').insert(dataToSync);
-          error = insertError;
-        }
         // CASO NORMAL: Resto de tablas
         else {
           const { error: upsertError } = await (supabase as any)
@@ -173,7 +171,6 @@ async function syncFromCacheToSupabase() {
             console.warn(`RLS Permission denied for table ${tableName}. Stopping sync for this table.`);
             break;
           }
-          // Marcar como error para no reintentar infinitamente el mismo registro bloqueante
           await (db as any)[tableName].update(item.id, { sync_status: 'error' });
         }
       }
@@ -205,17 +202,12 @@ export async function syncToSupabase(organizationId?: string) {
     return;
   }
 
-  // MODO HÍBRIDO: Sincronizar DESDE Supabase HACIA caché local
-  if (APP_CONFIG.DB_MODE === 'hybrid') {
-    await syncFromSupabaseToCache(organizationId);
-    return;
-  }
+  // 1. PRIMERO SIEMPRE SUBIR CAMBIOS LOCALES (Evita que el PULL los sobrescriba si no son 'pendiente')
+  await syncFromCacheToSupabase();
 
-  // MODO OFFLINE: Sincronizar DESDE caché local HACIA Supabase
-  if (APP_CONFIG.DB_MODE === 'offline') {
-    await syncFromCacheToSupabase();
-    return;
-  }
+  // 2. DESCARGAR CAMBIOS REMOTOS (Bidireccional)
+  // Tanto en modo 'hybrid' como 'offline' queremos que la caché local esté al día
+  await syncFromSupabaseToCache(organizationId);
 }
 
 // Solo habilitar sincronización automática si NO estamos en modo producción

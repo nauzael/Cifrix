@@ -112,12 +112,11 @@ export function Dashboard() {
       // Allow Super Admin to view other organizations without forcing a resync
       const isSuperAdmin = currentProfile?.role === 'SUPER_ADMIN' || user?.email === 'superadmin@cifrix.com';
 
+      // ⚠️ FIX: No borrar nunca la base de datos automáticamente aquí. 
+      // Es muy peligroso si hay cambios locales 'pendiente' que no se han subido.
       if (!isSuperAdmin && profileOrgId && (!localOrgId || localOrgId !== profileOrgId)) {
-        console.log('Organization mismatch or missing data. Forcing sync for:', profileOrgId);
-        // Safe clear: we only want data for the correct org
-        if (orgs.length > 0) await db.clearAllData();
-
-        // Force sync with explicit ID
+        console.log('Organization mismatch or missing data locally. Syncing data for:', profileOrgId);
+        // En lugar de borrar, simplemente intentamos sincronizar lo que falta
         await syncAll(profileOrgId);
         orgs = await db.organizations.toArray();
       }
