@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 
+import { Modal } from '../ui/Modal';
+import { AuditLog } from '../../lib/db';
+
 interface SecuritySettingsProps {
   organization: Organization;
 }
@@ -23,6 +26,7 @@ interface SecuritySettingsProps {
 export function SecuritySettings({ organization }: SecuritySettingsProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAction, setFilterAction] = useState<string>('all');
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
   const auditLogs = useLiveQuery(
     async () => {
@@ -47,6 +51,38 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
     },
     [organization.id, filterAction, searchTerm]
   );
+
+  const translateAction = (action: string) => {
+    const map: Record<string, string> = {
+      'CREATE': 'Creación',
+      'UPDATE': 'Actualización',
+      'DELETE': 'Eliminación',
+      'LOGIN': 'Inicio de Sesión',
+      'UPDATE_USER_ASSIGNMENT': 'Asignación de Usuario'
+    };
+    return map[action] || action;
+  };
+
+  const translateEntity = (entity: string) => {
+    const map: Record<string, string> = {
+      'TRANSACTION': 'Transacción',
+      'USER': 'Usuario',
+      'ACCOUNT': 'Cuenta',
+      'MEMBER': 'Miembro',
+      'INVOICE': 'Factura',
+      'PAYMENT': 'Pago',
+      'PROJECT': 'Proyecto',
+      'CATEGORY': 'Categoría',
+      'JOURNAL_ENTRY': 'Asiento Contable',
+      'CONTRIBUTION': 'Contribución',
+      'CUSTOMER': 'Cliente',
+      'INVOICE_ITEM': 'Detalle de Factura',
+      'DECLARACION_RENTA': 'Declaración de Renta',
+      'FISCAL_YEAR': 'Año Fiscal',
+      'EXOGENO': 'Reporte Exógeno'
+    };
+    return map[entity] || entity;
+  };
 
   return (
     <div className="space-y-8">
@@ -133,15 +169,15 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
                   </td>
                   <td className="px-4 sm:px-6 py-4">
                     <span className={`px-2 py-1 rounded-md text-[9px] font-black tracking-wider uppercase whitespace-nowrap ${log.action === 'DELETE' ? 'bg-red-100 text-red-700' :
-                        log.action === 'CREATE' ? 'bg-green-100 text-green-700' :
-                          log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700' :
-                            'bg-slate-100 text-slate-700'
+                      log.action === 'CREATE' ? 'bg-green-100 text-green-700' :
+                        log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700' :
+                          'bg-slate-100 text-slate-700'
                       }`}>
-                      {log.action}
+                      {translateAction(log.action)}
                     </span>
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-xs font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    {log.entity_type}
+                    {translateEntity(log.entity_type)}
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-xs font-medium text-slate-500 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
@@ -153,7 +189,7 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
                     <button
                       className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
                       title="Ver datos técnicos"
-                    // onClick={() => console.log('Log Data:', log)}
+                      onClick={() => setSelectedLog(log)}
                     >
                       <Eye size={14} />
                     </button>
@@ -189,6 +225,77 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={!!selectedLog}
+        onClose={() => setSelectedLog(null)}
+        title="Detalles de Movimiento"
+        subtitle={selectedLog ? formatDate(selectedLog.created_at) : ''}
+        icon={Activity}
+        maxWidth="lg"
+      >
+        {selectedLog && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tipo de Acción</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{translateAction(selectedLog.action)}</p>
+              </div>
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Entidad Afectada</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{translateEntity(selectedLog.entity_type)}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <h4 className="flex items-center gap-2 text-xs font-black text-red-500 uppercase tracking-widest">
+                  <div className="size-2 rounded-full bg-red-500" />
+                  Valor Anterior
+                </h4>
+                <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 h-[300px] overflow-auto custom-scrollbar">
+                  {selectedLog.old_data ? (
+                    <pre className="text-[10px] font-mono leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                      {JSON.stringify(selectedLog.old_data, null, 2)}
+                    </pre>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-slate-300 text-xs italic">
+                      Sin datos anteriores
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="flex items-center gap-2 text-xs font-black text-green-500 uppercase tracking-widest">
+                  <div className="size-2 rounded-full bg-green-500" />
+                  Valor Nuevo
+                </h4>
+                <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 h-[300px] overflow-auto custom-scrollbar">
+                  {selectedLog.new_data ? (
+                    <pre className="text-[10px] font-mono leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                      {JSON.stringify(selectedLog.new_data, null, 2)}
+                    </pre>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-slate-300 text-xs italic">
+                      Sin datos nuevos
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setSelectedLog(null)}
+                className="px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
+              >
+                Cerrar Detalles
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
