@@ -1,6 +1,7 @@
 import { db } from './db';
 import { supabase } from './supabase';
 import { APP_CONFIG, dbLog } from './config';
+import { toast } from '../store/toastStore';
 
 export const TABLES_TO_SYNC = [
   'organizations',
@@ -177,7 +178,11 @@ async function syncFromCacheToSupabase() {
           if (!error) {
             const ids = chunk.map(i => i.id);
             await (db as any)[tableName].where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
+            console.log(`[Sync Success] ${tableName}: Synced ${ids.length} records.`);
           } else {
+            console.error(`[Sync Error] ${tableName} batch failed:`, error);
+            toast.error(`Error de sincronización en ${tableName}: ${(error as any).message || 'Error desconocido'}`);
+
             // Fallback individual solo si el batch falla
             for (const item of chunk) {
               const { sync_status, ...dt } = item;
@@ -185,6 +190,7 @@ async function syncFromCacheToSupabase() {
               if (!indError) {
                 await (db as any)[tableName].update(item.id, { sync_status: 'sincronizado' });
               } else {
+                console.error(`[Sync Single Error] ${tableName} ${item.id}:`, indError);
                 await (db as any)[tableName].update(item.id, { sync_status: 'error' });
               }
             }
@@ -193,6 +199,7 @@ async function syncFromCacheToSupabase() {
       }
     } catch (error) {
       console.error(`Error syncing table ${tableName}:`, error);
+      toast.error(`Error crítico sincronizando ${tableName}`);
     }
   }
 }
