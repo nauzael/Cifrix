@@ -6,7 +6,7 @@ import { financialNotesService } from '../../lib/accounting/notes';
 import { financialExportService } from '../../lib/accounting/export';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowRight, Check, AlertTriangle, FileText, Lock, Calendar, Plus, Trash2, Edit } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from '../../store/toastStore';
 import { useAuthStore } from '../../store/authStore';
 
 // Pasos del Wizard
@@ -20,7 +20,7 @@ const STEPS = [
 ];
 
 export function FinancialStatementsWizard() {
-    const { profile } = useAuthStore();
+    const { user, profile } = useAuthStore();
 
     const currentOrganization = useLiveQuery(async () => {
         if (profile?.organizationId) {
@@ -216,7 +216,8 @@ export function FinancialStatementsWizard() {
     const handleDownloadPDF = async () => {
         if (!currentOrganization) return;
         setIsExporting(true);
-        const t = toast.loading('Generando PDF...');
+        const tId = 'pdf-gen';
+        toast.info('Generando PDF...');
         try {
             const startDate = `${year}-01-01`;
             const endDate = cutOffDate;
@@ -244,10 +245,10 @@ export function FinancialStatementsWizard() {
                 }
             );
 
-            toast.success('PDF generado con éxito', { id: t });
+            toast.success('PDF generado con éxito');
         } catch (error) {
             console.error(error);
-            toast.error('Error al generar PDF', { id: t });
+            toast.error('Error al generar PDF');
         } finally {
             setIsExporting(false);
         }
@@ -268,14 +269,15 @@ export function FinancialStatementsWizard() {
                 .first();
 
             if (!equityAccount) {
-                toast.error('No se encontró una cuenta de patrimonio para resultados (36xx).');
+                toast.error('No se encontró una cuenta de patrimonio para resultados (36xx). Por favor, créela en el PUC.');
+                setIsClosingProcess(false);
                 return;
             }
 
             const result = await closingProcessService.performAnnualClosing(
                 currentOrganization.id,
                 year,
-                'SYSTEM',
+                user?.id || 'SYSTEM',
                 equityAccount.id
             );
 
