@@ -436,8 +436,8 @@ export class CifrixDB extends Dexie {
 
   constructor() {
     super('CifrixDatabase');
-    this.version(15).stores({
-      // Tablas existentes
+    // Versión 13 - Base estable (Original schema)
+    this.version(13).stores({
       organizations: 'id, type, sync_status',
       members: 'id, organization_id, full_name, document_id, status, sync_status',
       transactions: 'id, organization_id, date, type, sync_status',
@@ -451,24 +451,26 @@ export class CifrixDB extends Dexie {
       invoices: 'id, organization_id, customer_id, number, date, status, dian_status, cufe, sync_status',
       invoice_items: 'id, invoice_id, sync_status',
       payments: 'id, organization_id, invoice_id, date, sync_status',
-      deleted_records: '++id, record_id, table_name, sync_status, [table_name+record_id]',
+      deleted_records: 'id, table_name, sync_status, [table_name+sync_status]',
       user_vault: 'email, user_id, last_sync',
-
-      // Nuevas tablas - Módulo de Renta
       declaraciones_renta: 'id, organization_id, periodo_fiscal, estado, contribuyente_id, sync_status',
       ingresos_renta: 'id, declaracion_id, tipo_ingreso, mes, sync_status',
       deducciones_renta: 'id, declaracion_id, tipo_deduccion, sync_status',
       activos_pasivos_renta: 'id, declaracion_id, tipo, sync_status',
-
-      // Nuevas tablas - Módulo de Exógenos
       exogenos: 'id, organization_id, tipo_exogeno, periodo_fiscal, nit_contribuyente, procesado, validado, sync_status',
       mapeo_inconsistencias: 'id, exogeno_id, estado_validacion, resuelto, sync_status',
-
-      // Nuevas tablas - Estados Financieros
       fiscal_years: 'id, organization_id, year, status, sync_status',
       financial_notes: 'id, organization_id, period_id, report_type, sync_status'
-    }).upgrade(trans => {
-      return trans.table('deleted_records').clear();
+    });
+
+    // Versión 14 - Eliminar la tabla problemática para permitir cambio de PK
+    this.version(14).stores({
+      deleted_records: null
+    });
+
+    // Versión 15 - Recrear con nuevo esquema (Auto-increment PK + record_id)
+    this.version(15).stores({
+      deleted_records: '++id, record_id, table_name, sync_status, [table_name+record_id]'
     });
 
     // Hooks to track deletions
