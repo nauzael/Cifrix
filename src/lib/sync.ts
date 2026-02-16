@@ -76,7 +76,18 @@ async function syncFromSupabaseToCache(organizationId?: string) {
           .map((item: any) => ({ ...item, sync_status: 'sincronizado' }));
 
         if (itemsToCache.length > 0) {
-          await (db as any)[tableName].bulkPut(itemsToCache);
+          await db.transaction('rw', (db as any)[tableName], db.deleted_records, async () => {
+            // Re-verificar eliminaciones en la transacción para evitar condiciones de carrera
+            // (Si el usuario borró algo mientras descargábamos de Supabase)
+            const currentDeleted = await db.deleted_records.where('table_name').equals(tableName).toArray();
+            const currentDeletedIds = new Set(currentDeleted.map(d => d.id));
+
+            const finalItems = itemsToCache.filter(item => !currentDeletedIds.has(item.id));
+
+            if (finalItems.length > 0) {
+              await (db as any)[tableName].bulkPut(finalItems);
+            }
+          });
         }
       }
     } catch (error) {
@@ -108,19 +119,27 @@ async function syncFromCacheToSupabase() {
         deletionsByTable[d.table_name].push(d.id);
       });
 
-      for (const [table, ids] of Object.entries(deletionsByTable)) {
-        const { error } = await (supabase as any)
-          .from(table)
-          .delete()
-          .in('id', ids);
+      // Enforce strict deletion order (reverse of dependency order) to avoid FK constraint errors
+      // e.g. Delete journal_entries BEFORE transactions
+      const tablesInReverseHeader = [...TABLES_TO_SYNC].reverse();
 
-        if (!error) {
-          await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
-        } else {
-          console.error(`Error deleting from ${table}:`, error);
-          // Marcar como error para evitar bucle infinito
-          // Si es por FK, el usuario tendría que resolver la dependencia primero
-          await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'error' });
+      for (const table of tablesInReverseHeader) {
+        if (deletionsByTable[table] && deletionsByTable[table].length > 0) {
+          const ids = deletionsByTable[table];
+
+          const { error } = await (supabase as any)
+            .from(table)
+            .delete()
+            .in('id', ids);
+
+          if (!error) {
+            await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
+          } else {
+            console.error(`Error deleting from ${table}:`, error);
+            // Si hay error (ej: FK), no marcamos como error inmediatamente para permitir reintentos,
+            // pero si es persistente, debería ser revisado.
+            // Para "transactions", si falla por FK, es crítico.
+          }
         }
       }
     }
