@@ -436,7 +436,7 @@ export class CifrixDB extends Dexie {
 
   constructor() {
     super('CifrixDatabase');
-    this.version(14).stores({
+    this.version(15).stores({
       // Tablas existentes
       organizations: 'id, type, sync_status',
       members: 'id, organization_id, full_name, document_id, status, sync_status',
@@ -467,6 +467,8 @@ export class CifrixDB extends Dexie {
       // Nuevas tablas - Estados Financieros
       fiscal_years: 'id, organization_id, year, status, sync_status',
       financial_notes: 'id, organization_id, period_id, report_type, sync_status'
+    }).upgrade(trans => {
+      return trans.table('deleted_records').clear();
     });
 
     // Hooks to track deletions
