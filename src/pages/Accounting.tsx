@@ -286,9 +286,13 @@ export function Accounting() {
                   className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
                 >
                   <option value="">Todas las cuentas</option>
-                  {accounts?.sort((a, b) => a.code.localeCompare(b.code)).map(acc => (
-                    <option key={acc.id} value={acc.id}>{acc.code} - {acc.name}</option>
-                  ))}
+                  {accounts
+                    ?.sort((a, b) => a.code.localeCompare(b.code))
+                    // Deduplicate by code for the dropdown
+                    .filter((acc, index, self) => index === self.findIndex(t => t.code === acc.code))
+                    .map(acc => (
+                      <option key={acc.id} value={acc.id}>{acc.code} - {acc.name}</option>
+                    ))}
                 </select>
               </div>
 

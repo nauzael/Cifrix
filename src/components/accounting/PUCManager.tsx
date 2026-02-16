@@ -202,10 +202,75 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
     }
   };
 
+  const cleanupDuplicates = async () => {
+    if (!orgId) return;
+    confirm({
+      title: 'Optimizar Catálogo',
+      message: 'Esta acción buscará cuentas duplicadas (mismo código), unificará sus movimientos en una sola cuenta y eliminará las copias redundantes. ¿Desea continuar?',
+      confirmText: 'Optimizar y Limpiar',
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          const allAccounts = await db.accounts.where('organization_id').equals(orgId).toArray();
+          const accountsByCode = new Map<string, Account[]>();
+
+          for (const acc of allAccounts) {
+            const existing = accountsByCode.get(acc.code) || [];
+            existing.push(acc);
+            accountsByCode.set(acc.code, existing);
+          }
+
+          let deletedCount = 0;
+
+          await db.transaction('rw', db.accounts, db.journal_entries, db.deleted_records, async () => {
+            for (const [code, accs] of accountsByCode) {
+              if (accs.length > 1) {
+                // Keep the first one as primary
+                const primary = accs[0];
+                const duplicates = accs.slice(1);
+
+                for (const dup of duplicates) {
+                  // Move journal entries to primary
+                  await db.journal_entries.where('account_id').equals(dup.id).modify({ account_id: primary.id });
+
+                  // Delete duplicate
+                  await db.accounts.delete(dup.id);
+                  await db.deleted_records.add({
+                    id: dup.id,
+                    table_name: 'accounts',
+                    sync_status: 'pendiente',
+                    deleted_at: new Date().toISOString()
+                  });
+                  deletedCount++;
+                }
+              }
+            }
+          });
+
+          if (deletedCount > 0) {
+            toast.success(`Optimización completada. Se eliminaron ${deletedCount} cuentas duplicadas.`);
+          } else {
+            toast.info('El catálogo ya está optimizado. No se encontraron duplicados.');
+          }
+        } catch (error) {
+          console.error('Error optimizing PUC:', error);
+          toast.error('Error al optimizar el catálogo.');
+        }
+      }
+    });
+  };
+
   const performSeed = async () => {
     try {
       await db.transaction('rw', db.accounts, async () => {
+        const existingAccounts = await db.accounts.where('organization_id').equals(orgId).toArray();
+        const existingCodes = new Set(existingAccounts.map(a => a.code));
+
+        let addedCount = 0;
+
         for (const item of UNIVERSAL_PUC) {
+          if (existingCodes.has(item.code)) continue;
+
           await db.accounts.add({
             id: uuidv4(),
             organization_id: orgId,
@@ -219,9 +284,15 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
             created_at: new Date().toISOString(),
             sync_status: 'pendiente'
           });
+          addedCount++;
+        }
+
+        if (addedCount > 0) {
+          toast.success(`Se agregaron ${addedCount} cuentas nuevas del catálogo universal.`);
+        } else {
+          toast.info('El catálogo ya contiene todas las cuentas básicas.');
         }
       });
-      toast.success('PUC universal cargado correctamente.');
     } catch (error) {
       toast.error('Error al cargar el PUC universal.');
     }
@@ -318,6 +389,12 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
             className="flex-1 lg:flex-none text-[11px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 px-5 py-3 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
             <FolderTree size={16} /> Cargar Universal
+          </button>
+          <button
+            onClick={cleanupDuplicates}
+            className="flex-1 lg:flex-none text-[11px] font-black uppercase tracking-widest bg-amber-50 dark:bg-amber-900/10 text-amber-600 hover:bg-amber-100 px-5 py-3 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Loader2 size={16} /> Optimizar
           </button>
           <button
             onClick={() => {

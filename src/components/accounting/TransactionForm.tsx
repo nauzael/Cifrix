@@ -127,6 +127,8 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
     return (accounts || [])
       .filter(acc => acc.accepts_movement)
       .sort((a, b) => a.code.localeCompare(b.code))
+      // Visually deduplicate for UI until cleanup is run
+      .filter((acc, index, self) => index === self.findIndex(t => t.code === acc.code))
       .map(acc => ({
         value: acc.id,
         label: `${acc.code} - ${acc.name}`
