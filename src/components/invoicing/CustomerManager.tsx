@@ -100,7 +100,7 @@ export function CustomerManager({ organizationId }: CustomerManagerProps) {
                     db.customers.delete(customer.id);
                   }
                 }}
-                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all"
               >
                 <Trash2 size={18} />
               </button>

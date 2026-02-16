@@ -99,7 +99,7 @@ export function CategoryManager({ organizationId }: CategoryManagerProps) {
           </div>
           <button
             onClick={() => deleteCategory(node.id)}
-            className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all opacity-0 group-hover:opacity-100 active:scale-90"
+            className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all active:scale-90"
           >
             <Trash2 size={18} />
           </button>
@@ -116,8 +116,8 @@ export function CategoryManager({ organizationId }: CategoryManagerProps) {
           <button
             onClick={() => setActiveType('ingreso')}
             className={`flex-1 sm:flex-none px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeType === 'ingreso'
-                ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-xl shadow-blue-500/10'
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              ? 'bg-white dark:bg-slate-800 text-blue-600 shadow-xl shadow-blue-500/10'
+              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
           >
             Ingresos
@@ -125,8 +125,8 @@ export function CategoryManager({ organizationId }: CategoryManagerProps) {
           <button
             onClick={() => setActiveType('egreso')}
             className={`flex-1 sm:flex-none px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeType === 'egreso'
-                ? 'bg-white dark:bg-slate-800 text-red-600 shadow-xl shadow-red-500/10'
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              ? 'bg-white dark:bg-slate-800 text-red-600 shadow-xl shadow-red-500/10'
+              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
           >
             Egresos

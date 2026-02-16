@@ -101,7 +101,7 @@ export function DeclarationList({ declaraciones, declaracionActual, onSelect, on
                                         onDelete(declaracion.id);
                                     }
                                 }}
-                                className="p-1 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-50 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                className="p-1 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-50 focus:opacity-100"
                                 title="Eliminar declaración"
                             >
                                 <Trash2 className="h-4 w-4" />

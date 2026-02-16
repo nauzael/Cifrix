@@ -406,7 +406,7 @@ export function FinancialStatementsWizard() {
                 <div className="space-y-4">
                     {notes.map(note => (
                         <div key={note.id} className="bg-white p-4 rounded-lg border hover:border-blue-300 transition group relative">
-                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+                            <div className="absolute top-4 right-4 flex gap-2 transition">
                                 <button onClick={() => setEditingNote(note)} className="p-1 text-blue-600 hover:bg-blue-50 rounded"><Edit size={16} /></button>
                                 <button onClick={() => handleDeleteNote(note.id)} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
                             </div>

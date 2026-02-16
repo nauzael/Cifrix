@@ -251,7 +251,7 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
               </span>
             </div>
 
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-2">
               <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${node.nature === 'DEBITO' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
                 }`}>
                 {node.nature}
