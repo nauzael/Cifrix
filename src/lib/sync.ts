@@ -30,14 +30,12 @@ export const TABLES_TO_SYNC = [
 // Tablas que NO tienen índice organization_id en Dexie (evita SchemaError)
 const TABLES_WITHOUT_ORG_INDEX = [
   'organizations',
-  'audit_logs',
   'journal_entries',
   'invoice_items',
   'ingresos_renta',
   'deducciones_renta',
   'activos_pasivos_renta',
-  'mapeo_inconsistencias',
-  'financial_notes'
+  'mapeo_inconsistencias'
 ];
 
 /**
