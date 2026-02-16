@@ -89,6 +89,47 @@ async function syncFromSupabaseToCache(organizationId?: string) {
             }
           });
         }
+
+        // --------------------------------------------------------
+        // GARBAGE COLLECTION: Eliminar registros locales que ya no existen en Supabase
+        // (Solo para tablas filtradas por organización, donde tenemos el set completo)
+        // --------------------------------------------------------
+        if (organizationId && data) {
+          const isFullSetFetch = tableName !== 'organizations' &&
+            tableName !== 'audit_logs' &&
+            tableName !== 'journal_entries' && // No tiene org_id
+            tableName !== 'invoice_items'; // No tiene org_id
+
+          if (isFullSetFetch) {
+            const remoteIds = new Set(data.map(d => d.id));
+
+            // Obtener todos los IDs locales para esta organización que están marcados como 'sincronizado'
+            // (Ignoramos 'pendiente' porque son creaciones offline que aun no están en la nube)
+            const localRecords = await (db as any)[tableName]
+              .where('organization_id')
+              .equals(organizationId)
+              .toArray(); // Optimization: could use keys() but need sync_status check
+
+            const orphansToDelete = localRecords
+              .filter((l: any) => l.sync_status === 'sincronizado' && !remoteIds.has(l.id))
+              .map((l: any) => l.id);
+
+            if (orphansToDelete.length > 0) {
+              console.log(`[GC] Deleting ${orphansToDelete.length} stale records from ${tableName}`);
+              await (db as any)[tableName].bulkDelete(orphansToDelete);
+
+              // Hook especial para cascada manual si es necesario
+              if (tableName === 'transactions') {
+                // Si borramos transacciones, borrar sus detalles también
+                const entries = await db.journal_entries.where('transaction_id').anyOf(orphansToDelete).toArray();
+                const entryIds = entries.map(e => e.id);
+                if (entryIds.length > 0) {
+                  await db.journal_entries.bulkDelete(entryIds);
+                }
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       console.error(`Error syncing table ${tableName}:`, error);
