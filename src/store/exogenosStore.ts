@@ -191,8 +191,9 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             toast.success(`${result.count} registros generados automáticamente`);
         } catch (error: any) {
             console.error('Error al generar exógenos:', error);
-            set({ error: error.message || 'Error al generar exógenos', loading: false });
-            toast.error('Error al generar exógenos desde contabilidad');
+            const errorMessage = error.message || 'Error al generar exógenos desde contabilidad';
+            set({ error: errorMessage, loading: false });
+            toast.error(errorMessage);
         }
     },
 
