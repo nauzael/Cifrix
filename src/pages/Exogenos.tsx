@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useExogenosStore } from '@/store/exogenosStore';
-import { Upload, AlertCircle, FileText, CheckCircle, Search, Filter, Trash2 } from 'lucide-react';
+import { Upload, AlertCircle, FileText, CheckCircle, Search, Filter, Trash2, Calculator } from 'lucide-react';
 import { toast } from '@/store/toastStore';
 import { ComparisonCharts } from '@/components/exogenos/ComparisonCharts';
 
@@ -20,7 +20,8 @@ export default function Exogenos() {
         importarArchivo,
         validarTodo,
         resolverInconsistencia,
-        eliminarReporte
+        eliminarReporte,
+        generarDesdeContabilidad
     } = useExogenosStore();
 
     const [filter, setFilter] = useState('');
@@ -76,6 +77,19 @@ export default function Exogenos() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={async () => {
+                            if (profile?.organizationId) {
+                                const year = new Date().getFullYear();
+                                await generarDesdeContabilidad(profile.organizationId, year);
+                            }
+                        }}
+                        disabled={loading}
+                        className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-600/20 transition-all font-bold text-sm disabled:opacity-50"
+                    >
+                        <Calculator className="size-4 mr-2" />
+                        Generar desde Contabilidad
+                    </button>
                     <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-600/20 transition-all font-bold text-sm">
                         <Upload className="size-4 mr-2" />
                         Importar XML/CSV

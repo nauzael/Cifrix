@@ -21,6 +21,7 @@ interface ExogenosState {
     validarTodo: () => Promise<void>;
     resolverInconsistencia: (id: string, comentario: string) => Promise<void>;
     eliminarReporte: (id: string) => Promise<void>;
+    generarDesdeContabilidad: (organizacionId: string, año: number) => Promise<void>;
     limpiarEstado: () => void;
 }
 
@@ -179,6 +180,19 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
         } catch (error) {
             console.error('Error al eliminar reporte:', error);
             toast.error('Error al eliminar reporte');
+        }
+    },
+
+    generarDesdeContabilidad: async (organizacionId: string, año: number) => {
+        set({ loading: true, error: null });
+        try {
+            const result = await exogenosService.generator.generateFromAccounting(organizacionId, año);
+            await get().cargarReportes(organizacionId);
+            toast.success(`${result.count} registros generados automáticamente`);
+        } catch (error: any) {
+            console.error('Error al generar exógenos:', error);
+            set({ error: error.message || 'Error al generar exógenos', loading: false });
+            toast.error('Error al generar exógenos desde contabilidad');
         }
     },
 
