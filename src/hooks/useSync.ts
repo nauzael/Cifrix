@@ -9,6 +9,38 @@ export function useSync() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const syncDeletions = async () => {
+    try {
+      const pendingDeletions = await db.deleted_records
+        .where('sync_status')
+        .equals('pendiente')
+        .toArray();
+
+      if (pendingDeletions.length === 0) return;
+
+      const deletionsByTable: Record<string, string[]> = {};
+      pendingDeletions.forEach(d => {
+        if (!deletionsByTable[d.table_name]) deletionsByTable[d.table_name] = [];
+        deletionsByTable[d.table_name].push(d.id);
+      });
+
+      for (const [table, ids] of Object.entries(deletionsByTable)) {
+        const { error } = await (supabase as any)
+          .from(table)
+          .delete()
+          .in('id', ids);
+
+        if (!error) {
+          await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
+        } else {
+          console.error(`Error deleting from ${table}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error('Error in syncDeletions:', error);
+    }
+  };
+
   const syncTable = async <T extends { id: string, organization_id?: string, sync_status?: SyncStatus }>(
     tableName: string,
     table: Table<T, string>,
@@ -16,7 +48,6 @@ export function useSync() {
   ) => {
     // 1. PUSH: Send pending local changes...
     const pendingItems = await table.where('sync_status').equals('pendiente').toArray();
-    // ... (existing push logic is mostly fine, but let's wrap it safe)
 
     for (const item of pendingItems) {
       try {
@@ -41,48 +72,40 @@ export function useSync() {
     try {
       let query = (supabase as any).from(tableName).select('*');
 
-      // If retrieving shared data (like accounts, transactions) and we have an org ID, filtering helps performance
-      // But we rely mainly on RLS. Adding this explicit filter is a safety net.
       if (organizationId && tableName !== 'organizations' && tableName !== 'users' && tableName !== 'audit_logs') {
-        // Check if table has organization_id column before filtering (best effort guess based on schema knowledge)
-        // We know our schema has organization_id in almost all tables
         if (['transactions', 'members', 'projects', 'accounts', 'journal_entries', 'categories', 'customers', 'invoices', 'payments', 'contributions'].includes(tableName)) {
           query = query.eq('organization_id', organizationId);
         }
       }
 
       const { data: remoteItemsData, error: fetchError } = await query;
-
       if (fetchError) throw fetchError;
 
       const remoteItems = remoteItemsData as any[] || [];
 
+      // Get local deletions to avoid pulling them back
+      const deletedLocalRecords = await db.deleted_records
+        .where('table_name')
+        .equals(tableName)
+        .toArray();
+      const deletedIds = new Set(deletedLocalRecords.map(d => d.id));
+
       if (remoteItems.length > 0) {
         await db.transaction('rw', table, async () => {
-          // Logic to reconcile:
-          // 1. If item exists locally and is 'pendiente', DO NOT overwrite (local changes take precedence temporarily until pushed)
-          // 2. If item exists locally and is 'sincronizado', overwrite with remote
-          // 3. If item does not exist locally, add it
-
-          const localIds = await table.toCollection().primaryKeys();
           const remoteIdSet = new Set(remoteItems.map(i => i.id));
-
-          // Bulk ops preparation
           const toPut = [];
           const toDelete = [];
 
           for (const remoteItem of remoteItems) {
+            // Check if it was deleted locally
+            if (deletedIds.has(remoteItem.id)) continue;
+
             const localItem = await table.get(remoteItem.id);
             if (!localItem || localItem.sync_status !== 'pendiente') {
               toPut.push({ ...remoteItem, sync_status: 'sincronizado' });
             }
           }
 
-          // Only delete if we are SURE this wasn't a filtered query.
-          // If we filtered by orgId, we only see a subset, so we shouldn't delete things not in the result set
-          // unless we are sure the table only contains that org's data locally.
-          // For safety in this hybrid mode: avoid bulk deletion unless we're strictly mirroring.
-          // Let's implement a safer delete: only delete if we know it belongs to this org and isn't in remote
           if (organizationId) {
             const localOrgItems = await table.where('organization_id').equals(organizationId).toArray();
             for (const localItem of localOrgItems) {
@@ -102,9 +125,6 @@ export function useSync() {
     }
   };
 
-  // ... syncDeletions remains same ...
-
-  const syncDeletions = async () => { };
 
   const syncAll = async (forceOrganizationId?: string) => {
     if (isSyncing) return;
