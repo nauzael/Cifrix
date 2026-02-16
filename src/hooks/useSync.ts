@@ -18,20 +18,25 @@ export function useSync() {
 
       if (pendingDeletions.length === 0) return;
 
-      const deletionsByTable: Record<string, string[]> = {};
+      const deletionsMap: Record<string, { remoteIds: string[], localIds: number[] }> = {};
+
       pendingDeletions.forEach(d => {
-        if (!deletionsByTable[d.table_name]) deletionsByTable[d.table_name] = [];
-        deletionsByTable[d.table_name].push(d.id);
+        if (!deletionsMap[d.table_name]) {
+          deletionsMap[d.table_name] = { remoteIds: [], localIds: [] };
+        }
+        deletionsMap[d.table_name].remoteIds.push(d.record_id);
+        // @ts-ignore
+        if (d.id) deletionsMap[d.table_name].localIds.push(d.id);
       });
 
-      for (const [table, ids] of Object.entries(deletionsByTable)) {
+      for (const [table, { remoteIds, localIds }] of Object.entries(deletionsMap)) {
         const { error } = await (supabase as any)
           .from(table)
           .delete()
-          .in('id', ids);
+          .in('id', remoteIds);
 
         if (!error) {
-          await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
+          await db.deleted_records.where('id').anyOf(localIds).modify({ sync_status: 'sincronizado' });
         } else {
           console.error(`Error deleting from ${table}:`, error);
         }
@@ -88,7 +93,7 @@ export function useSync() {
         .where('table_name')
         .equals(tableName)
         .toArray();
-      const deletedIds = new Set(deletedLocalRecords.map(d => d.id));
+      const deletedIds = new Set(deletedLocalRecords.map(d => d.record_id));
 
       if (remoteItems.length > 0) {
         await db.transaction('rw', table, async () => {

@@ -190,7 +190,8 @@ export interface AuditLog {
 }
 
 export interface DeletedRecord {
-  id: string; // id of the record in its original table
+  id?: number; // Auto-incrementing local ID
+  record_id: string; // The ID of the deleted record
   table_name: string;
   deleted_at: string;
   sync_status: SyncStatus;
@@ -435,7 +436,7 @@ export class CifrixDB extends Dexie {
 
   constructor() {
     super('CifrixDatabase');
-    this.version(13).stores({
+    this.version(14).stores({
       // Tablas existentes
       organizations: 'id, type, sync_status',
       members: 'id, organization_id, full_name, document_id, status, sync_status',
@@ -450,7 +451,7 @@ export class CifrixDB extends Dexie {
       invoices: 'id, organization_id, customer_id, number, date, status, dian_status, cufe, sync_status',
       invoice_items: 'id, invoice_id, sync_status',
       payments: 'id, organization_id, invoice_id, date, sync_status',
-      deleted_records: 'id, table_name, sync_status, [table_name+sync_status]',
+      deleted_records: '++id, record_id, table_name, sync_status, [table_name+record_id]',
       user_vault: 'email, user_id, last_sync',
 
       // Nuevas tablas - Módulo de Renta
@@ -491,7 +492,7 @@ export class CifrixDB extends Dexie {
 
         // RETORNAR la promesa para que Dexie espere a que se registre el rastro antes de completar el borrado
         return this.deleted_records.put({
-          id,
+          record_id: id,
           table_name: tableName,
           deleted_at: new Date().toISOString(),
           sync_status: 'pendiente'

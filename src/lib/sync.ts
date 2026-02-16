@@ -160,7 +160,7 @@ async function syncFromSupabaseToCache(organizationId?: string) {
           .where('table_name')
           .equals(tableName)
           .toArray();
-        const deletedIds = new Set(deletedEntries.map(d => d.id));
+        const deletedIds = new Set(deletedEntries.map(d => d.record_id));
 
         const pendingLocalItems = await (db as any)[tableName]
           .where('sync_status')
@@ -249,22 +249,30 @@ async function syncFromCacheToSupabase() {
       .toArray();
 
     if (pendingDeletions.length > 0) {
-      const deletionsByTable: Record<string, string[]> = {};
+      // Agrupar por tabla
+      const deletionsMap: Record<string, { remoteIds: string[], localIds: number[] }> = {};
+
       pendingDeletions.forEach(d => {
-        if (!deletionsByTable[d.table_name]) deletionsByTable[d.table_name] = [];
-        deletionsByTable[d.table_name].push(d.id);
+        if (!deletionsMap[d.table_name]) {
+          deletionsMap[d.table_name] = { remoteIds: [], localIds: [] };
+        }
+        deletionsMap[d.table_name].remoteIds.push(d.record_id);
+        if (d.id) deletionsMap[d.table_name].localIds.push(d.id);
       });
 
       const tablesInReverse = [...TABLES_TO_SYNC].reverse();
       for (const table of tablesInReverse) {
-        if (deletionsByTable[table]?.length > 0) {
-          const ids = deletionsByTable[table];
-          console.log(`[Sync] Pushing ${ids.length} deletions to ${table}...`);
-          const { error } = await (supabase as any).from(table).delete().in('id', ids);
-          if (!error) {
-            await db.deleted_records.where('id').anyOf(ids).modify({ sync_status: 'sincronizado' });
-          } else {
-            console.error(`[Sync] Error deleting from ${table}:`, error);
+        if (deletionsMap[table]) {
+          const { remoteIds, localIds } = deletionsMap[table];
+          if (remoteIds.length > 0) {
+            console.log(`[Sync] Pushing ${remoteIds.length} deletions to ${table}...`);
+            const { error } = await (supabase as any).from(table).delete().in('id', remoteIds);
+
+            if (!error) {
+              await db.deleted_records.where('id').anyOf(localIds).modify({ sync_status: 'sincronizado' });
+            } else {
+              console.error(`[Sync] Error deleting from ${table}:`, error);
+            }
           }
         }
       }
