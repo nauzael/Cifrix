@@ -22,7 +22,8 @@ export default function Exogenos() {
         validarTodo,
         resolverInconsistencia,
         eliminarReporte,
-        generarDesdeContabilidad
+        generarDesdeContabilidad,
+        limpiarTodo
     } = useExogenosStore();
 
     const [filter, setFilter] = useState('');
@@ -104,6 +105,20 @@ export default function Exogenos() {
                         <CheckCircle className="size-4 mr-2 text-emerald-500" />
                         Validar Todo
                     </button>
+                    {(reportes.length > 0 || inconsistencias.length > 0) && (
+                        <button
+                            onClick={async () => {
+                                if (confirm('¿Está seguro de limpiar todos los datos de exógenos? Esta acción no se puede deshacer y borrará también las validaciones.') && profile?.organizationId) {
+                                    await limpiarTodo(profile.organizationId);
+                                }
+                            }}
+                            disabled={loading}
+                            className="inline-flex items-center px-4 py-2 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-xl transition-all font-bold text-sm disabled:opacity-50"
+                        >
+                            <Trash2 className="size-4 mr-2" />
+                            Limpiar Datos
+                        </button>
+                    )}
                 </div>
             </div>
 

@@ -22,6 +22,7 @@ interface ExogenosState {
     resolverInconsistencia: (id: string, comentario: string) => Promise<void>;
     eliminarReporte: (id: string) => Promise<void>;
     generarDesdeContabilidad: (organizacionId: string, año: number) => Promise<void>;
+    limpiarTodo: (organizacionId: string) => Promise<void>;
     limpiarEstado: () => void;
 }
 
@@ -194,6 +195,24 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             const errorMessage = error.message || 'Error al generar exógenos desde contabilidad';
             set({ error: errorMessage, loading: false });
             toast.error(errorMessage);
+        }
+    },
+
+    limpiarTodo: async (organizacionId: string) => {
+        set({ loading: true });
+        try {
+            const reportesIds = get().reportes.map(r => r.id);
+            const incsIds = get().inconsistencias.map(i => i.id);
+
+            await db.exogenos.bulkDelete(reportesIds);
+            await db.mapeo_inconsistencias.bulkDelete(incsIds);
+
+            set({ reportes: [], inconsistencias: [], loading: false });
+            toast.success('Módulo de exógenos limpiado correctamente');
+        } catch (error) {
+            console.error('Error al limpiar exógenos:', error);
+            set({ loading: false });
+            toast.error('Error al limpiar los datos');
         }
     },
 
