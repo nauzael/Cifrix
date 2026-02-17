@@ -25,6 +25,8 @@ export const TABLES_TO_SYNC = [
   'activos_pasivos_renta',
   'third_parties',
   'exogenos',
+  'exogena_balances',
+  'exogena_balance_lines',
   'mapeo_inconsistencias',
   'fiscal_years',
   'financial_notes'
@@ -33,6 +35,8 @@ export const TABLES_TO_SYNC = [
 export const EXOGENOS_TABLES = [
   'third_parties',
   'exogenos',
+  'exogena_balances',
+  'exogena_balance_lines',
   'mapeo_inconsistencias'
 ];
 
