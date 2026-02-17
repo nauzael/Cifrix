@@ -23,11 +23,11 @@ export const TABLES_TO_SYNC = [
   'ingresos_renta',
   'deducciones_renta',
   'activos_pasivos_renta',
-  'third_parties',
-  'exogenos',
-  'exogena_balances',
-  'exogena_balance_lines',
-  'mapeo_inconsistencias',
+  // 'third_parties',
+  // 'exogenos',
+  // 'exogena_balances',
+  // 'exogena_balance_lines',
+  // 'mapeo_inconsistencias',
   'fiscal_years',
   'financial_notes'
 ];
