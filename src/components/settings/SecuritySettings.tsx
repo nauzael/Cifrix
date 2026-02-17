@@ -84,6 +84,69 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
     return map[entity] || entity;
   };
 
+  const FIELD_LABELS: Record<string, string> = {
+    full_name: 'Nombre Completo',
+    document_id: 'Documento / ID',
+    phone: 'Teléfono',
+    email: 'Correo Electrónico',
+    address: 'Dirección',
+    status: 'Estado',
+    birth_date: 'Fecha Nacimiento',
+    entry_date: 'Fecha Ingreso',
+    baptism_date: 'Fecha Bautismo',
+    ministry: 'Ministerios',
+    pledge_amount: 'Monto Compromiso',
+    pledge_period: 'Periodo Compromiso',
+    description: 'Descripción',
+    amount: 'Monto / Valor',
+    date: 'Fecha',
+    reference: 'Referencia',
+    notes: 'Notas',
+    category: 'Categoría',
+    method: 'Método',
+    name: 'Nombre',
+    code: 'Código',
+    tax_id: 'NIT / RUT',
+    type: 'Tipo',
+    role: 'Rol',
+    active: 'Activo',
+    is_active: 'Está Activo'
+  };
+
+  const renderDataValue = (key: string, value: any) => {
+    if (value === null || value === undefined || value === '') return <span className="text-slate-300 italic">No registrado</span>;
+    if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : <span className="text-slate-300 italic">Ninguno</span>;
+    if (typeof value === 'boolean') return value ? 'Sí' : 'No';
+    if (key.includes('amount') || key === 'total' || key === 'subtotal' || key === 'tax') {
+      return `$ ${new Intl.NumberFormat('es-CO').format(value)}`;
+    }
+    return String(value);
+  };
+
+  const FriendlyDataViewer = ({ data }: { data: any }) => {
+    if (!data || typeof data !== 'object') return null;
+
+    return (
+      <div className="space-y-3">
+        {Object.entries(data).map(([key, value]) => {
+          // Skip internal IDs and sync status to avoid noise
+          if (['id', 'organization_id', 'sync_status', 'created_at', 'updated_at', 'created_by'].includes(key)) return null;
+
+          return (
+            <div key={key} className="border-b border-slate-100 dark:border-slate-800 pb-2 last:border-0">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight mb-1">
+                {FIELD_LABELS[key] || key}
+              </p>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300 leading-snug">
+                {renderDataValue(key, value)}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       {/* Autenticación y Sesión */}
@@ -253,11 +316,9 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
                   <div className="size-2 rounded-full bg-red-500" />
                   Valor Anterior
                 </h4>
-                <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 h-[300px] overflow-auto custom-scrollbar">
+                <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-slate-200 dark:border-slate-800 h-[320px] overflow-y-auto custom-scrollbar">
                   {selectedLog.old_data ? (
-                    <pre className="text-[10px] font-mono leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                      {JSON.stringify(selectedLog.old_data, null, 2)}
-                    </pre>
+                    <FriendlyDataViewer data={selectedLog.old_data} />
                   ) : (
                     <div className="h-full flex items-center justify-center text-slate-300 text-xs italic">
                       Sin datos anteriores
@@ -271,11 +332,9 @@ export function SecuritySettings({ organization }: SecuritySettingsProps) {
                   <div className="size-2 rounded-full bg-green-500" />
                   Valor Nuevo
                 </h4>
-                <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 h-[300px] overflow-auto custom-scrollbar">
+                <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-xl border border-slate-200 dark:border-slate-800 h-[320px] overflow-y-auto custom-scrollbar">
                   {selectedLog.new_data ? (
-                    <pre className="text-[10px] font-mono leading-relaxed text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                      {JSON.stringify(selectedLog.new_data, null, 2)}
-                    </pre>
+                    <FriendlyDataViewer data={selectedLog.new_data} />
                   ) : (
                     <div className="h-full flex items-center justify-center text-slate-300 text-xs italic">
                       Sin datos nuevos
