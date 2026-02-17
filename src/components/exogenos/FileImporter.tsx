@@ -49,9 +49,21 @@ export const FileImporter = ({ organizationId }: FileImporterProps) => {
         }
     };
 
-    // ... handleDrop ... 
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    };
 
-    // ... handleChange ...
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        if (e.target.files && e.target.files[0]) {
+            handleFile(e.target.files[0]);
+        }
+    };
 
     return (
         <div className="bg-card rounded-2xl p-8 border border-border shadow-sm">
