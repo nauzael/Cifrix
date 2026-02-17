@@ -380,6 +380,7 @@ export interface Exogeno {
 
 export interface MapeoInconsistencia {
   id: string;
+  organization_id: string;
   exogeno_id: string;
 
   // Referencia a operación interna

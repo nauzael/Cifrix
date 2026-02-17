@@ -137,6 +137,67 @@ export class ExogenosValidator {
 
         return resultados;
     }
+    /**
+     * Valida un reporte exógeno contra un mapa de saldos de balance
+     */
+    validarContraBalance(exogeno: Exogeno, balanceMap: Map<string, { debito: number, credito: number, saldo: number }>): InconsistencyResult {
+        const nit = exogeno.nit_contribuyente;
+        const balanceData = balanceMap.get(nit);
+
+        // Caso 1: Tercero no existe en el balance
+        if (!balanceData) {
+            // Un tercero reportado en exógena DEBERÍA estar en contabilidad si hubo movimiento.
+            // Si el monto es significativo, es error.
+            if (exogeno.monto > 1000) {
+                return {
+                    hayInconsistencia: true,
+                    tipo: 'TERCERO_FALTANTE',
+                    descripcion: 'El tercero reportado no tiene movimientos en el Balance de Prueba cargado.',
+                    valorReportado: exogeno.monto,
+                    valorInterno: 0,
+                    diferencia: exogeno.monto
+                };
+            }
+        } else {
+            // Caso 2: Tercero existe. Comparar valores.
+            // El reporte exógeno suele ser un acumulado anual de un concepto.
+            // El balance tiene el saldo final o movimiento del año.
+
+            // Estrategia simple: Comparar el valor reportado con el movimiento total (mayor de debito o credito) o saldo
+            // Dado que no sabemos la naturaleza exacta (ingreso/gasto) sin mapeo de cuentas, 
+            // usamos una heurística: ¿El monto reportado se parece a alguno de los totales del balance?
+
+            const { debito, credito, saldo } = balanceData;
+
+            // Buscamos coincidencia con Debito, Credito o Saldo Neto
+            const diffDebito = Math.abs(exogeno.monto - debito);
+            const diffCredito = Math.abs(exogeno.monto - credito);
+            const diffSaldo = Math.abs(exogeno.monto - Math.abs(saldo));
+
+            const minDiff = Math.min(diffDebito, diffCredito, diffSaldo);
+            const UMBRAL = 1000; // Tolerancia
+
+            if (minDiff > UMBRAL) {
+                return {
+                    hayInconsistencia: true,
+                    tipo: 'VALOR_DISCORDANTE',
+                    descripcion: `Monto no coincide con Balance. Balance (D: ${debito}, C: ${credito}, Saldo: ${saldo}).`,
+                    valorReportado: exogeno.monto,
+                    valorInterno: saldo, // Mostramos saldo como referencia principal
+                    diferencia: minDiff
+                };
+            }
+        }
+
+        return {
+            hayInconsistencia: false,
+            tipo: 'VALOR_DISCORDANTE',
+            descripcion: 'OK - Coincide con Balance',
+            valorReportado: exogeno.monto,
+            valorInterno: balanceData?.saldo || 0,
+            diferencia: 0
+        };
+    }
 }
 
 export const exogenosValidator = new ExogenosValidator();

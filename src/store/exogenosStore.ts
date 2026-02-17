@@ -223,6 +223,7 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
                 const inconsistencia: MapeoInconsistencia = {
                     id: crypto.randomUUID(),
                     exogeno_id: reporte.id,
+                    organization_id: reporte.organization_id,
                     estado_validacion: 'PENDIENTE',
                     diferencia_monto: result.diferencia,
                     resuelto: false,
@@ -246,31 +247,86 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
     validarTodo: async () => {
         set({ loading: true });
         const { reportes } = get();
+        const orgId = reportes[0]?.organization_id;
+
+        if (!orgId) {
+            set({ loading: false });
+            return;
+        }
 
         try {
-            // Limpiar inconsistencias previas no resueltas
+            // 1. Cargar Líneas de Balance
+            const balances = await db.exogena_balances.where('organization_id').equals(orgId).toArray();
+
+            if (balances.length === 0) {
+                toast.error('Debe cargar un Balance de Prueba para poder validar la información.');
+                set({ loading: false });
+                return;
+            }
+
+            const balanceIds = balances.map(b => b.id);
+            const balanceLines = await db.exogena_balance_lines.where('balance_id').anyOf(balanceIds).toArray();
+
+            // 2. Agrupar Balance por Tercero (NIT)
+            const balanceMap = new Map<string, { debito: number, credito: number, saldo: number }>();
+
+            for (const line of balanceLines) {
+                const nit = line.nit_tercero; // Asegurar limpieza de NIT si es necesario (puntos, guiones)
+                const current = balanceMap.get(nit) || { debito: 0, credito: 0, saldo: 0 };
+
+                current.debito += line.debito || 0;
+                current.credito += line.credito || 0;
+                current.saldo += line.saldo || 0;
+
+                balanceMap.set(nit, current);
+            }
+
+            // 3. Limpiar inconsistencias previas no resueltas
             const idsBorrar = get().inconsistencias
                 .filter(i => i.estado_validacion === 'PENDIENTE')
                 .map(i => i.id);
 
-            await db.mapeo_inconsistencias.bulkDelete(idsBorrar);
-
-            // Optimización: Validar lote
-            // await exogenosService.validator.validarLote(reportes);
-            // Por ahora individual para reutilizar logica
-            for (const reporte of reportes) {
-                await get().validarReporte(reporte.id);
+            if (idsBorrar.length > 0) {
+                await db.mapeo_inconsistencias.bulkDelete(idsBorrar);
             }
 
-            // Recargar inconsistencias
-            const orgId = reportes[0]?.organization_id;
-            if (orgId) {
-                const updatedIncs = await db.mapeo_inconsistencias.where('organization_id').equals(orgId).toArray();
-                set({ inconsistencias: updatedIncs });
+            // 4. Validar masivamente
+            const nuevasInconsistencias: MapeoInconsistencia[] = [];
+
+            for (const reporte of reportes) {
+                // Solo validar reportes importados (no generados si los hubiera mezclados)
+                const resultado = exogenosService.validator.validarContraBalance(reporte, balanceMap);
+
+                if (resultado.hayInconsistencia) {
+                    nuevasInconsistencias.push({
+                        id: crypto.randomUUID(),
+                        exogeno_id: reporte.id,
+                        organization_id: orgId, // Importante para multi-tenancy y borrado
+                        estado_validacion: 'PENDIENTE',
+                        diferencia_monto: resultado.diferencia,
+                        resuelto: false,
+                        notas: resultado.descripcion,
+                        created_at: new Date().toISOString(),
+                        sync_status: 'pendiente'
+                    });
+                }
+            }
+
+            // 5. Guardar y actualizar estado
+            if (nuevasInconsistencias.length > 0) {
+                await db.mapeo_inconsistencias.bulkAdd(nuevasInconsistencias);
+                // Cargar todas las inconsistencias (incluidas las resueltas que no borramos)
+                const allIncs = await db.mapeo_inconsistencias.where('organization_id').equals(orgId).toArray();
+                set({ inconsistencias: allIncs });
+                toast.warning(`Se encontraron ${nuevasInconsistencias.length} inconsistencias.`);
+            } else {
+                // Si no hay nuevas, limpiar estado visual de inconsistencias pendientes
+                const allIncs = await db.mapeo_inconsistencias.where('organization_id').equals(orgId).toArray();
+                set({ inconsistencias: allIncs });
+                toast.success('Validación completada: No se encontraron diferencias con el balance.');
             }
 
             set({ loading: false });
-            toast.success('Validación masiva completada');
         } catch (error) {
             console.error('Error en validación masiva:', error);
             set({ loading: false });
