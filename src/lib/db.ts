@@ -401,6 +401,68 @@ export interface MapeoInconsistencia {
   sync_status?: SyncStatus;
 }
 
+export interface ThirdParty {
+  id: string;
+  organization_id: string;
+  nit: string;
+  nombre: string;
+  tipo_persona: 'NATURAL' | 'JURIDICA';
+  obligado_exogena: boolean;
+  tipos_exogena: string[];
+  created_at: string;
+  updated_at?: string;
+  sync_status?: SyncStatus;
+}
+
+export interface ExogenaBalance {
+  id: string;
+  organization_id: string;
+  anio_gravable: number;
+  nombre_archivo: string;
+  fecha_carga: string;
+  tercero_count: number;
+  total_debitos: number;
+  total_creditos: number;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+export interface ExogenaBalanceLine {
+  id: string;
+  balance_id: string;
+  nit_tercero: string;
+  nombre_tercero: string;
+  cuenta: string;
+  debito: number;
+  credito: number;
+  saldo: number;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+export interface ExogenaCorrection {
+  id: string;
+  organization_id: string;
+  exogeno_id: string;
+  tipo_correccion: 'AJUSTE_VALOR' | 'CAMBIO_CONCEPTO' | 'IGNORAR';
+  valor_anterior: number;
+  valor_nuevo: number;
+  justificacion: string;
+  usuario_id: string;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
+export interface ExogenaMapping {
+  id: string;
+  organization_id: string;
+  nombre: string;
+  formato: string;
+  column_mappings: any;
+  created_at: string;
+  sync_status?: SyncStatus;
+}
+
 export class CifrixDB extends Dexie {
   // Tablas existentes
   organizations!: Table<Organization>;
@@ -432,6 +494,13 @@ export class CifrixDB extends Dexie {
   // Nuevas tablas - Estados Financieros
   fiscal_years!: Table<FiscalYear>;
   financial_notes!: Table<FinancialNote>;
+
+  // Nuevas tablas - Módulo de Exógenos - Fase 2
+  third_parties!: Table<ThirdParty>;
+  exogena_balances!: Table<ExogenaBalance>;
+  exogena_balance_lines!: Table<ExogenaBalanceLine>;
+  exogena_corrections!: Table<ExogenaCorrection>;
+  exogena_mappings!: Table<ExogenaMapping>;
 
   ignoreDeletions = false;
 
@@ -501,10 +570,15 @@ export class CifrixDB extends Dexie {
       financial_notes: 'id, organization_id, period_id, report_type, sync_status'
     });
 
-    // Versión 17 - Sincronizar con esquema de Supabase y corregir campos de miembros
-    this.version(17).stores({
+    // Versión 18 - Agregar tablas de Exógenos Fase 2
+    this.version(18).stores({
       members: 'id, organization_id, full_name, document_id, status, is_active, entry_date, birth_date, sync_status',
-      deleted_records: '++id, record_id, table_name, sync_status, [table_name+record_id]'
+      deleted_records: '++id, record_id, table_name, sync_status, [table_name+record_id]',
+      third_parties: 'id, organization_id, nit, nombre, sync_status',
+      exogena_balances: 'id, organization_id, anio_gravable, sync_status',
+      exogena_balance_lines: 'id, balance_id, nit_tercero, sync_status',
+      exogena_corrections: 'id, organization_id, exogeno_id, sync_status',
+      exogena_mappings: 'id, organization_id, nombre, sync_status'
     });
 
     // Hooks to track deletions

@@ -18,55 +18,78 @@ export interface InconsistencyResult {
 
 export class ExogenosValidator {
     /**
-     * Valida un registro de exógena contra los datos contables internos
+     * Valida un registro de exógena (IMPORTADO) contra los datos contables internos (GENERADOS)
+     * Requiere que previamente se haya ejecutado el Generador para el mismo periodo.
      */
-    async validarContraContabilidad(exogeno: Exogeno): Promise<InconsistencyResult> {
-        // 1. Calcular retención esperada según el concepto y año del reporte
-        // El año viene en exogeno.periodo_fiscal
+    async validarContraContabilidad(exogenoImportado: Exogeno, generatedRecordsMap?: Map<string, Exogeno>): Promise<InconsistencyResult> {
+        // 1. Calcular retención esperada según norma (teórico)
         const retencionEsperada = calculateExpectedRetention(
-            exogeno.periodo_fiscal,
-            exogeno.concepto,
-            exogeno.monto
+            exogenoImportado.periodo_fiscal,
+            exogenoImportado.concepto,
+            exogenoImportado.monto
         );
 
-        // 2. Verificar si la retención reportada coincide con la esperada para ese año
-        // Se permite un margen de error pequeño por redondeos (ej: 100 pesos)
+        // 2. Validación de Retención aritmética básica
         const margenErrorRetencion = 100;
-        const diferenciaRetencion = Math.abs(exogeno.retencion - retencionEsperada);
+        const diferenciaRetencion = Math.abs(exogenoImportado.retencion - retencionEsperada);
 
         if (diferenciaRetencion > margenErrorRetencion && retencionEsperada > 0) {
             return {
                 hayInconsistencia: true,
                 tipo: 'RETENCION_ERRONEA',
-                descripcion: `Para el año ${exogeno.periodo_fiscal} y concepto ${exogeno.concepto}, la retención esperada es ${retencionEsperada} pero se reportó ${exogeno.retencion}`,
-                valorReportado: exogeno.retencion,
+                descripcion: `Retención calculada incorrecta. Base: ${exogenoImportado.monto}, Tasa Sugerida, Esperado: ${retencionEsperada}, Reportado: ${exogenoImportado.retencion}`,
+                valorReportado: exogenoImportado.retencion,
                 valorInterno: retencionEsperada,
                 diferencia: diferenciaRetencion
             };
         }
 
-        // 3. Buscar transacciones relacionadas con el contribuyente
-        // En esta versión, buscamos en facturas o contribuciones que coincidan con el NIT
-        // const facturas = await db.invoices
-        //     .where('organization_id')
-        //     .equals(exogeno.organization_id)
-        //     .toArray();
+        // 3. Obtener Valor Interno (Contabilidad)
+        // Estrategia: Buscar en los registros GENERADOS AUTOMATICAMENTE
+        let valorInterno = 0;
 
-        // Filtrar localmente por NIT (ya que el tax_id del cliente es lo que tenemos)
-        // Esto es una simplificación
-        const valorInterno = 0; // En una versión real buscaríamos facturas del cliente con ese NIT
+        if (generatedRecordsMap) {
+            // Busqueda rápida si se provee el mapa
+            const key = `${exogenoImportado.nit_contribuyente}-${exogenoImportado.concepto}`;
+            const match = generatedRecordsMap.get(key);
+            if (match) valorInterno = match.monto;
+        } else {
+            // Búsqueda en DB (más lento)
+            const match = await db.exogenos
+                .where('organization_id').equals(exogenoImportado.organization_id)
+                .and(e =>
+                    e.periodo_fiscal === exogenoImportado.periodo_fiscal &&
+                    e.nit_contribuyente === exogenoImportado.nit_contribuyente &&
+                    e.concepto === exogenoImportado.concepto &&
+                    e.archivo_origen === 'GENERADO_AUTOMATICO'
+                )
+                .first();
 
-        const diferencia = Math.abs(exogeno.monto - valorInterno);
+            if (match) valorInterno = match.monto;
+        }
 
-        // Umbral de materialidad (ej: 10,000 COP)
-        const UMBRAL = 10000;
+        // Comparar
+        const UMBRAL = 1000; // Pesos
+        const diferencia = Math.abs(exogenoImportado.monto - valorInterno);
 
         if (diferencia > UMBRAL) {
+            // Casos especiales
+            if (valorInterno === 0) {
+                return {
+                    hayInconsistencia: true,
+                    tipo: 'TERCERO_FALTANTE', // Existe en reporte externo, no en contabilidad
+                    descripcion: 'El tercero o concepto no aparece en la contabilidad interna',
+                    valorReportado: exogenoImportado.monto,
+                    valorInterno: 0,
+                    diferencia: diferencia
+                };
+            }
+
             return {
                 hayInconsistencia: true,
                 tipo: 'VALOR_DISCORDANTE',
-                descripcion: `El tercero reportó un pago de ${exogeno.monto} pero en contabilidad figura ${valorInterno}`,
-                valorReportado: exogeno.monto,
+                descripcion: `Diferencia significativa entre valor reportado y contabilidad`,
+                valorReportado: exogenoImportado.monto,
                 valorInterno: valorInterno,
                 diferencia: diferencia
             };
@@ -75,8 +98,8 @@ export class ExogenosValidator {
         return {
             hayInconsistencia: false,
             tipo: 'VALOR_DISCORDANTE',
-            descripcion: 'Valores consistentes para el periodo fiscal',
-            valorReportado: exogeno.monto,
+            descripcion: 'OK',
+            valorReportado: exogenoImportado.monto,
             valorInterno: valorInterno,
             diferencia: diferencia
         };
@@ -84,12 +107,32 @@ export class ExogenosValidator {
 
     /**
      * Realiza validación masiva de una lista de exógenos
+     * Optimizado para cargar "Generados" una sola vez
      */
-    async validarLote(exogenos: Exogeno[]): Promise<Record<string, InconsistencyResult>> {
-        const resultados: Record<string, InconsistencyResult> = {};
+    async validarLote(exogenosImportados: Exogeno[]): Promise<Record<string, InconsistencyResult>> {
+        if (exogenosImportados.length === 0) return {};
 
-        for (const ex of exogenos) {
-            resultados[ex.id] = await this.validarContraContabilidad(ex);
+        const resultados: Record<string, InconsistencyResult> = {};
+        const organizationId = exogenosImportados[0].organization_id;
+        const year = exogenosImportados[0].periodo_fiscal;
+
+        // Cargar todos los generados para este año/org para hacer cruce rápido
+        const generated = await db.exogenos
+            .where('organization_id').equals(organizationId)
+            .and(e => e.periodo_fiscal === year && e.archivo_origen === 'GENERADO_AUTOMATICO')
+            .toArray();
+
+        // Crear Map clave: NIT-CONCEPTO
+        const generatedMap = new Map<string, Exogeno>();
+        generated.forEach(g => {
+            generatedMap.set(`${g.nit_contribuyente}-${g.concepto}`, g);
+        });
+
+        for (const ex of exogenosImportados) {
+            // Validar solo si es importado (tiene archivo origen y no es generado)
+            if (ex.archivo_origen !== 'GENERADO_AUTOMATICO' && ex.archivo_origen) {
+                resultados[ex.id] = await this.validarContraContabilidad(ex, generatedMap);
+            }
         }
 
         return resultados;

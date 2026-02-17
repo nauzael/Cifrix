@@ -1,10 +1,5 @@
-/**
- * Store de Zustand para el módulo de Exógenas
- * Gestiona la carga, validación y mapeo de inconsistencias de reportes de terceros
- */
-
 import { create } from 'zustand';
-import { db, Exogeno, MapeoInconsistencia } from '@/lib/db';
+import { db, Exogeno, MapeoInconsistencia, ThirdParty } from '@/lib/db';
 import { exogenosService } from '@/lib/exogenos';
 import { syncExogenos } from '@/lib/sync';
 import { toast } from '@/store/toastStore';
@@ -12,25 +7,34 @@ import { toast } from '@/store/toastStore';
 interface ExogenosState {
     reportes: Exogeno[];
     inconsistencias: MapeoInconsistencia[];
+    thirdParties: ThirdParty[];
     loading: boolean;
     error: string | null;
 
     // Acciones
     cargarReportes: (organizacionId: string) => Promise<void>;
+    cargarTerceros: (organizacionId: string) => Promise<void>;
     importarArchivo: (file: File, organizacionId: string) => Promise<void>;
     validarReporte: (reporteId: string) => Promise<void>;
     validarTodo: () => Promise<void>;
     resolverInconsistencia: (id: string, comentario: string) => Promise<void>;
     eliminarReporte: (id: string) => Promise<void>;
-    generarDesdeContabilidad: (organizacionId: string, año: number) => Promise<void>;
+    generarDesdeContabilidad: (organizacionId: string, año: number) => Promise<{ count: number; total: number }>;
     limpiarTodo: (organizacionId: string) => Promise<void>;
     sincronizarConNube: (organizacionId: string) => Promise<void>;
+
+    // Terceros Acciones
+    crearTercero: (tercero: Omit<ThirdParty, 'id' | 'created_at'>) => Promise<void>;
+    actualizarTercero: (id: string, updates: Partial<ThirdParty>) => Promise<void>;
+    eliminarTercero: (id: string) => Promise<void>;
+
     limpiarEstado: () => void;
 }
 
 export const useExogenosStore = create<ExogenosState>((set, get) => ({
     reportes: [],
     inconsistencias: [],
+    thirdParties: [],
     loading: false,
     error: null,
 
@@ -54,6 +58,20 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
         }
     },
 
+    cargarTerceros: async (organizacionId: string) => {
+        set({ loading: true });
+        try {
+            const thirdParties = await db.third_parties
+                .where('organization_id')
+                .equals(organizacionId)
+                .toArray();
+            set({ thirdParties, loading: false });
+        } catch (error) {
+            console.error('Error al cargar terceros:', error);
+            set({ loading: false });
+        }
+    },
+
     importarArchivo: async (file: File, organizacionId: string) => {
         set({ loading: true, error: null });
         try {
@@ -62,7 +80,7 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             const newReportes: Exogeno[] = rawRows.map(row => ({
                 id: crypto.randomUUID(),
                 organization_id: organizacionId,
-                nit_informante: '', // TODO: Get from organization settings
+                nit_informante: '',
                 nit_contribuyente: row.nit_contribuyente,
                 nombre_contribuyente: row.nombre_contribuyente,
                 periodo_fiscal: row.periodo_fiscal,
@@ -73,16 +91,45 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
                 tipo_exogeno: row.tipo_exogeno,
                 procesado: false,
                 validado: false,
+                archivo_origen: file.name,
                 created_at: new Date().toISOString(),
                 sync_status: 'pendiente'
             }));
 
             await db.exogenos.bulkAdd(newReportes);
 
-            // Recargar
-            await get().cargarReportes(organizacionId);
+            // Sincronizar terceros nuevos
+            const existingThirdParties = await db.third_parties.where('organization_id').equals(organizacionId).toArray();
+            const existingNits = new Set(existingThirdParties.map(t => t.nit));
+            const uniqueNewNits = new Set<string>();
+            const newThirdParties: ThirdParty[] = [];
 
-            toast.success(`${newReportes.length} registros importados correctamente`);
+            for (const row of rawRows) {
+                if (!existingNits.has(row.nit_contribuyente) && !uniqueNewNits.has(row.nit_contribuyente)) {
+                    uniqueNewNits.add(row.nit_contribuyente);
+                    newThirdParties.push({
+                        id: crypto.randomUUID(),
+                        organization_id: organizacionId,
+                        nit: row.nit_contribuyente,
+                        nombre: row.nombre_contribuyente,
+                        tipo_persona: row.nit_contribuyente.length === 9 || row.nit_contribuyente.length === 10 ? 'JURIDICA' : 'NATURAL', // Heurística simple
+                        obligado_exogena: false,
+                        tipos_exogena: [], // Se llenará si se configura
+                        created_at: new Date().toISOString(),
+                        sync_status: 'pendiente'
+                    });
+                }
+            }
+
+            if (newThirdParties.length > 0) {
+                await db.third_parties.bulkAdd(newThirdParties);
+            }
+
+            // Recargar todo
+            await get().cargarReportes(organizacionId);
+            await get().cargarTerceros(organizacionId);
+
+            toast.success(`${newReportes.length} registros importados y ${newThirdParties.length} nuevos terceros creados.`);
         } catch (error: any) {
             console.error('Error al importar archivo:', error);
             set({ error: error.message || 'Error al procesar el archivo', loading: false });
@@ -133,8 +180,18 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
 
             await db.mapeo_inconsistencias.bulkDelete(idsBorrar);
 
+            // Optimización: Validar lote
+            // await exogenosService.validator.validarLote(reportes);
+            // Por ahora individual para reutilizar logica
             for (const reporte of reportes) {
                 await get().validarReporte(reporte.id);
+            }
+
+            // Recargar inconsistencias
+            const orgId = reportes[0]?.organization_id;
+            if (orgId) {
+                const updatedIncs = await db.mapeo_inconsistencias.where('organization_id').equals(orgId).toArray();
+                set({ inconsistencias: updatedIncs });
             }
 
             set({ loading: false });
@@ -192,11 +249,13 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             const result = await exogenosService.generator.generateFromAccounting(organizacionId, año);
             await get().cargarReportes(organizacionId);
             toast.success(`${result.count} registros generados automáticamente`);
+            return result;
         } catch (error: any) {
             console.error('Error al generar exógenos:', error);
             const errorMessage = error.message || 'Error al generar exógenos desde contabilidad';
             set({ error: errorMessage, loading: false });
             toast.error(errorMessage);
+            throw error;
         }
     },
 
@@ -229,7 +288,48 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
         }
     },
 
+    // CRUD Terceros
+    crearTercero: async (tercero) => {
+        try {
+            const id = crypto.randomUUID();
+            const newThirdParty = { ...tercero, id, created_at: new Date().toISOString(), sync_status: 'pendiente' as const };
+            await db.third_parties.add(newThirdParty);
+            set(state => ({ thirdParties: [...state.thirdParties, newThirdParty] }));
+            toast.success('Tercero creado');
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al crear tercero');
+        }
+    },
+
+    actualizarTercero: async (id, updates) => {
+        try {
+            await db.third_parties.update(id, { ...updates, sync_status: 'pendiente' });
+            set(state => ({
+                thirdParties: state.thirdParties.map(t => t.id === id ? { ...t, ...updates } : t)
+            }));
+            toast.success('Tercero actualizado');
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al actualizar tercero');
+        }
+    },
+
+    eliminarTercero: async (id) => {
+        try {
+            await db.third_parties.delete(id);
+            set(state => ({
+                thirdParties: state.thirdParties.filter(t => t.id !== id)
+            }));
+            toast.success('Tercero eliminado');
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al eliminar tercero');
+        }
+    },
+
     limpiarEstado: () => {
-        set({ reportes: [], inconsistencias: [], error: null, loading: false });
+        set({ reportes: [], inconsistencias: [], thirdParties: [], error: null, loading: false });
     }
 }));
+

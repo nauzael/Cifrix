@@ -3,7 +3,7 @@
  * Permite convertir archivos de reportes de terceros en datos estructurados
  */
 
-import { Exogeno } from '@/lib/db';
+import { read, utils } from 'xlsx';
 
 export interface ExogenoRow {
     nit_contribuyente: string;
@@ -13,13 +13,26 @@ export interface ExogenoRow {
     retencion: number;
     periodo_fiscal: number;
     tipo_exogeno: '0210' | '0220' | '0230' | '0240' | '0250' | '0260';
+    // Metadata adicional para trazabilidad
+    linea_origen?: number;
+    archivo_origen?: string;
+    errores?: string[];
+}
+
+export interface ColumnMapping {
+    nit: string | number;         // Nombre de columna o índice (0, 1, 'A', 'B')
+    nombre?: string | number;
+    concepto: string | number;
+    monto: string | number;
+    retencion?: string | number;
+    periodo?: string | number;
 }
 
 export class ExogenosParser {
     /**
      * Procesa un archivo XML de la DIAN (Formato estándar)
      */
-    async parseDIANXml(content: string): Promise<ExogenoRow[]> {
+    async parseDIANXml(content: string, fileName?: string): Promise<ExogenoRow[]> {
         const rows: ExogenoRow[] = [];
         const currentYear = new Date().getFullYear();
 
@@ -35,8 +48,7 @@ export class ExogenosParser {
             console.log(`[Parser] Procesando formato ${formato} año ${defaultYear}`);
 
             // 2. Intentar encontrar registros (MUISCA usa etiquetas específicas por formato)
-            // Para 1001 -> <pagos>, 1007 -> <ingresos>, etc.
-            const muiscaTags = ['pagos', 'ingresos', 'ret', 'mo_ret', 'iva_ret', 'record'];
+            const muiscaTags = ['pagos', 'ingresos', 'ret', 'mo_ret', 'iva_ret', 'record', 'sal'];
             let records: Element[] = [];
 
             for (const tagName of muiscaTags) {
@@ -48,18 +60,18 @@ export class ExogenosParser {
                 }
             }
 
-            // Fallback agresivo: cualquier elemento con nid (NIT DIAN)
+            // Fallback: buscar por atributo 'nid'
             if (records.length === 0) {
                 records = Array.from(xmlDoc.querySelectorAll('*')).filter(el => el.hasAttribute('nid')) as Element[];
-                if (records.length > 0) console.log(`[Parser] Fallback: Encontrados ${records.length} elementos con atributo 'nid'`);
             }
 
-            for (const record of records) {
+            for (let i = 0; i < records.length; i++) {
+                const record = records[i];
                 // NIT: 'nit' o 'nid' (MUISCA)
                 const nit = record.getAttribute('nit') || record.getAttribute('nid') || '';
                 if (!nit) continue;
 
-                // Nombre o Razón Social
+                // Nombre
                 let nombre = record.getAttribute('raz') || record.getAttribute('nombre') || '';
                 if (!nombre) {
                     const apl1 = record.getAttribute('apl1') || '';
@@ -69,15 +81,12 @@ export class ExogenosParser {
                     nombre = [nom1, nom2, apl1, apl2].filter(Boolean).join(' ').trim();
                 }
 
-                // Concepto: 'cpt' (MUISCA standard) o 'concepto'
+                // Concepto
                 const concepto = record.getAttribute('cpt') || record.getAttribute('concepto') || '';
 
-                // Montos (MUISCA usa 'pago' para 1001 y 'valor' para otros)
+                // Montos
                 const monto = parseFloat(record.getAttribute('pago') || record.getAttribute('valor') || '0');
                 const retencion = parseFloat(record.getAttribute('retp') || record.getAttribute('retencion') || '0');
-
-                // Periodo
-                const periodo = parseInt(record.getAttribute('periodo') || defaultYear.toString());
 
                 rows.push({
                     nit_contribuyente: nit,
@@ -85,42 +94,121 @@ export class ExogenosParser {
                     concepto: concepto,
                     monto: monto,
                     retencion: retencion,
-                    periodo_fiscal: periodo,
-                    tipo_exogeno: '0210' // TODO: Mapear según formato real
+                    periodo_fiscal: defaultYear,
+                    tipo_exogeno: '0210', // TODO: Inferir del formato XML
+                    linea_origen: i + 1,
+                    archivo_origen: fileName
                 });
             }
 
-            console.log(`[Parser] Extracción finalizada: ${rows.length} filas procesadas`);
+            return rows;
         } catch (error) {
             console.error('Error parsing DIAN XML:', error);
             throw new Error('Formato XML de la DIAN inválido o no soportado');
+        }
+    }
+
+    /**
+     * Procesa un archivo CSV con mapeo opcional
+     */
+    async parseCSV(content: string, mapping?: ColumnMapping, fileName?: string): Promise<ExogenoRow[]> {
+        const rows: ExogenoRow[] = [];
+        const lines = content.split('\n');
+        const currentYear = new Date().getFullYear();
+
+        // Si no hay mapeo, usamos por defecto: 0=NIT, 1=NOMBRE, 2=CONCEPTO, 3=VALOR
+        const map = mapping || { nit: 0, nombre: 1, concepto: 2, monto: 3, retencion: 4 };
+
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const cols = line.split(','); // TODO: Mejorar split para respetar comillas
+
+            const getValue = (key: string | number | undefined) => {
+                if (key === undefined) return '';
+                if (typeof key === 'number') return cols[key] || '';
+                // Si es string, no podemos buscar por nombre en CSV simple sin header mapping complejo
+                return '';
+            };
+
+            const nit = getValue(map.nit);
+            const nombre = getValue(map.nombre);
+            const concepto = getValue(map.concepto);
+            const monto = parseFloat(getValue(map.monto) || '0');
+            const retencion = parseFloat(getValue(map.retencion) || '0');
+
+            if (nit) {
+                rows.push({
+                    nit_contribuyente: nit.replace(/['"]/g, '').trim(),
+                    nombre_contribuyente: nombre.replace(/['"]/g, '').trim(),
+                    concepto: concepto.replace(/['"]/g, '').trim(),
+                    monto: isNaN(monto) ? 0 : monto,
+                    retencion: isNaN(retencion) ? 0 : retencion,
+                    periodo_fiscal: currentYear - 1,
+                    tipo_exogeno: '0210',
+                    linea_origen: i + 1,
+                    archivo_origen: fileName
+                });
+            }
         }
 
         return rows;
     }
 
     /**
-     * Procesa un archivo CSV
+     * Procesa archivo Excel (.xlsx, .xls)
      */
-    async parseCSV(content: string): Promise<ExogenoRow[]> {
+    async parseXLSX(buffer: ArrayBuffer, mapping?: ColumnMapping, fileName?: string): Promise<ExogenoRow[]> {
+        const wb = read(buffer, { type: 'array' });
+        const sheetName = wb.SheetNames[0];
+        const sheet = wb.Sheets[sheetName];
+        const data = utils.sheet_to_json(sheet, { header: 1 }) as any[][]; // Array de arrays
+
         const rows: ExogenoRow[] = [];
-        const lines = content.split('\n');
         const currentYear = new Date().getFullYear();
 
-        // Asumimos primera línea es header: NIT,NOMBRE,CONCEPTO,VALOR,RETENCION,PERIODO
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
+        // Mapeo por defecto si no se provee (A=0, B=1, etc)
+        const map = mapping || { nit: 0, nombre: 1, concepto: 2, monto: 3, retencion: 4 };
 
-            const [nit, nombre, concepto, valor, retencion, periodo] = line.split(',');
+        // Empezamos en fila 1 (asumiendo fila 0 es header)
+        for (let i = 1; i < data.length; i++) {
+            const row = data[i];
+
+            const getValue = (idx: string | number | undefined): any => {
+                if (idx === undefined) return '';
+                if (typeof idx === 'number') return row[idx];
+                // Si pasamos letras 'A', 'B', convertir a índice
+                if (typeof idx === 'string' && /^[A-Z]+$/.test(idx)) {
+                    // Simple conversión para A-Z (0-25)
+                    let colIndex = 0;
+                    for (let j = 0; j < idx.length; j++) {
+                        colIndex = colIndex * 26 + idx.charCodeAt(j) - 64;
+                    }
+                    return row[colIndex - 1]; // 0-based
+                }
+                return '';
+            };
+
+            const nit = String(getValue(map.nit) || '').trim();
+            // Validar que tenga contenido mínimo
+            if (!nit) continue;
+
+            const nombre = String(getValue(map.nombre) || '').trim();
+            const concepto = String(getValue(map.concepto) || '').trim();
+            const monto = parseFloat(String(getValue(map.monto) || '0').replace(/[^0-9.-]/g, ''));
+            const retencion = parseFloat(String(getValue(map.retencion) || '0').replace(/[^0-9.-]/g, ''));
+
             rows.push({
-                nit_contribuyente: nit?.trim(),
-                nombre_contribuyente: nombre?.trim(),
-                concepto: concepto?.trim(),
-                monto: parseFloat(valor?.trim() || '0'),
-                retencion: parseFloat(retencion?.trim() || '0'),
-                periodo_fiscal: parseInt(periodo?.trim() || (currentYear - 1).toString()),
-                tipo_exogeno: '0210'
+                nit_contribuyente: nit,
+                nombre_contribuyente: nombre,
+                concepto: concepto,
+                monto: isNaN(monto) ? 0 : monto,
+                retencion: isNaN(retencion) ? 0 : retencion,
+                periodo_fiscal: currentYear - 1,
+                tipo_exogeno: '0210',
+                linea_origen: i + 1,
+                archivo_origen: fileName
             });
         }
 
@@ -128,32 +216,28 @@ export class ExogenosParser {
     }
 
     /**
-     * Helper para identificar el tipo de archivo y procesarlo
+     * Detecta tipo y procesa
      */
-    async parseFile(file: File): Promise<ExogenoRow[]> {
+    async parseFile(file: File, mapping?: ColumnMapping): Promise<ExogenoRow[]> {
         const buffer = await file.arrayBuffer();
-
-        // Decodificar temporalmente como UTF-8 para buscar la declaración de encoding
-        const tempContent = new TextDecoder('utf-8').decode(buffer);
-        let content = tempContent;
-
-        // Si el archivo indica ISO-8859-1 (común en la DIAN), re-decodificar correctamente
-        if (tempContent.includes('encoding="ISO-8859-1"') ||
-            tempContent.includes('encoding="iso-8859-1"') ||
-            tempContent.includes('encoding="ISO8859-1"')) {
-            content = new TextDecoder('iso-8859-1').decode(buffer);
-        }
-
         const extension = file.name.split('.').pop()?.toLowerCase();
 
-        switch (extension) {
-            case 'xml':
-                return this.parseDIANXml(content);
-            case 'csv':
-                return this.parseCSV(content);
-            default:
-                throw new Error(`Extensión .${extension} no soportada. Use XML o CSV.`);
+        if (extension === 'xlsx' || extension === 'xls') {
+            return this.parseXLSX(buffer, mapping, file.name);
         }
+
+        const decoder = new TextDecoder('utf-8'); // TODO: Detectar encoding
+        let content = decoder.decode(buffer);
+
+        if (extension === 'xml') {
+            return this.parseDIANXml(content, file.name);
+        }
+
+        if (extension === 'csv' || extension === 'txt') {
+            return this.parseCSV(content, mapping, file.name);
+        }
+
+        throw new Error(`Extensión .${extension} no soportada.`);
     }
 }
 
