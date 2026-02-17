@@ -130,9 +130,14 @@ export const ThirdPartyTable = ({ organizationId }: ThirdPartyTableProps) => {
                                                     />
                                                 </div>
                                             ) : (
-                                                <div>
-                                                    <div className="font-bold text-foreground text-sm">{tp.nombre}</div>
-                                                    <div className="text-muted-foreground text-xs font-mono">{tp.nit}</div>
+                                                <div className="flex flex-col">
+                                                    <div className="font-bold text-foreground text-sm text-balance">
+                                                        {tp.nombre || <span className="text-muted-foreground italic">Sin nombre registrado</span>}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                                                        <span className="font-semibold text-[10px] uppercase bg-muted px-1 rounded">NIT</span>
+                                                        <span className="font-mono text-foreground/80">{tp.nit}</span>
+                                                    </div>
                                                 </div>
                                             )}
                                         </td>

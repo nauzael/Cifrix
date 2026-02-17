@@ -38,19 +38,42 @@ export class BalanceParser {
             throw new Error("No se pudo detectar la fila de encabezados. Asegúrese de que el archivo tenga columnas como 'Cuenta', 'NIT', 'Débito', 'Crédito'.");
         }
 
-        // 2. Mapear columnas
+        // 2. Mapear columnas con prioridad y exclusión
         const headerRow = data[headerRowIndex].map(cell => String(cell).toLowerCase().trim());
-        const colMap = {
-            cuenta: headerRow.findIndex(h => h.includes('cuenta') || h.includes('codigo')),
-            nit: headerRow.findIndex(h => h.includes('nit') || h.includes('identifica') || h.includes('cedula')),
-            nombre: headerRow.findIndex(h => h.includes('nombre') || h.includes('tercero') || h.includes('razon')),
-            debito: headerRow.findIndex(h => h.includes('debito') || h.includes('débito')),
-            credito: headerRow.findIndex(h => h.includes('credito') || h.includes('crédito')),
-            saldo: headerRow.findIndex(h => h.includes('saldo') || h.includes('final'))
+
+        const findColIndex = (keywords: string[], excludeIndex: number = -1) => {
+            return headerRow.findIndex((h, index) => {
+                if (index === excludeIndex) return false;
+                return keywords.some(k => h.includes(k));
+            });
         };
 
+        const colMap = {
+            cuenta: -1,
+            nit: -1,
+            nombre: -1,
+            debito: -1,
+            credito: -1,
+            saldo: -1
+        };
+
+        // Identificar NIT (Alta prioridad)
+        colMap.nit = findColIndex(['nit', 'identifica', 'cedula', 'rut']);
+
+        // Identificar Nombre (Excluyendo la columna ya identificada como NIT)
+        // Evita que "NIT Tercero" se identifique como Nombre por la palabra "Tercero"
+        colMap.nombre = findColIndex(['nombre', 'tercero', 'razon', 'apellidos'], colMap.nit);
+
+        // Identificar Cuenta
+        colMap.cuenta = findColIndex(['cuenta', 'codigo'], -1);
+
+        // Identificar Valores
+        colMap.debito = findColIndex(['debito', 'débito', 'cargo']);
+        colMap.credito = findColIndex(['credito', 'crédito', 'abono']);
+        colMap.saldo = findColIndex(['saldo', 'final', 'total']);
+
         if (colMap.cuenta === -1 && colMap.nit === -1) {
-            throw new Error("No se encontraron columnas para Cuenta ni NIT.");
+            throw new Error("No se encontraron columnas para Cuenta ni NIT. Verifique los encabezados del archivo.");
         }
 
         const lines: Partial<ExogenaBalanceLine>[] = [];
