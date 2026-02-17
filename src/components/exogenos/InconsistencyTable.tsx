@@ -41,8 +41,8 @@ export const InconsistencyTable = ({ organizationId }: InconsistencyTableProps) 
 
                 return (
                     <div key={inc.id} className={`p-6 rounded-2xl border transition-all ${isResolved
-                            ? 'bg-muted/50 border-border opacity-60'
-                            : 'bg-card border-destructive/20 shadow-sm hover:border-destructive/40'
+                        ? 'bg-muted/50 border-border opacity-60'
+                        : 'bg-card border-destructive/20 shadow-sm hover:border-destructive/40'
                         }`}>
                         <div className="flex flex-col md:flex-row items-start justify-between gap-6">
                             <div className="flex items-start gap-4 flex-1">
@@ -59,21 +59,29 @@ export const InconsistencyTable = ({ organizationId }: InconsistencyTableProps) 
                                         <p className="text-sm text-foreground font-medium">{inc.notas}</p>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-4 bg-muted/30 rounded-xl border border-border/50">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-xl border border-border/50">
                                         <div>
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Reportado Tercero</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Concepto</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-bold text-foreground">{reporte?.concepto || 'N/A'}</p>
+                                                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">Exógena</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Valor Reportado (Exógena)</p>
                                             <p className="text-lg font-bold text-foreground">{formatMoney(reporte?.monto || 0)}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Diferencia</p>
-                                            <p className="text-lg font-bold text-destructive">{formatMoney(inc.diferencia_monto || 0)}</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Valor Contabilidad (Balance)</p>
+                                            {/* Si la diferencia es positiva, contab = reporte - dif. Si es negativa, ??. Asumimos valor absoluto en diferencia. */}
+                                            {/* Mejor mostrar: Reportado - Diferencia = Contabilidad Aprox */}
+                                            <p className="text-lg font-bold text-blue-600">
+                                                {formatMoney((reporte?.monto || 0) - (inc.diferencia_monto || 0))}
+                                            </p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Estado</p>
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${isResolved ? 'bg-emerald-100 text-emerald-700' : 'bg-destructive/10 text-destructive'
-                                                }`}>
-                                                {isResolved ? 'RESUELTO' : 'PENDIENTE'}
-                                            </span>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Diferencia Detectada</p>
+                                            <p className="text-lg font-bold text-destructive">{formatMoney(inc.diferencia_monto || 0)}</p>
                                         </div>
                                     </div>
 
