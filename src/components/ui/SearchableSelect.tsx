@@ -91,11 +91,10 @@ export function SearchableSelect({
   return (
     <div className={`relative ${className}`} ref={containerRef}>
       <div
-        className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus-within:ring-2 focus-within:ring-blue-500/20 cursor-pointer flex items-center justify-between transition-all ${
-          size === 'sm' ? 'px-3 py-1.5 rounded-lg text-xs' : 
-          size === 'lg' ? 'px-6 py-4 rounded-2xl text-base' : 
-          'px-4 py-3 rounded-xl text-sm'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full bg-muted/50 dark:bg-muted/20 border border-border focus-within:ring-2 focus-within:ring-primary/20 cursor-pointer flex items-center justify-between transition-all ${size === 'sm' ? 'px-3 py-1.5 rounded-lg text-xs' :
+            size === 'lg' ? 'px-6 py-4 rounded-2xl text-base' :
+              'px-4 py-3 rounded-xl text-sm'
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         onClick={() => {
           if (disabled) return;
           if (!isOpen) {
@@ -106,31 +105,30 @@ export function SearchableSelect({
           }
         }}
       >
-        <span className={`${size === 'sm' ? 'font-medium' : 'font-bold'} ${!selectedOption ? 'text-slate-400' : 'text-slate-900 dark:text-white'} truncate`}>
+        <span className={`${size === 'sm' ? 'font-medium' : 'font-bold'} ${!selectedOption ? 'text-muted-foreground' : 'text-foreground'} truncate`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronsUpDown className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} text-slate-400 shrink-0`} />
+        <ChevronsUpDown className={`${size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} text-muted-foreground shrink-0`} />
       </div>
 
       {isOpen && createPortal(
-        <div 
+        <div
           ref={portalRef}
-          className={`fixed z-[9999] bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden ${
-            size === 'sm' ? 'rounded-lg' : 'rounded-xl'
-          }`}
+          className={`fixed z-[99999] bg-card shadow-2xl border border-border overflow-hidden backdrop-blur-md ${size === 'sm' ? 'rounded-lg' : 'rounded-2xl'
+            }`}
           style={{
             top: `${coords.top + 4}px`,
             left: `${coords.left}px`,
             width: `${coords.width}px`,
           }}
         >
-          <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+          <div className="p-2 border-b border-border bg-muted/10">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 ref={inputRef}
                 type="text"
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-950 rounded-lg text-sm border-none focus:ring-2 focus:ring-blue-500/20 outline-none text-slate-900 dark:text-white"
+                className="w-full pl-9 pr-4 py-2 bg-background dark:bg-muted/20 rounded-lg text-sm border border-border focus:ring-2 focus:ring-primary/20 outline-none text-foreground"
                 placeholder="Buscar..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -138,21 +136,20 @@ export function SearchableSelect({
               />
             </div>
           </div>
-          
-          <div className="max-h-60 overflow-y-auto p-1">
+
+          <div className="max-h-[min(400px,50vh)] overflow-y-auto p-1 custom-scrollbar">
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-slate-400 text-center">
+              <div className="px-4 py-3 text-sm text-muted-foreground text-center">
                 No se encontraron resultados
               </div>
             ) : (
               filteredOptions.map((option) => (
                 <div
                   key={option.value}
-                  className={`px-4 py-2 rounded-lg text-sm cursor-pointer flex items-center justify-between transition-colors ${
-                    value === option.value
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                  }`}
+                  className={`px-4 py-2.5 rounded-xl text-sm cursor-pointer flex items-center justify-between transition-all ${value === option.value
+                      ? 'bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20'
+                      : 'text-foreground hover:bg-accent'
+                    }`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onChange(option.value);
@@ -160,7 +157,7 @@ export function SearchableSelect({
                   }}
                 >
                   <span className="truncate">{option.label}</span>
-                  {value === option.value && <Check className="w-4 h-4 shrink-0" />}
+                  {value === option.value && <Check className="w-4 h-4 shrink-0 transition-transform scale-110" />}
                 </div>
               ))
             )}

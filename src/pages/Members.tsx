@@ -552,7 +552,7 @@ export function Members() {
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)} />
-          <div className="relative bg-card rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-border">
+          <div className="relative bg-card rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-300 border border-border flex flex-col">
             <div className="p-8 border-b border-border flex items-center justify-between bg-card">
               <div>
                 <h3 className="font-black text-2xl text-foreground tracking-tight uppercase">
@@ -589,7 +589,7 @@ export function Members() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-              <div className="p-5 h-[350px] overflow-y-auto custom-scrollbar">
+              <div className="p-5 flex-1 overflow-y-auto custom-scrollbar min-h-0">
                 {activeTab === 'personal' ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

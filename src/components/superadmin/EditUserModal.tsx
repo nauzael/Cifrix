@@ -193,10 +193,10 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
   if (!isOpen || !user) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="fixed inset-0" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+      <div className="relative bg-card rounded-[2.5rem] shadow-2xl w-full max-w-2xl max-h-[90vh] border border-border overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col">
+        <div className="p-8 border-b border-border flex justify-between items-center bg-muted/10 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20">
               <Shield className="text-white" size={24} />
@@ -218,7 +218,7 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6 min-h-0">
           <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between group">
             <div className="space-y-1">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cuenta de Usuario</p>

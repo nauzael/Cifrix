@@ -77,7 +77,7 @@ export function Modal({
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: 'spring', duration: 0.5, bounce: 0.3 }}
                         className={cn(
-                            "relative bg-card rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] w-full border border-border flex flex-col max-h-full overflow-hidden",
+                            "relative bg-card rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] w-full border border-border flex flex-col max-h-[95vh] overflow-hidden",
                             maxWidthClasses[maxWidth],
                             className
                         )}
@@ -87,7 +87,7 @@ export function Modal({
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-xl" />
 
                         {/* Header */}
-                        <div className="px-6 py-6 sm:px-10 border-b border-border flex justify-between items-center bg-muted/30 backdrop-blur-sm shrink-0">
+                        <div className="px-6 py-6 sm:px-10 border-b border-border flex justify-between items-center bg-muted/10 backdrop-blur-md shrink-0">
                             <div className="flex items-center gap-5">
                                 {Icon && (
                                     <div className="p-3.5 bg-primary rounded-2xl shadow-xl shadow-primary/20 text-primary-foreground shrink-0">
@@ -118,7 +118,7 @@ export function Modal({
                         </div>
 
                         {/* Content Body */}
-                        <div className="p-6 sm:p-10 overflow-y-auto custom-scrollbar flex-1">
+                        <div className="p-6 sm:p-10 overflow-y-auto custom-scrollbar flex-1 min-h-0">
                             {children}
                         </div>
                     </motion.div>
