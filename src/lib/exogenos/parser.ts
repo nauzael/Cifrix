@@ -27,42 +27,40 @@ export class ExogenosParser {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(content, 'text/xml');
 
-            // 1. Intentar encontrar etiquetas de datos
-            // El formato real de la DIAN usa etiquetas como <pagos> para el formato 1001
-            let records = Array.from(xmlDoc.getElementsByTagName('record'));
-
-            if (records.length === 0) {
-                // Si no hay <record>, buscar etiquetas comunes de MUISCA
-                const muiscaTags = ['pagos', 'ret', 'mo_ret', 'iva_ret'];
-                for (const tagName of muiscaTags) {
-                    const found = Array.from(xmlDoc.getElementsByTagName(tagName));
-                    if (found.length > 0) {
-                        records = found;
-                        break;
-                    }
-                }
-            }
-
-            // Si aún no hay registros, buscar cualquier elemento que tenga atributos clave (fallback agresivo)
-            if (records.length === 0) {
-                const allElements = xmlDoc.querySelectorAll('*');
-                for (const el of Array.from(allElements)) {
-                    if (el.hasAttribute('nid') && (el.hasAttribute('pago') || el.hasAttribute('valor'))) {
-                        records.push(el as Element);
-                    }
-                }
-            }
-
-            // Obtener año fiscal del encabezado si existe (<Ano>)
+            // 1. Identificar formato del encabezado
+            const formato = xmlDoc.getElementsByTagName('Formato')[0]?.textContent || '1001';
             const yearHeader = xmlDoc.getElementsByTagName('Ano')[0]?.textContent;
             const defaultYear = yearHeader ? parseInt(yearHeader) : currentYear - 1;
+
+            console.log(`[Parser] Procesando formato ${formato} año ${defaultYear}`);
+
+            // 2. Intentar encontrar registros (MUISCA usa etiquetas específicas por formato)
+            // Para 1001 -> <pagos>, 1007 -> <ingresos>, etc.
+            const muiscaTags = ['pagos', 'ingresos', 'ret', 'mo_ret', 'iva_ret', 'record'];
+            let records: Element[] = [];
+
+            for (const tagName of muiscaTags) {
+                const found = Array.from(xmlDoc.getElementsByTagName(tagName));
+                if (found.length > 0) {
+                    console.log(`[Parser] Encontrados ${found.length} registros con etiqueta <${tagName}>`);
+                    records = found;
+                    break;
+                }
+            }
+
+            // Fallback agresivo: cualquier elemento con nid (NIT DIAN)
+            if (records.length === 0) {
+                records = Array.from(xmlDoc.querySelectorAll('*')).filter(el => el.hasAttribute('nid')) as Element[];
+                if (records.length > 0) console.log(`[Parser] Fallback: Encontrados ${records.length} elementos con atributo 'nid'`);
+            }
 
             for (const record of records) {
                 // NIT: 'nit' o 'nid' (MUISCA)
                 const nit = record.getAttribute('nit') || record.getAttribute('nid') || '';
+                if (!nit) continue;
 
-                // Nombre: 'nombre' o 'raz' (Razón Social) o nombres divididos
-                let nombre = record.getAttribute('nombre') || record.getAttribute('raz') || '';
+                // Nombre o Razón Social
+                let nombre = record.getAttribute('raz') || record.getAttribute('nombre') || '';
                 if (!nombre) {
                     const apl1 = record.getAttribute('apl1') || '';
                     const apl2 = record.getAttribute('apl2') || '';
@@ -71,28 +69,28 @@ export class ExogenosParser {
                     nombre = [nom1, nom2, apl1, apl2].filter(Boolean).join(' ').trim();
                 }
 
-                // Concepto: 'concepto' o 'cpt'
-                const concepto = record.getAttribute('concepto') || record.getAttribute('cpt') || '';
+                // Concepto: 'cpt' (MUISCA standard) o 'concepto'
+                const concepto = record.getAttribute('cpt') || record.getAttribute('concepto') || '';
 
-                // Montos
-                const monto = parseFloat(record.getAttribute('valor') || record.getAttribute('pago') || '0');
-                const retencion = parseFloat(record.getAttribute('retencion') || record.getAttribute('retp') || '0');
+                // Montos (MUISCA usa 'pago' para 1001 y 'valor' para otros)
+                const monto = parseFloat(record.getAttribute('pago') || record.getAttribute('valor') || '0');
+                const retencion = parseFloat(record.getAttribute('retp') || record.getAttribute('retencion') || '0');
 
                 // Periodo
                 const periodo = parseInt(record.getAttribute('periodo') || defaultYear.toString());
 
-                if (nit) {
-                    rows.push({
-                        nit_contribuyente: nit,
-                        nombre_contribuyente: nombre || 'Desconocido',
-                        concepto: concepto,
-                        monto: monto,
-                        retencion: retencion,
-                        periodo_fiscal: periodo,
-                        tipo_exogeno: '0210'
-                    });
-                }
+                rows.push({
+                    nit_contribuyente: nit,
+                    nombre_contribuyente: nombre || 'Desconocido',
+                    concepto: concepto,
+                    monto: monto,
+                    retencion: retencion,
+                    periodo_fiscal: periodo,
+                    tipo_exogeno: '0210' // TODO: Mapear según formato real
+                });
             }
+
+            console.log(`[Parser] Extracción finalizada: ${rows.length} filas procesadas`);
         } catch (error) {
             console.error('Error parsing DIAN XML:', error);
             throw new Error('Formato XML de la DIAN inválido o no soportado');

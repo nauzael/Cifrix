@@ -16,6 +16,7 @@ export default function Exogenos() {
         reportes,
         inconsistencias,
         loading,
+        error,
         cargarReportes,
         importarArchivo,
         validarTodo,
@@ -139,6 +140,14 @@ export default function Exogenos() {
                     </span>
                 </button>
             </div>
+
+            {/* Error Message */}
+            {error && (
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-3 text-destructive">
+                    <AlertCircle className="size-5" />
+                    <p className="text-sm font-medium">{error}</p>
+                </div>
+            )}
 
             {/* Main Content */}
             <div className="bg-card rounded-2xl shadow-sm border border-border min-h-[400px]">

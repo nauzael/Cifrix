@@ -474,8 +474,8 @@ export class CifrixDB extends Dexie {
       deleted_records: '++id, record_id, table_name, sync_status, [table_name+record_id]'
     });
 
-    // Versión 16 - Asegurar esquema completo y estable
-    this.version(16).stores({
+    // Versión 17 - Corregir índices de inconsistencias
+    this.version(17).stores({
       organizations: 'id, type, sync_status',
       members: 'id, organization_id, full_name, document_id, status, sync_status',
       transactions: 'id, organization_id, date, type, sync_status',
@@ -496,7 +496,7 @@ export class CifrixDB extends Dexie {
       deducciones_renta: 'id, declaracion_id, tipo_deduccion, sync_status',
       activos_pasivos_renta: 'id, declaracion_id, tipo, sync_status',
       exogenos: 'id, organization_id, tipo_exogeno, periodo_fiscal, nit_contribuyente, procesado, validado, sync_status',
-      mapeo_inconsistencias: 'id, exogeno_id, estado_validacion, resuelto, sync_status',
+      mapeo_inconsistencias: 'id, organization_id, exogeno_id, estado_validacion, resuelto, sync_status',
       fiscal_years: 'id, organization_id, year, status, sync_status',
       financial_notes: 'id, organization_id, period_id, report_type, sync_status'
     });
