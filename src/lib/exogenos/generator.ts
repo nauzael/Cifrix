@@ -6,14 +6,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { db, Exogeno, Account, Transaction, JournalEntry, Member, Customer } from '../db';
 
-/**
- * Generador de Reportes Exógenos desde Contabilidad
- * Extrae información de transacciones, recaudos y facturación para consolidar datos de terceros
- */
-
-import { v4 as uuidv4 } from 'uuid';
-import { db, Exogeno, Account, Transaction, JournalEntry, Member, Customer } from '../db';
-
 export class ExogenosGenerator {
     /**
      * Genera registros exógenos basados en el movimiento contable del año
