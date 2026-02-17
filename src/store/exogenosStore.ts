@@ -337,7 +337,7 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
         if (!organizacionId) return;
         set({ loading: true });
         try {
-            // Obtener todos los IDs de reportes, inconsistencias y terceros para esta organización
+            // 1. Obtener IDs para rastreo de eliminaciones
             const reportes = await db.exogenos.where('organization_id').equals(organizacionId).toArray();
             const reportesIds = reportes.map(r => r.id);
 
@@ -347,15 +347,24 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             const terceros = await db.third_parties.where('organization_id').equals(organizacionId).toArray();
             const tercerosIds = terceros.map(t => t.id);
 
-            // Borrado físico local
-            await db.exogenos.bulkDelete(reportesIds);
+            const balances = await db.exogena_balances.where('organization_id').equals(organizacionId).toArray();
+            const balancesIds = balances.map(b => b.id);
+            // Lines are cascade deleted usually, but best to be explicit if no foreign key cascade
+            const balanceLines = await db.exogena_balance_lines.where('balance_id').anyOf(balancesIds).toArray();
+            const balanceLinesIds = balanceLines.map(l => l.id);
+
+            // 2. Borrado físico local (El orden importa para evitar FK constraints si hubieran)
             await db.mapeo_inconsistencias.bulkDelete(incsIds);
+            await db.exogenos.bulkDelete(reportesIds);
+            await db.exogena_balance_lines.bulkDelete(balanceLinesIds);
+            await db.exogena_balances.bulkDelete(balancesIds);
             await db.third_parties.bulkDelete(tercerosIds);
 
-            // Sincronizar inmediatamente para que desaparezcan de Supabase
+            // 3. Sincronizar inmediatamente para que desaparezcan de Supabase
             // El hook 'deleting' de la DB habrá registrado estos IDs en deleted_records
             await get().sincronizarConNube(organizacionId);
 
+            // 4. Limpiar estado local
             set({ reportes: [], inconsistencias: [], thirdParties: [], loading: false });
             toast.success('Información eliminada y sincronizada correctamente');
         } catch (error) {
