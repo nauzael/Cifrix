@@ -23,17 +23,17 @@ export const TABLES_TO_SYNC = [
   'ingresos_renta',
   'deducciones_renta',
   'activos_pasivos_renta',
+  'third_parties',
   'exogenos',
   'mapeo_inconsistencias',
-  'third_parties',
   'fiscal_years',
   'financial_notes'
 ];
 
 export const EXOGENOS_TABLES = [
+  'third_parties',
   'exogenos',
-  'mapeo_inconsistencias',
-  'third_parties'
+  'mapeo_inconsistencias'
 ];
 
 // Tablas que NO tienen índice organization_id en Dexie (evita SchemaError)
