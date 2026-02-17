@@ -26,58 +26,64 @@ export function ComparisonCharts() {
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <BarChart3 size={48} className="text-blue-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Total Reportado */}
+            <div className="bg-card p-4 rounded-xl border border-border shadow-sm group hover:border-primary/20 transition-colors">
+                <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Reportado</p>
+                    <BarChart3 size={16} className="text-blue-500 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Total Reportado</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white">{formatMoney(totalReportado)}</p>
-                <div className="mt-4 flex items-center gap-2">
-                    <span className="flex items-center text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
-                        Terceros
+                <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-lg font-black text-foreground truncate">{formatMoney(totalReportado)}</p>
+                    <span className="text-[9px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-md">
+                        TERCEROS
                     </span>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <TrendingUp size={48} className="text-green-600" />
+            {/* Conciliado */}
+            <div className="bg-card p-4 rounded-xl border border-border shadow-sm group hover:border-emerald-500/20 transition-colors">
+                <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Conciliado</p>
+                    <TrendingUp size={16} className="text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Conciliado</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white">{formatMoney(totalConciliado)}</p>
-                <div className="mt-4 flex items-center gap-2">
-                    <span className="flex items-center text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
-                        {resueltosCount} Resueltos
+                <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-lg font-black text-foreground truncate">{formatMoney(totalConciliado)}</p>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded-md">
+                        {resueltosCount} OK
                     </span>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <TrendingDown size={48} className="text-red-600" />
+            {/* Discrepancias */}
+            <div className="bg-card p-4 rounded-xl border border-border shadow-sm group hover:border-rose-500/20 transition-colors">
+                <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Discrepancias</p>
+                    <TrendingDown size={16} className="text-rose-500 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Discrepancias</p>
-                <p className="text-2xl font-black text-red-600">{pendientesCount}</p>
-                <div className="mt-4 flex items-center gap-2">
-                    <span className="flex items-center text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-full">
+                <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-lg font-black text-rose-600 truncate">{pendientesCount}</p>
+                    <span className="text-[9px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-900/30 px-1.5 py-0.5 rounded-md uppercase">
                         Pendientes
                     </span>
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <PieChart size={48} className="text-purple-600" />
+            {/* Salud de Datos */}
+            <div className="bg-card p-4 rounded-xl border border-border shadow-sm group hover:border-purple-500/20 transition-colors">
+                <div className="flex items-center justify-between mb-1">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Salud de Datos</p>
+                    <PieChart size={16} className="text-purple-500 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Salud de Datos</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white">
-                    {reportes.length > 0 ? Math.round(((reportes.length - pendientesCount) / reportes.length) * 100) : 100}%
-                </p>
-                <div className="mt-4 flex items-center gap-2">
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div className="space-y-2">
+                    <div className="flex items-baseline justify-between">
+                        <p className="text-lg font-black text-foreground">
+                            {reportes.length > 0 ? Math.round(((reportes.length - pendientesCount) / reportes.length) * 100) : 100}%
+                        </p>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
                         <div
-                            className="bg-purple-600 h-full transition-all duration-1000"
+                            className="bg-purple-500 h-full transition-all duration-1000"
                             style={{ width: `${reportes.length > 0 ? ((reportes.length - pendientesCount) / reportes.length) * 100 : 100}%` }}
                         />
                     </div>
