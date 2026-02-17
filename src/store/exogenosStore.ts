@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { db, Exogeno, MapeoInconsistencia, ThirdParty } from '@/lib/db';
+import { db, Exogeno, MapeoInconsistencia, ThirdParty, ExogenaBalance, ExogenaBalanceLine } from '@/lib/db';
 import { exogenosService } from '@/lib/exogenos';
 import { syncExogenos } from '@/lib/sync';
 import { toast } from '@/store/toastStore';
@@ -29,6 +29,7 @@ interface ExogenosState {
     eliminarTercero: (id: string) => Promise<void>;
 
     limpiarEstado: () => void;
+    importarBalance: (file: File, organizacionId: string) => Promise<void>;
 }
 
 export const useExogenosStore = create<ExogenosState>((set, get) => ({
@@ -134,6 +135,79 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             console.error('Error al importar archivo:', error);
             set({ error: error.message || 'Error al procesar el archivo', loading: false });
             toast.error('Error al importar el archivo');
+        }
+    },
+
+    importarBalance: async (file: File, organizacionId: string) => {
+        set({ loading: true, error: null });
+        try {
+            const rows = await exogenosService.parser.parseBalance(file);
+            const year = new Date().getFullYear() - 1; // Default
+
+            const balanceId = crypto.randomUUID();
+            const balance: ExogenaBalance = {
+                id: balanceId,
+                organization_id: organizacionId,
+                anio_gravable: year,
+                nombre_archivo: file.name,
+                fecha_carga: new Date().toISOString(),
+                tercero_count: new Set(rows.map(r => r.nit_tercero)).size,
+                total_debitos: rows.reduce((sum, r) => sum + r.debito, 0),
+                total_creditos: rows.reduce((sum, r) => sum + r.credito, 0),
+                created_at: new Date().toISOString(),
+                sync_status: 'pendiente'
+            };
+
+            const lines: ExogenaBalanceLine[] = rows.map(r => ({
+                id: crypto.randomUUID(),
+                balance_id: balanceId,
+                nit_tercero: r.nit_tercero,
+                nombre_tercero: r.nombre_tercero,
+                cuenta: r.cuenta,
+                debito: r.debito,
+                credito: r.credito,
+                saldo: r.saldo,
+                created_at: new Date().toISOString(),
+                sync_status: 'pendiente'
+            }));
+
+            await db.exogena_balances.add(balance);
+            await db.exogena_balance_lines.bulkAdd(lines);
+
+            // Sincronizar terceros del balance si no existen
+            const existingThirdParties = await db.third_parties.where('organization_id').equals(organizacionId).toArray();
+            const existingNits = new Set(existingThirdParties.map(t => t.nit));
+            const uniqueNewNits = new Set<string>();
+            const newThirdParties: ThirdParty[] = [];
+
+            for (const row of rows) {
+                if (row.nit_tercero && !existingNits.has(row.nit_tercero) && !uniqueNewNits.has(row.nit_tercero)) {
+                    uniqueNewNits.add(row.nit_tercero);
+                    newThirdParties.push({
+                        id: crypto.randomUUID(),
+                        organization_id: organizacionId,
+                        nit: row.nit_tercero,
+                        nombre: row.nombre_tercero,
+                        tipo_persona: row.nit_tercero.length >= 9 ? 'JURIDICA' : 'NATURAL',
+                        obligado_exogena: false,
+                        tipos_exogena: [],
+                        created_at: new Date().toISOString(),
+                        sync_status: 'pendiente'
+                    });
+                }
+            }
+
+            if (newThirdParties.length > 0) {
+                await db.third_parties.bulkAdd(newThirdParties);
+            }
+
+            toast.success(`Balance importado: ${lines.length} líneas procesadas y ${newThirdParties.length} terceros creados.`);
+            set({ loading: false });
+        } catch (error: any) {
+            console.error('Error al importar balance:', error);
+            const msg = error.message || 'Error desconocido';
+            set({ error: msg, loading: false });
+            toast.error(msg);
         }
     },
 

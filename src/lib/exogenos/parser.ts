@@ -28,6 +28,15 @@ export interface ColumnMapping {
     periodo?: string | number;
 }
 
+export interface BalanceRow {
+    cuenta: string;
+    nit_tercero: string;
+    nombre_tercero: string;
+    debito: number;
+    credito: number;
+    saldo: number;
+}
+
 export class ExogenosParser {
     /**
      * Procesa un archivo XML de la DIAN (Formato estándar)
@@ -238,6 +247,83 @@ export class ExogenosParser {
         }
 
         throw new Error(`Extensión .${extension} no soportada.`);
+    }
+
+    /**
+     * Parsea un archivo de Balance de Prueba (Formato: Cuenta, Nit, Nombre, Debito, Credito, Saldo)
+     */
+    async parseBalance(file: File): Promise<BalanceRow[]> {
+        const buffer = await file.arrayBuffer();
+        const extension = file.name.split('.').pop()?.toLowerCase();
+
+        if (extension !== 'xlsx' && extension !== 'xls' && extension !== 'csv') {
+            throw new Error('Solo se soportan archivos Excel (.xlsx, .xls) o CSV para balances.');
+        }
+
+        let data: any[][] = [];
+
+        if (extension === 'xlsx' || extension === 'xls') {
+            const wb = read(buffer, { type: 'array' });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            data = utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+        } else {
+            // Basic CSV support
+            const decoder = new TextDecoder('utf-8');
+            const content = decoder.decode(buffer);
+            data = content.split('\n').map(line => line.split(','));
+        }
+
+        const rows: BalanceRow[] = [];
+
+        // Estrategia heurística simple: Ignorar headers, buscar primera fila con números
+        // Asumimos orden: [0]Cuenta, [1]Nit, [2]Nombre, ... [N-2]Debito, [N-1]Credito, [N]Saldo
+        // O: Nit, Nombre, Saldo...
+
+        // Mapeo por defecto: 0:Cuenta, 1:Nit, 2:Nombre, 3:Debito, 4:Credito, 5:Saldo
+        // Ajustar según necesidad o pedir mapeo en UI
+
+        for (let i = 1; i < data.length; i++) {
+            const row = data[i];
+            if (!row || row.length < 3) continue;
+
+            const getValue = (idx: number) => {
+                const val = row[idx];
+                return val !== undefined ? String(val).trim() : '';
+            };
+
+            const getNumber = (idx: number) => {
+                const val = getValue(idx);
+                return parseFloat(val.replace(/[^0-9.-]/g, '')) || 0;
+            };
+
+            // Intento de detectar columnas por contenido si es necesario, 
+            // por ahora hardcoded al formato más común (Siigo/WorldOffice export sencillo)
+            // Columnas típicas: Cuenta - Nit - Tercero - Saldo Inicial - Debito - Credito - Saldo Final
+
+            // Asumimos un formato simple de 6 columnas Clave:
+            // 0: Cuenta (opcional)
+            // 1: Nit
+            // 2: Nombre
+            // 3: Debito
+            // 4: Credito
+            // 5: Saldo (Final)
+
+            // Si el archivo tiene menos columnas, ajustamos
+
+            const nit = getValue(1).replace(/[^0-9-]/g, ''); // Limpiar nit
+            if (!nit || nit.length < 3) continue; // Saltar filas totalizadoras o vacías
+
+            rows.push({
+                cuenta: getValue(0),
+                nit_tercero: nit,
+                nombre_tercero: getValue(2),
+                debito: getNumber(3),
+                credito: getNumber(4),
+                saldo: getNumber(5)
+            });
+        }
+
+        return rows;
     }
 }
 
