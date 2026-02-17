@@ -94,7 +94,21 @@ export const ThirdPartyTable = ({ organizationId }: ThirdPartyTableProps) => {
                         ) : (
                             filtered.map(tp => {
                                 // Calcular saldo desde las lineas cargadas
-                                const lines = balanceLines.filter(l => l.nit_tercero === tp.nit);
+                                // Normalizar NIT del tercero actual para la búsqueda
+                                let nitTercero = tp.nit.replace(/[\.\,\s]/g, '');
+                                if (nitTercero.includes('-')) {
+                                    nitTercero = nitTercero.split('-')[0];
+                                }
+
+                                const lines = balanceLines.filter(l => {
+                                    // Normalizar NIT de la línea del balance
+                                    let nitLinea = l.nit_tercero.replace(/[\.\,\s]/g, '');
+                                    if (nitLinea.includes('-')) {
+                                        nitLinea = nitLinea.split('-')[0];
+                                    }
+                                    return nitLinea === nitTercero;
+                                });
+
                                 const saldo = lines.reduce((acc, l) => acc + (l.saldo || 0), 0);
 
                                 return (

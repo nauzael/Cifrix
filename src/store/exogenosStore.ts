@@ -285,7 +285,13 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             const balanceMap = new Map<string, { debito: number, credito: number, saldo: number }>();
 
             for (const line of balanceLines) {
-                const nit = line.nit_tercero; // Asegurar limpieza de NIT si es necesario (puntos, guiones)
+                // Normalización básica de NIT: quitar guiones, espacios y puntos.
+                // Si viene formato "123456789-1", tomamos "123456789".
+                let nit = line.nit_tercero.replace(/[\.\,\s]/g, '');
+                if (nit.includes('-')) {
+                    nit = nit.split('-')[0];
+                }
+
                 const current = balanceMap.get(nit) || { debito: 0, credito: 0, saldo: 0 };
 
                 current.debito += line.debito || 0;

@@ -141,7 +141,12 @@ export class ExogenosValidator {
      * Valida un reporte exógeno contra un mapa de saldos de balance
      */
     validarContraBalance(exogeno: Exogeno, balanceMap: Map<string, { debito: number, credito: number, saldo: number }>): InconsistencyResult {
-        const nit = exogeno.nit_contribuyente;
+        // Normalización básica de NIT reportado
+        let nit = exogeno.nit_contribuyente.replace(/[\.\,\s]/g, '');
+        if (nit.includes('-')) {
+            nit = nit.split('-')[0];
+        }
+
         const balanceData = balanceMap.get(nit);
 
         // Caso 1: Tercero no existe en el balance
