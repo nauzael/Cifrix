@@ -9,6 +9,7 @@ interface ExogenosState {
     reportes: Exogeno[];
     inconsistencias: MapeoInconsistencia[];
     thirdParties: ThirdParty[];
+    balanceLines: ExogenaBalanceLine[];
     loading: boolean;
     error: string | null;
 
@@ -37,6 +38,7 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
     reportes: [],
     inconsistencias: [],
     thirdParties: [],
+    balanceLines: [],
     loading: false,
     error: null,
 
@@ -67,7 +69,19 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
                 .where('organization_id')
                 .equals(organizacionId)
                 .toArray();
-            set({ thirdParties, loading: false });
+            set({ thirdParties });
+
+            // Cargar Balance Lines (si hay)
+            const balances = await db.exogena_balances.where('organization_id').equals(organizacionId).toArray();
+            if (balances.length > 0) {
+                const balanceIds = balances.map(b => b.id);
+                const lines = await db.exogena_balance_lines.where('balance_id').anyOf(balanceIds).toArray();
+                set({ balanceLines: lines });
+            } else {
+                set({ balanceLines: [] });
+            }
+
+            set({ loading: false });
         } catch (error) {
             console.error('Error al cargar terceros:', error);
             set({ loading: false });
