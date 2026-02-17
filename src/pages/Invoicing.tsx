@@ -139,15 +139,17 @@ export function Invoicing() {
                         <p className="text-[10px] text-primary font-black uppercase tracking-tighter">IVA: $ {formatCurrency(invoice.tax)}</p>
                       </td>
                       <td className="px-8 py-5 text-center">
-                        <span className={`inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${invoice.status === 'pagada' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                            invoice.status === 'borrador' ? 'bg-slate-50 text-slate-500 border-slate-200' :
-                              'bg-amber-50 text-amber-700 border-amber-200'
+                        <span className={`inline-flex px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${invoice.status === 'pagada'
+                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                          : invoice.status === 'borrador'
+                            ? 'bg-muted text-muted-foreground border-border'
+                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                           }`}>
                           {invoice.status}
                         </span>
                       </td>
                       <td className="px-8 py-5">
-                        <button className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all">
+                        <button className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all">
                           <MoreVertical size={20} />
                         </button>
                       </td>

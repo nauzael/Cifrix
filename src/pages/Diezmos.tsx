@@ -238,8 +238,8 @@ export function Diezmos() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">Módulo Ministerial</h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Gestión de diezmos, ofrendas y proyectos.</p>
+          <h2 className="text-xl sm:text-2xl font-black text-foreground mb-1 tracking-tight">Módulo Ministerial</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">Gestión de diezmos, ofrendas y proyectos.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -259,7 +259,7 @@ export function Diezmos() {
             <CloudFog className="size-4" />
             <span className="hidden sm:inline font-black uppercase tracking-widest text-[10px]">Sincronizar</span>
           </button>
-          <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
+          <div className="flex items-center gap-1.5 bg-card p-1.5 rounded-xl border border-border shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
             {[
               { id: 'registro', label: 'Aportes', icon: Heart },
               { id: 'proyectos', label: 'Proyectos', icon: Target },
@@ -268,7 +268,7 @@ export function Diezmos() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${activeTab === tab.id ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${activeTab === tab.id ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}
               >
                 <tab.icon className="size-4" />
                 <span>{tab.label}</span>
@@ -286,13 +286,13 @@ export function Diezmos() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
           {/* Sidebar: Member List */}
           <div className="lg:col-span-4 flex flex-col min-h-0">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col h-[400px] lg:h-[calc(100vh-280px)]">
-              <div className="p-3 sm:p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Seleccionar Miembro</p>
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col h-[400px] lg:h-[calc(100vh-280px)]">
+              <div className="p-3 sm:p-4 border-b border-border bg-muted/30">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3">Seleccionar Miembro</p>
                 <div className="relative group">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4 group-focus-within:text-blue-500 transition-colors" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4 group-focus-within:text-primary transition-colors" />
                   <input
-                    className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2 bg-background text-foreground border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                     placeholder="Filtrar por nombre o ID..."
                     type="text"
                     value={searchTerm}
@@ -303,13 +303,13 @@ export function Diezmos() {
               <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
                 {isLoading ? (
                   <div className="p-6 text-center flex flex-col items-center gap-2">
-                    <Loader2 className="animate-spin size-6 text-blue-500" />
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cargando lista...</p>
+                    <Loader2 className="animate-spin size-6 text-primary" />
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Cargando lista...</p>
                   </div>
                 ) : filteredMembers.length === 0 ? (
-                  <div className="p-12 text-center text-slate-500 flex flex-col items-center gap-4">
-                    <div className="size-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-                      <Search size={32} className="text-slate-300" />
+                  <div className="p-12 text-center text-muted-foreground flex flex-col items-center gap-4">
+                    <div className="size-16 rounded-full bg-muted flex items-center justify-center">
+                      <Search size={32} className="text-muted-foreground/30" />
                     </div>
                     <p className="text-xs font-bold">No se encontraron miembros</p>
                   </div>
@@ -318,21 +318,21 @@ export function Diezmos() {
                     key={member.id}
                     onClick={() => setSelectedMember(member)}
                     className={`group p-2.5 mb-1 rounded-xl cursor-pointer transition-all border-2 ${selectedMember?.id === member.id
-                      ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-600/20'
-                      : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      ? 'bg-primary border-primary shadow-lg shadow-primary/20'
+                      : 'border-transparent hover:bg-accent'
                       }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <div className={`size-9 rounded-lg flex items-center justify-center font-black text-[10px] uppercase transition-colors ${selectedMember?.id === member.id
-                        ? 'bg-white text-blue-600'
-                        : 'bg-blue-50 dark:bg-blue-500/10 text-blue-600'
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-primary/10 text-primary'
                         }`}>
                         {member.full_name.substring(0, 2)}
                       </div>
                       <div className="min-w-0">
-                        <p className={`text-sm font-black truncate uppercase tracking-tight ${selectedMember?.id === member.id ? 'text-white' : 'text-slate-900 dark:text-white'
+                        <p className={`text-sm font-black truncate uppercase tracking-tight ${selectedMember?.id === member.id ? 'text-primary-foreground' : 'text-foreground'
                           }`}>{member.full_name}</p>
-                        <p className={`text-[10px] font-bold ${selectedMember?.id === member.id ? 'text-blue-100' : 'text-slate-400'
+                        <p className={`text-[10px] font-bold ${selectedMember?.id === member.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
                           }`}>
                           ID: {member.document_id || 'SIN REGISTRO'}
                         </p>
@@ -353,44 +353,44 @@ export function Diezmos() {
           <div className="lg:col-span-8 flex flex-col gap-4">
             {/* Quick Stats Banner */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+              <div className="bg-card p-3 rounded-2xl border border-border shadow-sm flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                   <TrendingUp className="size-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Total Hoy</p>
-                  <p className="text-base font-black text-slate-900 dark:text-white">$ {formatCurrency(dailyTotal)}</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-0.5">Total Hoy</p>
+                  <p className="text-base font-black text-foreground">$ {formatCurrency(dailyTotal)}</p>
                 </div>
               </div>
-              <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600">
+              <div className="bg-card p-3 rounded-2xl border border-border shadow-sm flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                   <Activity className="size-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Aportes Hoy</p>
-                  <p className="text-base font-black text-slate-900 dark:text-white">{dailyCount}</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-0.5">Aportes Hoy</p>
+                  <p className="text-base font-black text-foreground">{dailyCount}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex-1">
-              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900">
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex-1">
+              <div className="p-4 sm:p-5 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card">
                 <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <div className="size-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
                     <Receipt className="size-7" />
                   </div>
                   <div>
-                    <h3 className="font-black text-2xl text-slate-900 dark:text-white tracking-tight uppercase">Nuevo Registro</h3>
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest">
-                      MIEMBRO: <span className={selectedMember ? "text-blue-600" : "text-slate-300"}>{selectedMember ? selectedMember.full_name : 'NO SELECCIONADO'}</span>
+                    <h3 className="font-black text-2xl text-foreground tracking-tight uppercase">Nuevo Registro</h3>
+                    <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest">
+                      MIEMBRO: <span className={selectedMember ? "text-primary" : "text-muted-foreground/30"}>{selectedMember ? selectedMember.full_name : 'NO SELECCIONADO'}</span>
                     </p>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fecha Contable</p>
-                  <div className="bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700">
-                    <p className="text-sm font-black text-slate-900 dark:text-white">{formatDate(new Date())}</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Fecha Contable</p>
+                  <div className="bg-muted px-3 py-1.5 rounded-xl border border-border">
+                    <p className="text-sm font-black text-foreground">{formatDate(new Date())}</p>
                   </div>
                 </div>
               </div>
@@ -398,12 +398,12 @@ export function Diezmos() {
               <form onSubmit={handleSubmit(onSubmit)} className="p-6 sm:p-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block ml-1">Monto del Aporte</label>
+                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Monto del Aporte</label>
                     <div className="relative group">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xl group-focus-within:text-blue-500 transition-colors">$</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-muted-foreground/30 text-xl group-focus-within:text-primary transition-colors">$</span>
                       <input
                         {...register('amount')}
-                        className="w-full pl-11 pr-5 py-3 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-xl font-black focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
+                        className="w-full pl-11 pr-5 py-3 bg-muted/50 text-foreground border border-border rounded-xl text-xl font-black focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none"
                         placeholder="0.00"
                         step="0.01"
                         type="number"
@@ -413,11 +413,11 @@ export function Diezmos() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block ml-1">Tipo de Ingreso</label>
+                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Tipo de Ingreso</label>
                     <div className="grid grid-cols-1 gap-2">
                       <select
                         {...register('category')}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-black uppercase tracking-tight focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer"
+                        className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm font-black uppercase tracking-tight focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
                       >
                         <option value="DIEZMO">Diezmo Ministerial</option>
                         <option value="OFRENDA">Ofrenda General</option>
@@ -427,10 +427,10 @@ export function Diezmos() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block ml-1">Proyecto Específico</label>
+                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Proyecto Específico</label>
                     <select
                       {...register('project_id')}
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-black focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer"
+                      className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm font-black focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
                     >
                       <option value="">Ninguno (Fondo General)</option>
                       {projects.map(p => (
@@ -440,7 +440,7 @@ export function Diezmos() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block ml-1">Método de Captación</label>
+                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Método de Captación</label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
                         { value: 'EFECTIVO', icon: Banknote, label: 'Efectivo' },
@@ -449,7 +449,7 @@ export function Diezmos() {
                       ].map((method) => (
                         <label key={method.value} className="cursor-pointer">
                           <input type="radio" value={method.value} {...register('method')} className="hidden peer" />
-                          <div className="flex flex-col items-center justify-center p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-400 peer-checked:border-blue-600 peer-checked:bg-blue-600/5 peer-checked:text-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                          <div className="flex flex-col items-center justify-center p-3 border border-border rounded-xl text-muted-foreground peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary hover:bg-accent transition-all">
                             <method.icon className="size-5 mb-1.5" />
                             <span className="text-[10px] font-black uppercase tracking-widest">{method.label}</span>
                           </div>
@@ -461,19 +461,19 @@ export function Diezmos() {
 
                 <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block ml-1">Referencia / Folio</label>
+                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Referencia / Folio</label>
                     <input
                       {...register('reference')}
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
+                      className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none"
                       placeholder="Ej. Sobrecito #124"
                       type="text"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block ml-1">Notas Internas</label>
+                    <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Notas Internas</label>
                     <input
                       {...register('notes')}
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none"
+                      className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none"
                       placeholder="Información adicional..."
                     />
                   </div>
@@ -483,7 +483,7 @@ export function Diezmos() {
                   <button
                     type="submit"
                     disabled={isSaving || !selectedMember}
-                    className="flex-1 w-full bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-base uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                    className="flex-1 w-full bg-primary text-primary-foreground px-6 py-3 rounded-xl font-black text-base uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                   >
                     {isSaving ? (
                       <Loader2 className="animate-spin size-6" />
@@ -497,7 +497,7 @@ export function Diezmos() {
                   <button
                     type="button"
                     onClick={() => { reset(); setSelectedMember(null); }}
-                    className="w-full sm:w-auto px-8 py-5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-black uppercase tracking-widest text-sm transition-colors"
+                    className="w-full sm:w-auto px-8 py-5 text-muted-foreground hover:text-foreground font-black uppercase tracking-widest text-sm transition-colors"
                   >
                     Limpiar
                   </button>

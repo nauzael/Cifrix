@@ -372,7 +372,7 @@ export function Members() {
         <div className="p-3 sm:p-4 border-b border-border flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-muted/30">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
             <div className="relative flex-1 sm:max-w-md group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4 group-focus-within:text-blue-500 transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-4 group-focus-within:text-primary transition-colors" />
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -384,7 +384,7 @@ export function Members() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="flex-1 sm:flex-none text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 py-2 px-3 outline-none font-bold transition-all cursor-pointer"
+                className="flex-1 sm:flex-none text-sm border border-border bg-card text-foreground rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary py-2 px-3 outline-none font-bold transition-all cursor-pointer"
               >
                 <option value="all">Todos los estados</option>
                 <option value="activo">Solo Activos</option>
@@ -396,7 +396,7 @@ export function Members() {
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={exportCSV}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl border border-slate-200 dark:border-slate-700 transition-all font-bold text-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-muted-foreground bg-card hover:bg-accent hover:text-foreground rounded-xl border border-border transition-all font-bold text-sm"
               title="Exportar CSV"
             >
               <Download className="size-4" />
@@ -404,7 +404,7 @@ export function Members() {
             </button>
             <button
               onClick={printDirectory}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl border border-slate-200 dark:border-slate-700 transition-all font-bold text-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-muted-foreground bg-card hover:bg-accent hover:text-foreground rounded-xl border border-border transition-all font-bold text-sm"
               title="Imprimir Directorio"
             >
               <Printer className="size-4" />
@@ -418,10 +418,10 @@ export function Members() {
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
-                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Miembro / Contacto</th>
-                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Información Ministerial</th>
-                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Estado</th>
-                <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Acciones</th>
+                <th className="px-4 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Miembro / Contacto</th>
+                <th className="px-4 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Información Ministerial</th>
+                <th className="px-4 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-center">Estado</th>
+                <th className="px-4 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -429,8 +429,8 @@ export function Members() {
                 <tr>
                   <td colSpan={4} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="size-8 animate-spin text-blue-500" />
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cargando directorio...</p>
+                      <Loader2 className="size-8 animate-spin text-primary" />
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Cargando directorio...</p>
                     </div>
                   </td>
                 </tr>
@@ -438,16 +438,16 @@ export function Members() {
                 <tr>
                   <td colSpan={4} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-3 max-w-xs mx-auto">
-                      <div className="size-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-                        <Search size={32} className="text-slate-300" />
+                      <div className="size-16 rounded-full bg-muted flex items-center justify-center">
+                        <Search size={32} className="text-muted-foreground" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-base font-black text-slate-900 dark:text-white tracking-tight">Sin resultados</p>
-                        <p className="text-xs text-slate-500">No encontramos miembros que coincidan.</p>
+                        <p className="text-base font-black text-foreground tracking-tight">Sin resultados</p>
+                        <p className="text-xs text-muted-foreground">No encontramos miembros que coincidan.</p>
                       </div>
                       <button
                         onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
-                        className="text-blue-600 font-bold text-xs hover:underline"
+                        className="text-primary font-bold text-xs hover:underline"
                       >
                         Limpiar filtros
                       </button>
@@ -459,7 +459,7 @@ export function Members() {
                   <tr key={member.id} className="hover:bg-muted/50 transition-colors group">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-black uppercase shrink-0 shadow-sm text-sm">
+                        <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground font-black uppercase shrink-0 shadow-sm text-sm">
                           {member.full_name.substring(0, 2)}
                         </div>
                         <div className="min-w-0">
@@ -493,8 +493,8 @@ export function Members() {
                           )}
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <div className="size-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          <div className="size-1 rounded-full bg-border" />
+                          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                             Ingreso: {formatDate(member.entry_date)}
                           </p>
                         </div>
@@ -519,21 +519,21 @@ export function Members() {
                       <div className="flex items-center justify-end gap-1 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => handleGenerateCertificate(member)}
-                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all"
+                          className="p-2 text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"
                           title="Generar Certificado"
                         >
                           <FileText className="size-4" />
                         </button>
                         <button
                           onClick={() => openModal(member)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all"
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
                           title="Editar"
                         >
                           <Edit className="size-4" />
                         </button>
                         <button
                           onClick={() => deleteMember(member.id)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                          className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                           title="Eliminar"
                         >
                           <Trash2 className="size-4" />
@@ -555,21 +555,21 @@ export function Members() {
           <div className="relative bg-card rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-border">
             <div className="p-8 border-b border-border flex items-center justify-between bg-card">
               <div>
-                <h3 className="font-black text-2xl text-slate-900 dark:text-white tracking-tight uppercase">
+                <h3 className="font-black text-2xl text-foreground tracking-tight uppercase">
                   {editingMember ? 'Editar Registro' : 'Nuevo Registro'}
                 </h3>
-                <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest opacity-70">Directorio de Membresía</p>
+                <p className="text-xs font-bold text-muted-foreground mt-1 uppercase tracking-widest opacity-70">Directorio de Membresía</p>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                className="p-3 text-muted-foreground hover:text-foreground rounded-2xl hover:bg-accent transition-all"
               >
                 <X className="size-6" />
               </button>
             </div>
 
             {/* Modal Tabs */}
-            <div className="flex px-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 overflow-x-auto scrollbar-hide gap-2">
+            <div className="flex px-8 border-b border-border bg-muted/30 overflow-x-auto scrollbar-hide gap-2">
               {[
                 { id: 'personal', label: 'Personales' },
                 { id: 'ministerial', label: 'Ministerial' },
@@ -579,8 +579,8 @@ export function Members() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                 >
                   {tab.label}
@@ -594,7 +594,7 @@ export function Members() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nombre Completo</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Nombre Completo</label>
                         <input
                           {...register('full_name')}
                           autoFocus
@@ -605,7 +605,7 @@ export function Members() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Documento / ID</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Documento / ID</label>
                         <input
                           {...register('document_id')}
                           className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
@@ -614,7 +614,7 @@ export function Members() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Teléfono</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Teléfono</label>
                         <input
                           {...register('phone')}
                           className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
@@ -623,7 +623,7 @@ export function Members() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Email</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Email</label>
                         <input
                           {...register('email')}
                           type="email"
@@ -633,7 +633,7 @@ export function Members() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Fecha Nacimiento</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Fecha Nacimiento</label>
                         <input
                           {...register('birth_date')}
                           type="date"
@@ -642,7 +642,7 @@ export function Members() {
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Dirección</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Dirección</label>
                         <input
                           {...register('address')}
                           className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
@@ -655,10 +655,10 @@ export function Members() {
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Estado</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Estado</label>
                         <select
                           {...register('status')}
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all appearance-none"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all appearance-none"
                         >
                           <option value="activo">Activo</option>
                           <option value="inactivo">Inactivo</option>
@@ -667,32 +667,32 @@ export function Members() {
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Fecha de Ingreso</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Fecha de Ingreso</label>
                         <input
                           {...register('entry_date')}
                           type="date"
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Fecha de Bautismo</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Fecha de Bautismo</label>
                         <input
                           {...register('baptism_date')}
                           type="date"
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                         />
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Ministerios (separados por coma)</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Ministerios (separados por coma)</label>
                         <input
                           onChange={(e) => {
                             const val = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
                             setValue('ministry', val);
                           }}
                           defaultValue={editingMember?.ministry?.join(', ')}
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                           placeholder="Ej. Alabanza, Escuela Dominical, Jóvenes"
                         />
                       </div>
@@ -707,23 +707,23 @@ export function Members() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Monto del Compromiso (Mensual)</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Monto del Compromiso (Mensual)</label>
                         <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</span>
                           <input
                             {...register('pledge_amount')}
                             type="number"
-                            className="w-full pl-8 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                            className="w-full pl-8 pr-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                             placeholder="0.00"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Período del Compromiso</label>
+                        <label className="block text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Período del Compromiso</label>
                         <input
                           {...register('pledge_period')}
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                           placeholder="Ej. Enero - Diciembre 2026"
                         />
                       </div>
@@ -732,11 +732,11 @@ export function Members() {
                 )}
               </div>
 
-              <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 bg-slate-50/30">
+              <div className="p-4 sm:p-6 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 bg-muted/30">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-3.5 sm:py-3 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all order-2 sm:order-1"
+                  className="px-6 py-3.5 sm:py-3 text-sm font-bold text-muted-foreground hover:bg-accent rounded-xl transition-all order-2 sm:order-1"
                 >
                   Cancelar
                 </button>

@@ -539,8 +539,8 @@ ${equityRows}
               {typeof stat.value === 'number' ? `$ ${formatCurrency(stat.value)}` : stat.value}
             </h3>
             <div className={`mt-3 flex items-center gap-1.5 font-bold text-[10px] sm:text-xs relative z-10 ${stat.color === 'emerald' ? 'text-emerald-600' :
-              stat.color === 'red' ? 'text-red-600' :
-                stat.color === 'blue' ? 'text-blue-500' : 'text-slate-400'
+              stat.color === 'red' ? 'text-red-500' :
+                stat.color === 'blue' ? 'text-primary' : 'text-muted-foreground'
               }`}>
               <stat.icon className="size-3.5" />
               {stat.detail}
