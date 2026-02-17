@@ -593,7 +593,7 @@ export class CifrixDB extends Dexie {
       // Nuevas tablas de Renta y Exógenos
       // Nuevas tablas de Renta y Exógenos
       'declaraciones_renta', 'ingresos_renta', 'deducciones_renta', 'activos_pasivos_renta',
-      'exogenos', 'mapeo_inconsistencias',
+      'exogenos', 'mapeo_inconsistencias', 'third_parties',
       // Nuevas tablas de Estados Financieros
       'fiscal_years', 'financial_notes'
     ];

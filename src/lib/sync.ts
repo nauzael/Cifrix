@@ -31,7 +31,8 @@ export const TABLES_TO_SYNC = [
 
 export const EXOGENOS_TABLES = [
   'exogenos',
-  'mapeo_inconsistencias'
+  'mapeo_inconsistencias',
+  'third_parties'
 ];
 
 // Tablas que NO tienen índice organization_id en Dexie (evita SchemaError)

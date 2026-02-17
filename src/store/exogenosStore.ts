@@ -260,20 +260,30 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
     },
 
     limpiarTodo: async (organizacionId: string) => {
+        if (!organizacionId) return;
         set({ loading: true });
         try {
-            const reportesIds = get().reportes.map(r => r.id);
-            const incsIds = get().inconsistencias.map(i => i.id);
+            // Obtener todos los IDs de reportes e inconsistencias para esta organización
+            const reportes = await db.exogenos.where('organization_id').equals(organizacionId).toArray();
+            const reportesIds = reportes.map(r => r.id);
 
+            const inconsistencias = await db.mapeo_inconsistencias.where('organization_id').equals(organizacionId).toArray();
+            const incsIds = inconsistencias.map(i => i.id);
+
+            // Borrado físico local
             await db.exogenos.bulkDelete(reportesIds);
             await db.mapeo_inconsistencias.bulkDelete(incsIds);
 
+            // Sincronizar inmediatamente para que desaparezcan de Supabase
+            // El hook 'deleting' de la DB habrá registrado estos IDs en deleted_records
+            await get().sincronizarConNube(organizacionId);
+
             set({ reportes: [], inconsistencias: [], loading: false });
-            toast.success('Módulo de exógenos limpiado correctamente');
+            toast.success('Información eliminada y sincronizada correctamente');
         } catch (error) {
             console.error('Error al limpiar exógenos:', error);
             set({ loading: false });
-            toast.error('Error al limpiar los datos');
+            toast.error('Error al intentar limpiar los datos');
         }
     },
 
