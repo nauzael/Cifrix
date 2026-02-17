@@ -12,24 +12,34 @@ export interface TaxRate {
 }
 
 const UVT_VALUES: Record<number, number> = {
+    2025: 49799,
     2024: 47065,
     2023: 42412,
     2022: 38004
 };
 
 export function getUVTForYear(year: number): number {
-    return UVT_VALUES[year] || UVT_VALUES[2024]; // Fallback to 2024
+    return UVT_VALUES[year] || UVT_VALUES[2025]; // Fallback to 2025
 }
 
 const RETENTION_RATES: TaxRate[] = [
+    // --- AÑO 2025 ---
+    { year: 2025, concept: '5001', rate: 0.0, threshold_uvt: 0 },
+    { year: 2025, concept: '5002', rate: 0.11 },
+    { year: 2025, concept: '5003', rate: 0.11 },
+    { year: 2025, concept: '5004', rate: 0.04, threshold_uvt: 4 },
+    { year: 2025, concept: '5005', rate: 0.035, threshold_uvt: 27 },
+    { year: 2025, concept: '5006', rate: 0.025, threshold_uvt: 27 },
+    { year: 2025, concept: '5007', rate: 0.11 },
+
     // --- AÑO 2024 ---
-    { year: 2024, concept: '5001', rate: 0.0, threshold_uvt: 0 }, // Laboral (progresivo, simplificado aquí)
-    { year: 2024, concept: '5002', rate: 0.11 }, // Honorarios PJ
-    { year: 2024, concept: '5003', rate: 0.11 }, // Comisiones
-    { year: 2024, concept: '5004', rate: 0.04, threshold_uvt: 4 }, // Servicios
-    { year: 2024, concept: '5005', rate: 0.035, threshold_uvt: 27 }, // Arrendamientos
-    { year: 2024, concept: '5006', rate: 0.025, threshold_uvt: 27 }, // Compras
-    { year: 2024, concept: '5007', rate: 0.11 }, // Seguros
+    { year: 2024, concept: '5001', rate: 0.0, threshold_uvt: 0 },
+    { year: 2024, concept: '5002', rate: 0.11 },
+    { year: 2024, concept: '5003', rate: 0.11 },
+    { year: 2024, concept: '5004', rate: 0.04, threshold_uvt: 4 },
+    { year: 2024, concept: '5005', rate: 0.035, threshold_uvt: 27 },
+    { year: 2024, concept: '5006', rate: 0.025, threshold_uvt: 27 },
+    { year: 2024, concept: '5007', rate: 0.11 },
 
     // --- AÑO 2023 ---
     { year: 2023, concept: '5001', rate: 0.0 },
