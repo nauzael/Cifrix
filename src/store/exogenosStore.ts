@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { db, Exogeno, MapeoInconsistencia } from '@/lib/db';
 import { exogenosService } from '@/lib/exogenos';
+import { syncExogenos } from '@/lib/sync';
 import { toast } from '@/store/toastStore';
 
 interface ExogenosState {
@@ -23,6 +24,7 @@ interface ExogenosState {
     eliminarReporte: (id: string) => Promise<void>;
     generarDesdeContabilidad: (organizacionId: string, año: number) => Promise<void>;
     limpiarTodo: (organizacionId: string) => Promise<void>;
+    sincronizarConNube: (organizacionId: string) => Promise<void>;
     limpiarEstado: () => void;
 }
 
@@ -213,6 +215,17 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
             console.error('Error al limpiar exógenos:', error);
             set({ loading: false });
             toast.error('Error al limpiar los datos');
+        }
+    },
+
+    sincronizarConNube: async (organizacionId: string) => {
+        set({ loading: true });
+        try {
+            await syncExogenos(organizacionId);
+            set({ loading: false });
+        } catch (error) {
+            console.error('Error sync exogenos:', error);
+            set({ loading: false });
         }
     },
 

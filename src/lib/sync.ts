@@ -23,10 +23,15 @@ export const TABLES_TO_SYNC = [
   'ingresos_renta',
   'deducciones_renta',
   'activos_pasivos_renta',
-  'exogenos',
-  'mapeo_inconsistencias',
+  // 'exogenos', // Sincronización manual
+  // 'mapeo_inconsistencias', // Sincronización manual
   'fiscal_years',
   'financial_notes'
+];
+
+export const EXOGENOS_TABLES = [
+  'exogenos',
+  'mapeo_inconsistencias'
 ];
 
 // Tablas que NO tienen índice organization_id en Dexie (evita SchemaError)
@@ -37,7 +42,7 @@ const TABLES_WITHOUT_ORG_INDEX = [
   'ingresos_renta',
   'deducciones_renta',
   'activos_pasivos_renta',
-  'mapeo_inconsistencias'
+  'mapeo_inconsistencias' // Mantenemos para referencia, aunque se sincronice manual
 ];
 
 /**
@@ -145,13 +150,13 @@ function mapTableSchema(tableName: string, data: any, toRemote: boolean) {
 /**
  * Sincronización en modo HÍBRIDO/OFFLINE: Descarga datos de Supabase a caché local
  */
-async function syncFromSupabaseToCache(organizationId?: string) {
+async function syncFromSupabaseToCache(organizationId?: string, tablesToSync: string[] = TABLES_TO_SYNC) {
   if (!APP_CONFIG.USE_LOCAL_CACHE && APP_CONFIG.DB_MODE !== 'offline') return;
 
   dbLog('Syncing FROM Supabase TO local cache (PARALLEL)...');
 
   // Procesar todas las tablas en paralelo para máxima velocidad
-  const syncPromises = TABLES_TO_SYNC.map(async (tableName) => {
+  const syncPromises = tablesToSync.map(async (tableName) => {
     try {
       let query = (supabase as any).from(tableName as any).select('*');
 
@@ -258,7 +263,7 @@ async function syncFromSupabaseToCache(organizationId?: string) {
 /**
  * Sincronización en modo OFFLINE: Sube datos pendientes a Supabase
  */
-async function syncFromCacheToSupabase() {
+async function syncFromCacheToSupabase(tablesToSync: string[] = TABLES_TO_SYNC) {
   dbLog('Syncing FROM local cache TO Supabase (BATCHED)...');
 
   // 1. ELIMINACIONES MASIVAS
@@ -280,7 +285,7 @@ async function syncFromCacheToSupabase() {
         if (d.id) deletionsMap[d.table_name].localIds.push(d.id);
       });
 
-      const tablesInReverse = [...TABLES_TO_SYNC].reverse();
+      const tablesInReverse = [...tablesToSync].reverse();
       for (const table of tablesInReverse) {
         if (deletionsMap[table]) {
           const { remoteIds, localIds } = deletionsMap[table];
@@ -302,7 +307,7 @@ async function syncFromCacheToSupabase() {
   }
 
   // 2. SUBIDAS MASIVAS
-  for (const tableName of TABLES_TO_SYNC) {
+  for (const tableName of tablesToSync) {
     try {
       const pendingItems = await (db as any)[tableName]
         .where('sync_status')
@@ -453,4 +458,30 @@ if (APP_CONFIG.DB_MODE !== 'production') {
   });
 
   dbLog(`Smart Sync: Enabled (mode: ${APP_CONFIG.DB_MODE}, interval: ${interval / 1000}s)`);
+}
+
+// Función manual para sincronizar exógenos
+export async function syncExogenos(organizationId?: string) {
+  if (APP_CONFIG.DB_MODE === 'production' || !navigator.onLine || syncInProgress) return;
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl || supabaseUrl.includes('placeholder')) return;
+
+  syncInProgress = true;
+  try {
+    console.log('[Sync] Iniciando sincronización manual de EXÓGENOS...');
+    // 1. Enviar cambios locales (solo exógenos)
+    await syncFromCacheToSupabase(EXOGENOS_TABLES);
+
+    // 2. Descargar datos de la nube (solo exógenos)
+    await syncFromSupabaseToCache(organizationId, EXOGENOS_TABLES);
+
+    console.log('[Sync] Sincronización manual de EXÓGENOS completada');
+    toast.success('Datos de exógenos sincronizados con la nube');
+  } catch (error) {
+    console.error('Error in manual sync exogenos:', error);
+    toast.error('Error al sincronizar exógenos');
+  } finally {
+    syncInProgress = false;
+  }
 }

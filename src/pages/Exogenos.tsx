@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useExogenosStore } from '@/store/exogenosStore';
-import { Upload, AlertCircle, FileText, CheckCircle, Search, Filter, Trash2, Calculator } from 'lucide-react';
+import { Upload, AlertCircle, FileText, CheckCircle, Search, Filter, Trash2, Calculator, RefreshCw } from 'lucide-react';
 import { toast } from '@/store/toastStore';
 import { ComparisonCharts } from '@/components/exogenos/ComparisonCharts';
 
@@ -23,7 +23,8 @@ export default function Exogenos() {
         resolverInconsistencia,
         eliminarReporte,
         generarDesdeContabilidad,
-        limpiarTodo
+        limpiarTodo,
+        sincronizarConNube
     } = useExogenosStore();
 
     const [filter, setFilter] = useState('');
@@ -97,6 +98,18 @@ export default function Exogenos() {
                         Importar XML/CSV
                         <input type="file" className="hidden" accept=".xml,.csv" onChange={handleFileUpload} />
                     </label>
+                    <button
+                        onClick={async () => {
+                            if (profile?.organizationId) {
+                                await sincronizarConNube(profile.organizationId);
+                            }
+                        }}
+                        disabled={loading}
+                        className="inline-flex items-center px-4 py-2 bg-slate-800 text-white hover:bg-slate-900 rounded-xl transition-all font-bold text-sm shadow-md"
+                    >
+                        <RefreshCw className="size-4 mr-2" />
+                        Sincronizar
+                    </button>
                     <button
                         onClick={() => validarTodo()}
                         disabled={loading || reportes.length === 0}
