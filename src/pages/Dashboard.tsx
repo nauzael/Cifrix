@@ -380,7 +380,8 @@ export function Dashboard() {
       if (profile?.role === 'SUPER_ADMIN') return true;
 
       // Core modules that should always be visible
-      if (action.id === 'settings' || action.id === 'invoicing' || action.id === 'accounting') return true;
+      // No more force-allowing these, as they are now configurable
+      // if (action.id === 'settings' || action.id === 'invoicing' || action.id === 'accounting') return true;
 
       // User Permission Check
       const userModules = profile?.allowedModules;

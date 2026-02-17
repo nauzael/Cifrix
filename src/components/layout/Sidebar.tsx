@@ -125,7 +125,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         if (profile?.role === 'SUPER_ADMIN') return true;
 
         // Core modules that should always be visible
-        if (item.id === 'dashboard' || item.id === 'settings') return true;
+        if (item.id === 'dashboard') return true;
 
         const userModules = profile?.allowedModules;
         if (userModules && userModules[item.id] === false) return false;

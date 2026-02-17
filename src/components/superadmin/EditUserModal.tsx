@@ -29,6 +29,7 @@ const AVAILABLE_MODULES = [
   { id: 'renta', label: 'Renta' },
   { id: 'exogenos', label: 'Exógenos' },
   { id: 'financial_statements', label: 'E. Financieros' },
+  { id: 'settings', label: 'Configuración' },
 ];
 
 export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModalProps) {
@@ -45,7 +46,8 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
     reports: true,
     renta: true,
     exogenos: true,
-    financial_statements: true
+    financial_statements: true,
+    settings: true
   });
   const [organizations, setOrganizations] = useState<any[]>([]);
 
@@ -98,7 +100,8 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
             reports: true,
             renta: true,
             exogenos: true,
-            financial_statements: true
+            financial_statements: true,
+            settings: true
           });
         })();
       }
@@ -138,6 +141,8 @@ export function EditUserModal({ isOpen, onClose, onSuccess, user }: EditUserModa
         for (const [moduleName, isEnabled] of Object.entries(selectedModules)) {
           if (isEnabled) {
             modulePermissions[moduleName] = { read: true, write: true, delete: true };
+          } else {
+            modulePermissions[moduleName] = { read: false, write: false, delete: false };
           }
         }
 
