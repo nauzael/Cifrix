@@ -29,8 +29,10 @@ import { FinancialStatementsWizard } from './components/accounting/FinancialStat
 
 import { ToastContainer } from './components/ui/Toast';
 import { GlobalConfirmModal } from './components/ui/GlobalConfirmModal';
+import { useTheme } from './hooks/useTheme';
 
 function App() {
+  useTheme();
   return (
     <BrowserRouter>
       <ToastContainer />

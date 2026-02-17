@@ -1,42 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-
-type Theme = 'light' | 'dark';
+import { useEffect } from 'react';
+import { useThemeStore } from '../store/themeStore';
 
 export function useTheme() {
-  const location = useLocation();
-  const isSuperAdmin = location.pathname.startsWith('/super-admin');
-
-  const [theme, setTheme] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
-      return savedTheme;
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  const { theme, toggleTheme, setTheme } = useThemeStore();
 
   useEffect(() => {
-    // Determine the effective theme based on route
-    const effectiveTheme = isSuperAdmin ? theme : 'light';
-    
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(effectiveTheme);
-    
-    // Only save preference if we are in super admin context (where choice is allowed)
-    // Or we can save it always, but it only takes effect in superadmin
-    if (isSuperAdmin) {
-      localStorage.setItem('theme', theme);
-    }
-  }, [theme, isSuperAdmin]);
-
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+  }, [theme]);
 
   return {
-    theme: isSuperAdmin ? theme : 'light',
+    theme,
     toggleTheme,
     setTheme,
-    isDark: isSuperAdmin && theme === 'dark'
+    isDark: theme === 'dark'
   };
-} 
+}
