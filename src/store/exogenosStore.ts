@@ -263,22 +263,26 @@ export const useExogenosStore = create<ExogenosState>((set, get) => ({
         if (!organizacionId) return;
         set({ loading: true });
         try {
-            // Obtener todos los IDs de reportes e inconsistencias para esta organización
+            // Obtener todos los IDs de reportes, inconsistencias y terceros para esta organización
             const reportes = await db.exogenos.where('organization_id').equals(organizacionId).toArray();
             const reportesIds = reportes.map(r => r.id);
 
             const inconsistencias = await db.mapeo_inconsistencias.where('organization_id').equals(organizacionId).toArray();
             const incsIds = inconsistencias.map(i => i.id);
 
+            const terceros = await db.third_parties.where('organization_id').equals(organizacionId).toArray();
+            const tercerosIds = terceros.map(t => t.id);
+
             // Borrado físico local
             await db.exogenos.bulkDelete(reportesIds);
             await db.mapeo_inconsistencias.bulkDelete(incsIds);
+            await db.third_parties.bulkDelete(tercerosIds);
 
             // Sincronizar inmediatamente para que desaparezcan de Supabase
             // El hook 'deleting' de la DB habrá registrado estos IDs en deleted_records
             await get().sincronizarConNube(organizacionId);
 
-            set({ reportes: [], inconsistencias: [], loading: false });
+            set({ reportes: [], inconsistencias: [], thirdParties: [], loading: false });
             toast.success('Información eliminada y sincronizada correctamente');
         } catch (error) {
             console.error('Error al limpiar exógenos:', error);

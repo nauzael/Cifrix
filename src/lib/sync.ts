@@ -23,8 +23,9 @@ export const TABLES_TO_SYNC = [
   'ingresos_renta',
   'deducciones_renta',
   'activos_pasivos_renta',
-  // 'exogenos', // Sincronización manual
-  // 'mapeo_inconsistencias', // Sincronización manual
+  'exogenos',
+  'mapeo_inconsistencias',
+  'third_parties',
   'fiscal_years',
   'financial_notes'
 ];
