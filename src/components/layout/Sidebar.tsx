@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useAuthStore } from '@/store/authStore';
-import { db } from '@/lib/db';
+import { useAuthStore } from '../../store/authStore';
+import { db } from '../../lib/db';
 import {
     LayoutDashboard,
     Users,
@@ -18,7 +18,7 @@ import {
     FileText,
     X
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 interface SidebarProps {
     isOpen: boolean;
