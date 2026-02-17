@@ -492,15 +492,15 @@ ${equityRows}
     <div className="space-y-4 pb-6">
       {isGenerating && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center">
-          <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md" />
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300 border border-slate-200 dark:border-slate-800 relative z-10">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md" />
+          <div className="bg-card p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300 border border-border relative z-10">
             <div className="relative">
-              <div className="size-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
-              <Loader2 className="size-8 text-blue-600 absolute inset-0 m-auto animate-pulse" />
+              <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+              <Loader2 className="size-8 text-primary absolute inset-0 m-auto animate-pulse" />
             </div>
             <div className="text-center">
-              <p className="font-black text-slate-900 dark:text-white text-lg">Generando Reporte</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{isGenerating}</p>
+              <p className="font-black text-foreground text-lg">Generando Reporte</p>
+              <p className="text-sm text-muted-foreground mt-1">{isGenerating}</p>
             </div>
           </div>
         </div>,
@@ -510,13 +510,13 @@ ${equityRows}
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">Centro de Reportes</h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Análisis financiero y exportación de datos.</p>
+          <h2 className="text-xl sm:text-2xl font-black text-foreground mb-1 tracking-tight">Centro de Reportes</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">Análisis financiero y exportación de datos.</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => generateReport('Consolidado Total')}
-            className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-tighter"
+            className="w-full sm:w-auto bg-primary text-primary-foreground px-6 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-tighter"
           >
             <Download className="size-5" />
             Exportar Consolidado
@@ -532,10 +532,10 @@ ${equityRows}
           { label: 'Margen Neto', value: stats.netMargin, icon: Banknote, color: 'blue', detail: `${stats.efficiency}% eficiencia` },
           { label: 'Base de Datos', value: 'Local', icon: History, color: 'slate', detail: 'Sincronizada' },
         ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+          <div key={i} className="bg-card p-4 rounded-xl border border-border shadow-sm relative overflow-hidden group">
             <div className={`absolute -right-4 -top-4 size-24 bg-${stat.color}-600/5 rounded-full group-hover:scale-150 transition-transform duration-500`} />
-            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mb-3 relative z-10">{stat.label}</p>
-            <h3 className={`text-xl sm:text-2xl font-black ${stat.color === 'blue' ? 'text-blue-600' : 'text-slate-900 dark:text-white'} relative z-10 tracking-tight`}>
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-black uppercase tracking-widest mb-3 relative z-10">{stat.label}</p>
+            <h3 className={`text-xl sm:text-2xl font-black ${stat.color === 'blue' ? 'text-primary' : 'text-foreground'} relative z-10 tracking-tight`}>
               {typeof stat.value === 'number' ? `$ ${formatCurrency(stat.value)}` : stat.value}
             </h3>
             <div className={`mt-3 flex items-center gap-1.5 font-bold text-[10px] sm:text-xs relative z-10 ${stat.color === 'emerald' ? 'text-emerald-600' :
@@ -559,27 +559,27 @@ ${equityRows}
           { id: 'budget', name: 'Ejecución Presupuestaria', icon: ClipboardCheck, color: 'indigo', desc: 'Comparativa entre proyectado y ejecutado.' },
           { id: 'auxiliary', name: 'Libro Auxiliar', icon: Table, color: 'slate', desc: 'Movimientos cronológicos de una cuenta específica.' },
         ].map((report) => (
-          <div key={report.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:shadow-blue-600/5 hover:border-blue-600/30 transition-all flex flex-col group">
+          <div key={report.id} className="bg-card p-4 rounded-xl border border-border shadow-sm hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30 transition-all flex flex-col group">
             <div className="flex items-start justify-between mb-4">
               <div className={`size-12 bg-${report.color}-600/10 text-${report.color}-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <report.icon className="size-6" />
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/50 px-3 py-1 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="bg-muted px-3 py-1 rounded-full text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                 PDF / Imprimir
               </div>
             </div>
 
-            <h4 className="text-lg font-black mb-2 text-slate-900 dark:text-white tracking-tight">{report.name}</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 flex-1 leading-relaxed">{report.desc}</p>
+            <h4 className="text-lg font-black mb-2 text-foreground tracking-tight">{report.name}</h4>
+            <p className="text-xs text-muted-foreground mb-6 flex-1 leading-relaxed">{report.desc}</p>
 
             <div className="space-y-4">
               {report.id === 'auxiliary' && (
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Seleccionar Cuenta</label>
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">Seleccionar Cuenta</label>
                   <select
                     value={selectedAuxAccId}
                     onChange={(e) => setSelectedAuxAccId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800/50 border-0 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 px-4 py-3 focus:ring-2 focus:ring-blue-600/20 transition-all appearance-none"
+                    className="w-full bg-muted border-0 rounded-xl text-sm font-bold text-foreground px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all appearance-none"
                   >
                     <option value="">Buscar cuenta contable...</option>
                     {(accounts || [])
@@ -597,13 +597,13 @@ ${equityRows}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => previewReport(report.name, true)}
-                  className="bg-blue-600 text-white py-3.5 rounded-xl font-black text-xs transition-all hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 active:scale-95 uppercase tracking-tighter"
+                  className="bg-primary text-primary-foreground py-3.5 rounded-xl font-black text-xs transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-95 uppercase tracking-tighter"
                 >
                   Generar
                 </button>
                 <button
                   onClick={() => previewReport(report.name, false)}
-                  className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white py-3.5 rounded-xl font-black text-xs transition-all hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 uppercase tracking-tighter"
+                  className="bg-muted text-foreground py-3.5 rounded-xl font-black text-xs transition-all hover:bg-accent active:scale-95 uppercase tracking-tighter"
                 >
                   Vista Previa
                 </button>

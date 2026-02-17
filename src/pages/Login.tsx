@@ -258,8 +258,8 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800">
+    <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-card p-8 rounded-3xl shadow-xl shadow-primary/5 border border-border">
 
         {/* Indicador de conexión */}
         {!isOnline && (
@@ -281,13 +281,13 @@ export const Login: React.FC = () => {
         )}
 
         <div className="text-center">
-          <div className="mx-auto size-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-600/20">
+          <div className="mx-auto size-16 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground mb-6 shadow-lg shadow-primary/20">
             <ShieldCheck size={32} />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-3xl font-black text-foreground tracking-tight">
             Cifrix
           </h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Inicia sesión en tu cuenta
           </p>
         </div>
@@ -295,7 +295,7 @@ export const Login: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">
+              <label className="block text-xs font-black text-muted-foreground uppercase tracking-widest mb-1.5">
                 Correo Electrónico
               </label>
               <input
@@ -303,7 +303,7 @@ export const Login: React.FC = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all dark:text-white"
+                className="w-full px-4 py-3 bg-muted/50 border-none rounded-xl focus:ring-4 focus:ring-primary/10 outline-none transition-all text-foreground"
                 placeholder="ejemplo@correo.com"
               />
               {errors.email && (
@@ -311,7 +311,7 @@ export const Login: React.FC = () => {
               )}
             </div>
             <div>
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5">
+              <label className="block text-xs font-black text-muted-foreground uppercase tracking-widest mb-1.5">
                 Contraseña
               </label>
               <input
@@ -319,7 +319,7 @@ export const Login: React.FC = () => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border-none rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all dark:text-white"
+                className="w-full px-4 py-3 bg-muted/50 border-none rounded-xl focus:ring-4 focus:ring-primary/10 outline-none transition-all text-foreground"
                 placeholder="••••••••"
               />
               {errors.password && (
@@ -335,8 +335,8 @@ export const Login: React.FC = () => {
               <Link
                 to="/forgot-password"
                 className={`font-bold transition-colors ${isOnline
-                  ? 'text-blue-600 hover:text-blue-700'
-                  : 'text-slate-400 cursor-not-allowed'
+                  ? 'text-primary hover:text-primary/80'
+                  : 'text-muted-foreground cursor-not-allowed'
                   }`}
                 onClick={(e) => !isOnline && e.preventDefault()}
               >
@@ -355,8 +355,8 @@ export const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`group relative w-full flex justify-center py-4 px-4 text-white text-sm font-black rounded-xl focus:outline-none focus:ring-4 transition-all shadow-lg disabled:opacity-50 ${isOnline
-                ? 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500/20 shadow-blue-600/25'
+              className={`group relative w-full flex justify-center py-4 px-4 text-primary-foreground text-sm font-black rounded-xl focus:outline-none focus:ring-4 transition-all shadow-lg disabled:opacity-50 ${isOnline
+                ? 'bg-primary hover:bg-primary/90 focus:ring-primary/20 shadow-primary/25'
                 : 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-500/20 shadow-orange-600/25'
                 }`}
             >

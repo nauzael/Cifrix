@@ -12,15 +12,15 @@ const icons: Record<ToastType, React.ElementType> = {
 
 const styles: Record<ToastType, string> = {
     success: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shadow-emerald-500/10',
-    error: 'bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400 shadow-rose-500/10',
-    info: 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400 shadow-blue-500/10',
+    error: 'bg-destructive/10 border-destructive/20 text-destructive shadow-destructive/10',
+    info: 'bg-primary/10 border-primary/20 text-primary shadow-primary/10',
     warning: 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400 shadow-amber-500/10',
 };
 
 const iconColors: Record<ToastType, string> = {
     success: 'text-emerald-500',
-    error: 'text-rose-500',
-    info: 'text-blue-500',
+    error: 'text-destructive',
+    info: 'text-primary',
     warning: 'text-amber-500',
 };
 
@@ -52,19 +52,19 @@ export function ToastContainer() {
                                 styles[toast.type].split(' ')[0]
                             )} />
 
-                            <div className={cn("p-2 rounded-xl bg-white/50 dark:bg-black/20 shrink-0 shadow-sm", iconColors[toast.type])}>
+                            <div className={cn("p-2 rounded-xl bg-card shrink-0 shadow-sm", iconColors[toast.type])}>
                                 <Icon size={20} />
                             </div>
 
                             <div className="flex-1 min-w-0 py-1">
-                                <p className="text-sm font-bold leading-tight tracking-tight">
+                                <p className="text-sm font-bold leading-tight tracking-tight text-foreground">
                                     {toast.message}
                                 </p>
                             </div>
 
                             <button
                                 onClick={() => removeToast(toast.id)}
-                                className="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0 opacity-50 hover:opacity-100"
+                                className="p-1 rounded-lg hover:bg-accent transition-colors shrink-0 opacity-50 hover:opacity-100"
                             >
                                 <X size={16} />
                             </button>

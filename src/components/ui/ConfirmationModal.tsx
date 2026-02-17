@@ -39,9 +39,9 @@ export function ConfirmationModal({
     };
 
     const buttonColors = {
-        danger: 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/25',
+        danger: 'bg-destructive hover:bg-destructive/90 shadow-destructive/25',
         warning: 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/25',
-        info: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/25',
+        info: 'bg-primary hover:bg-primary/90 shadow-primary/25',
     };
 
     const Icon = icons[type];
@@ -55,7 +55,7 @@ export function ConfirmationModal({
             maxWidth="sm"
         >
             <div className="space-y-6">
-                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed">
                     {message}
                 </p>
 
@@ -66,16 +66,16 @@ export function ConfirmationModal({
                             placeholder={inputPlaceholder}
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-600/20 transition-all placeholder:text-slate-400"
+                            className="w-full px-4 py-3 bg-muted/50 border-none rounded-xl text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
                             autoFocus
                         />
                     </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+                        className="flex-1 px-6 py-3 bg-muted text-muted-foreground rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-accent hover:text-accent-foreground transition-all active:scale-95"
                     >
                         {cancelText}
                     </button>
@@ -85,7 +85,7 @@ export function ConfirmationModal({
                             onClose();
                         }}
                         className={cn(
-                            "flex-1 px-6 py-3 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95",
+                            "flex-1 px-6 py-3 text-primary-foreground rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95",
                             buttonColors[type]
                         )}
                         disabled={inputType && !inputValue}

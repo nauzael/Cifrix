@@ -440,18 +440,18 @@ export function Dashboard() {
       {/* Greeting & Date Picker */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-foreground mb-1 tracking-tight">
             {getGreeting()}, {user?.user_metadata?.full_name?.split(' ')[0] || 'Tesorero'} 👋
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Resumen financiero al <span className="text-slate-900 dark:text-slate-200 font-bold underline decoration-blue-500/30 decoration-4 underline-offset-4">{new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Resumen financiero al <span className="text-foreground font-bold underline decoration-primary/30 decoration-4 underline-offset-4">{new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </p>
         </div>
 
-        <div className="flex items-center self-start sm:self-auto gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-xl shadow-sm text-slate-700 dark:text-slate-200">
+        <div className="flex items-center self-start sm:self-auto gap-2 bg-card border border-border p-1.5 rounded-xl shadow-sm text-foreground">
           <button
             onClick={() => changeMonth(-1)}
-            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
           >
             <ChevronLeft className="size-5" />
           </button>
@@ -460,7 +460,7 @@ export function Dashboard() {
           </span>
           <button
             onClick={() => changeMonth(1)}
-            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
           >
             <ChevronRight className="size-5" />
           </button>
@@ -476,22 +476,22 @@ export function Dashboard() {
             </div>
             <span className="text-xs font-black text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full border border-green-100 dark:border-green-900/50">+{stats.incomeTrend}%</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{isChurch ? 'Diezmos y Ofrendas' : 'Ingresos'}</p>
-          <h3 className="text-xl lg:text-2xl font-black mt-2 text-slate-900 dark:text-white tabular-nums">$ {formatCurrency(stats.income)}</h3>
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{isChurch ? 'Diezmos y Ofrendas' : 'Ingresos'}</p>
+          <h3 className="text-xl lg:text-2xl font-black mt-2 text-foreground tabular-nums">$ {formatCurrency(stats.income)}</h3>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group">
+        <div className="bg-card p-4 rounded-xl border border-border shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-center justify-between mb-3">
             <div className="size-10 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <TrendingDown className="size-5" />
             </div>
             <span className="text-xs font-black text-red-600 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-full border border-red-100 dark:border-red-900/50">{stats.expenseTrend}%</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{isChurch ? 'Gastos Ministeriales' : 'Egresos'}</p>
-          <h3 className="text-xl lg:text-2xl font-black mt-2 text-slate-900 dark:text-white tabular-nums">$ {formatCurrency(stats.expense)}</h3>
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{isChurch ? 'Gastos Ministeriales' : 'Egresos'}</p>
+          <h3 className="text-xl lg:text-2xl font-black mt-2 text-foreground tabular-nums">$ {formatCurrency(stats.expense)}</h3>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border-2 border-blue-500 dark:border-blue-600 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 transition-all group relative overflow-hidden">
+        <div className="bg-card p-4 rounded-xl border-2 border-primary/50 shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/20 transition-all group relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 -mr-8 -mt-8 rounded-full blur-2xl"></div>
           <div className="flex items-center justify-between mb-3 relative z-10">
             <div className="size-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -499,8 +499,8 @@ export function Dashboard() {
             </div>
             <span className="text-xs font-black text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-full border border-blue-100 dark:border-blue-900/50">Actualizado</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider relative z-10">{isChurch ? 'Tesorería Neta' : 'Balance Neto'}</p>
-          <h3 className="text-xl lg:text-2xl font-black mt-2 text-blue-600 tabular-nums relative z-10">$ {formatCurrency(stats.balance)}</h3>
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider relative z-10">{isChurch ? 'Tesorería Neta' : 'Balance Neto'}</p>
+          <h3 className="text-xl lg:text-2xl font-black mt-2 text-primary tabular-nums relative z-10">$ {formatCurrency(stats.balance)}</h3>
         </div>
 
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group">
@@ -510,8 +510,8 @@ export function Dashboard() {
             </div>
             <span className="text-xs font-black text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-full border border-amber-100 dark:border-amber-900/50">Pendientes</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Por Cobrar/Pagar</p>
-          <h3 className="text-xl lg:text-2xl font-black mt-2 text-slate-900 dark:text-white tabular-nums">
+          <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Por Cobrar/Pagar</p>
+          <h3 className="text-xl lg:text-2xl font-black mt-2 text-foreground tabular-nums">
             $ {formatCurrency(stats.ar - stats.ap)}
           </h3>
         </div>
@@ -550,10 +550,10 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Chart Area */}
         <div className="lg:col-span-8 space-y-5">
-          <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="bg-card p-4 sm:p-5 rounded-xl border border-border shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div>
-                <h4 className="font-bold text-lg text-slate-900 dark:text-white">{isChurch ? 'Comportamiento de Diezmos' : 'Flujo de Efectivo'}</h4>
+                <h4 className="font-bold text-lg text-foreground">{isChurch ? 'Comportamiento de Diezmos' : 'Flujo de Efectivo'}</h4>
                 <p className="text-xs text-slate-500">{isChurch ? 'Tendencia de ofrendas y gastos mensuales' : 'Comparativa diaria de ingresos y egresos'}</p>
               </div>
               <div className="flex gap-4">
@@ -610,12 +610,12 @@ export function Dashboard() {
               <button
                 key={i}
                 onClick={() => navigate(action.path)}
-                className={`flex flex-col items-center justify-center p-3 lg:p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all group ${action.hover}`}
+                className={`flex flex-col items-center justify-center p-3 lg:p-4 bg-card border border-border rounded-xl transition-all group ${action.hover}`}
               >
                 <div className={`size-11 lg:size-12 ${action.bg} ${action.color} rounded-xl flex items-center justify-center mb-2 group-hover:scale-110 group-hover:rotate-3 transition-transform`}>
                   <action.icon className="size-5 lg:size-6" />
                 </div>
-                <span className="text-xs lg:text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-tight">{action.label}</span>
+                <span className="text-xs lg:text-sm font-black text-muted-foreground uppercase tracking-tight">{action.label}</span>
               </button>
             ))}
           </div>
@@ -623,9 +623,9 @@ export function Dashboard() {
 
         {/* Activity Sidebar */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm h-full flex flex-col hover:shadow-md transition-shadow">
+          <div className="bg-card p-5 rounded-xl border border-border shadow-sm h-full flex flex-col hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-5">
-              <h4 className="font-black text-lg text-slate-900 dark:text-white tracking-tight">Últimos Movimientos</h4>
+              <h4 className="font-black text-lg text-foreground tracking-tight">Últimos Movimientos</h4>
               <button
                 onClick={() => navigate('/accounting')}
                 className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg transition-colors"
@@ -644,13 +644,13 @@ export function Dashboard() {
                 </div>
               ) : (
                 recentTransactions.map((tx) => (
-                  <div key={tx.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
-                    <div className={`size-11 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform ${tx.type === 'ingreso' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-red-100 dark:bg-red-900/30 text-red-600'}`}>
+                  <div key={tx.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/50 transition-all group border border-transparent hover:border-border">
+                    <div className={`size-11 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform ${tx.type === 'ingreso' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' : 'bg-red-100 dark:bg-red-900/30 text-red-600'}`}>
                       {tx.type === 'ingreso' ? <TrendingUp className="size-5" /> : <TrendingDown className="size-5" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold truncate text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{tx.description}</p>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{formatDate(tx.date)}</p>
+                      <p className="text-sm font-bold truncate text-foreground group-hover:text-primary transition-colors">{tx.description}</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">{formatDate(tx.date)}</p>
                     </div>
                     <p className={`text-sm font-black tabular-nums ${tx.type === 'ingreso' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'ingreso' ? '+' : '-'}$ {formatCurrency(getTransactionAmount(tx.id))}
@@ -660,10 +660,10 @@ export function Dashboard() {
               )}
             </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-              <div className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/5 -mr-4 -mt-4 rounded-full blur-xl group-hover:bg-blue-500/10 transition-colors"></div>
-                <p className="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em]">Sincronización Local</p>
+            <div className="mt-8 pt-6 border-t border-border">
+              <div className="bg-gradient-to-br from-muted/50 to-card p-5 rounded-2xl border border-border relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 -mr-4 -mt-4 rounded-full blur-xl group-hover:bg-primary/10 transition-colors"></div>
+                <p className="text-[10px] font-black text-muted-foreground mb-4 uppercase tracking-[0.2em]">Sincronización Local</p>
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center gap-3">
                     <div className={`size-2.5 rounded-full shadow-[0_0_12px_rgba(34,197,94,0.4)] ${isSyncing ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`}></div>

@@ -67,7 +67,7 @@ export function Modal({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md transition-all duration-300 pointer-events-auto"
+                        className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all duration-300 pointer-events-auto"
                     />
 
                     {/* Modal Container */}
@@ -77,30 +77,30 @@ export function Modal({
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: 'spring', duration: 0.5, bounce: 0.3 }}
                         className={cn(
-                            "relative bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.7)] w-full border border-slate-200/50 dark:border-slate-800/50 flex flex-col max-h-full overflow-hidden",
+                            "relative bg-card rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] w-full border border-border flex flex-col max-h-full overflow-hidden",
                             maxWidthClasses[maxWidth],
                             className
                         )}
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Soft background glow */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-blue-500/30 to-transparent blur-xl" />
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-xl" />
 
                         {/* Header */}
-                        <div className="px-6 py-6 sm:px-10 border-b border-slate-100 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm shrink-0">
+                        <div className="px-6 py-6 sm:px-10 border-b border-border flex justify-between items-center bg-muted/30 backdrop-blur-sm shrink-0">
                             <div className="flex items-center gap-5">
                                 {Icon && (
-                                    <div className="p-3.5 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-xl shadow-blue-500/20 text-white shrink-0">
+                                    <div className="p-3.5 bg-primary rounded-2xl shadow-xl shadow-primary/20 text-primary-foreground shrink-0">
                                         <Icon size={24} className="drop-shadow-sm" />
                                     </div>
                                 )}
                                 <div className="min-w-0">
-                                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight truncate">
+                                    <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-tight truncate">
                                         {title}
                                     </h3>
                                     {subtitle && (
-                                        <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-2 uppercase tracking-widest leading-none">
-                                            <span className="size-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                                        <p className="text-[11px] font-bold text-muted-foreground mt-1 flex items-center gap-2 uppercase tracking-widest leading-none">
+                                            <span className="size-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                                             {subtitle}
                                         </p>
                                     )}
@@ -110,7 +110,7 @@ export function Modal({
                             {showCloseButton && (
                                 <button
                                     onClick={onClose}
-                                    className="p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all active:scale-90 shrink-0"
+                                    className="p-3 text-muted-foreground hover:text-foreground hover:bg-accent rounded-2xl transition-all active:scale-90 shrink-0"
                                 >
                                     <X size={24} />
                                 </button>

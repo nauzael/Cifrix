@@ -145,19 +145,19 @@ export function Settings() {
             <div className="p-2.5 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20">
               <Shield className="text-white" size={24} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
               Ajustes del Sistema
             </h3>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-muted-foreground">
             Gestiona la información de tu organización, perfil y preferencias de seguridad.
           </p>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border shadow-xl shadow-primary/5 overflow-hidden">
         {/* Tabs Navigation */}
-        <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-3 sm:px-5">
+        <div className="border-b border-border bg-muted/30 px-3 sm:px-5">
           <div className="flex gap-1 sm:gap-4 flex-wrap py-3">
             {tabs.map((tab) => (
               <button
@@ -166,14 +166,14 @@ export function Settings() {
                 className={cn(
                   "relative py-3 px-4 sm:px-2 text-xs sm:text-sm font-black uppercase tracking-widest transition-all flex items-center gap-3 whitespace-nowrap rounded-xl",
                   activeTab === tab.id
-                    ? "bg-white dark:bg-slate-900 text-blue-600 shadow-md ring-1 ring-slate-200 dark:ring-slate-700"
-                    : "text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-white/50 dark:hover:bg-slate-900/50"
+                    ? "bg-background text-primary shadow-md ring-1 ring-border"
+                    : "text-muted-foreground hover:text-primary hover:bg-background/50"
                 )}
               >
                 <tab.icon className={cn("size-4 sm:size-5 transition-transform duration-300", activeTab === tab.id && "scale-110")} />
                 {tab.label}
                 {activeTab === tab.id && (
-                  <div className="absolute -bottom-[17px] left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
+                  <div className="absolute -bottom-[17px] left-0 right-0 h-1 bg-primary rounded-t-full" />
                 )}
               </button>
             ))}
@@ -186,8 +186,8 @@ export function Settings() {
             <div>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <section className="space-y-5">
-                  <div className="flex items-center gap-4 text-slate-900 dark:text-white">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-xl text-blue-600">
+                  <div className="flex items-center gap-4 text-foreground">
+                    <div className="p-2 bg-primary/10 rounded-xl text-primary">
                       <Info size={20} />
                     </div>
                     <h3 className="text-xl font-black tracking-tight">Información de la Organización</h3>
@@ -195,10 +195,10 @@ export function Settings() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                     <div className="space-y-2 group">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Nombre Legal</label>
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 group-focus-within:text-primary transition-colors">Nombre Legal</label>
                       <input
                         {...register('name')}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none font-bold"
+                        className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all outline-none font-bold"
                         placeholder="Ej. Iglesia Central"
                       />
                       {errors.name && <p className="text-red-500 text-[10px] font-black mt-1 uppercase ml-1">{errors.name.message}</p>}
@@ -217,53 +217,53 @@ export function Settings() {
                     </div>
 
                     <div className="space-y-2 group">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">NIT / ID Fiscal</label>
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 group-focus-within:text-primary transition-colors">NIT / ID Fiscal</label>
                       <input
                         {...register('tax_id')}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none font-bold"
+                        className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all outline-none font-bold"
                         placeholder="000.000.000-0"
                       />
                       {errors.tax_id && <p className="text-red-500 text-[10px] font-black mt-1 uppercase ml-1">{errors.tax_id.message}</p>}
                     </div>
 
                     <div className="space-y-2 group">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Ubicación Física</label>
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 group-focus-within:text-primary transition-colors">Ubicación Física</label>
                       <input
                         {...register('address')}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none font-bold"
+                        className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all outline-none font-bold"
                         placeholder="Dirección completa"
                       />
                     </div>
 
                     <div className="space-y-2 group">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Teléfono</label>
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 group-focus-within:text-primary transition-colors">Teléfono</label>
                       <input
                         {...register('phone')}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none font-bold"
+                        className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all outline-none font-bold"
                         placeholder="+57 000 000 0000"
                       />
                     </div>
 
                     <div className="space-y-2 group">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-blue-600 transition-colors">Email Corporativo</label>
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 group-focus-within:text-primary transition-colors">Email Corporativo</label>
                       <input
                         {...register('email')}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500/50 transition-all outline-none font-bold"
+                        className="w-full px-4 py-2.5 bg-muted/50 text-foreground border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary/10 focus:border-primary/50 transition-all outline-none font-bold"
                         placeholder="contacto@organizacion.com"
                       />
                       {errors.email && <p className="text-red-500 text-[10px] font-black mt-1 uppercase ml-1">{errors.email.message}</p>}
                     </div>
 
-                    <div className="sm:col-span-2 space-y-4 group p-6 bg-slate-50/50 dark:bg-slate-800/50 rounded-[2rem] border border-slate-200 dark:border-slate-800">
+                    <div className="sm:col-span-2 space-y-4 group p-6 bg-muted/30 rounded-[2rem] border border-border">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-600/20">
+                        <div className="p-2 bg-primary rounded-xl text-primary-foreground shadow-lg shadow-primary/20">
                           <Globe size={18} />
                         </div>
-                        <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">Identidad Visual (Logo)</h4>
+                        <h4 className="text-sm font-black uppercase tracking-widest text-foreground">Identidad Visual (Logo)</h4>
                       </div>
 
                       <div className="flex flex-col sm:flex-row items-center gap-6">
-                        <div className="size-32 rounded-[2rem] bg-white dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center overflow-hidden shadow-inner group-hover:border-blue-400/50 transition-colors">
+                        <div className="size-32 rounded-[2rem] bg-card border-2 border-dashed border-border flex items-center justify-center overflow-hidden shadow-inner group-hover:border-primary/50 transition-colors">
                           {org?.settings?.logo_url ? (
                             <img src={org.settings.logo_url} className="w-full h-full object-contain p-2" alt="Logo" />
                           ) : (
@@ -319,7 +319,7 @@ export function Settings() {
                                   }
                                 }}
                               />
-                              <div className="px-6 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 hover:border-blue-500 hover:text-blue-600 transition-all text-center shadow-sm">
+                              <div className="px-6 py-2.5 bg-card border border-border rounded-xl text-[10px] font-black uppercase tracking-widest text-foreground hover:border-primary hover:text-primary transition-all text-center shadow-sm">
                                 Seleccionar Imagen
                               </div>
                             </label>
@@ -366,18 +366,18 @@ export function Settings() {
                   </div>
                 </section>
 
-                <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6 border-t border-border">
                   <button
                     type="button"
                     onClick={() => reset()}
-                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-black uppercase tracking-widest text-muted-foreground hover:bg-accent transition-all active:scale-95"
                   >
                     Descartar
                   </button>
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="group relative w-full sm:w-auto px-8 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 overflow-hidden"
+                    className="group relative w-full sm:w-auto px-8 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     {isSaving ? <Loader2 className="animate-spin size-5" /> : <Save className="size-5 group-hover:scale-110 transition-transform" />}

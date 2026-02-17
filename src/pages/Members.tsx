@@ -335,8 +335,8 @@ export function Members() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">Directorio</h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Gestión de membresía y contactos.</p>
+          <h2 className="text-xl sm:text-2xl font-black text-foreground mb-1 tracking-tight">Directorio</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">Gestión de membresía y contactos.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -367,16 +367,16 @@ export function Members() {
       </div>
 
       {/* Main Content Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         {/* Toolbar */}
-        <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+        <div className="p-3 sm:p-4 border-b border-border flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-muted/30">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
             <div className="relative flex-1 sm:max-w-md group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4 group-focus-within:text-blue-500 transition-colors" />
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none bg-white dark:bg-slate-900 dark:text-white transition-all"
+                className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-xl focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none bg-background text-foreground transition-all"
                 placeholder="Buscar por nombre, documento o email..."
               />
             </div>
@@ -417,7 +417,7 @@ export function Members() {
         <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+              <tr className="bg-muted/50 border-b border-border">
                 <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Miembro / Contacto</th>
                 <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Información Ministerial</th>
                 <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Estado</th>
@@ -456,23 +456,23 @@ export function Members() {
                 </tr>
               ) : (
                 members.map((member) => (
-                  <tr key={member.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
+                  <tr key={member.id} className="hover:bg-muted/50 transition-colors group">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="size-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-black uppercase shrink-0 shadow-sm text-sm">
                           {member.full_name.substring(0, 2)}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-black text-slate-900 dark:text-white truncate group-hover:text-blue-600 transition-colors uppercase tracking-tight">{member.full_name}</p>
+                          <p className="text-sm font-black text-foreground truncate group-hover:text-primary transition-colors uppercase tracking-tight">{member.full_name}</p>
                           <div className="flex flex-col gap-0.5 mt-0.5">
                             {member.email && (
-                              <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
-                                <Mail className="size-3 text-slate-400" /> {member.email}
+                              <p className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium">
+                                <Mail className="size-3 text-muted-foreground" /> {member.email}
                               </p>
                             )}
                             {member.phone && (
-                              <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
-                                <Phone className="size-3 text-slate-400" /> {member.phone}
+                              <p className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium">
+                                <Phone className="size-3 text-muted-foreground" /> {member.phone}
                               </p>
                             )}
                           </div>
@@ -484,7 +484,7 @@ export function Members() {
                         <div className="flex items-center gap-1 flex-wrap">
                           {member.ministry && member.ministry.length > 0 ? (
                             member.ministry.map((m, idx) => (
-                              <span key={idx} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-tighter">
+                              <span key={idx} className="px-2 py-0.5 bg-muted text-muted-foreground rounded-lg text-[10px] font-black uppercase tracking-tighter">
                                 {m}
                               </span>
                             ))
@@ -551,9 +551,9 @@ export function Members() {
       {/* Add/Edit Member Modal */}
       {isModalOpen && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md transition-opacity" onClick={() => setIsModalOpen(false)} />
-          <div className="relative bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-200 dark:border-slate-800">
-            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)} />
+          <div className="relative bg-card rounded-[32px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-border">
+            <div className="p-8 border-b border-border flex items-center justify-between bg-card">
               <div>
                 <h3 className="font-black text-2xl text-slate-900 dark:text-white tracking-tight uppercase">
                   {editingMember ? 'Editar Registro' : 'Nuevo Registro'}
@@ -598,7 +598,7 @@ export function Members() {
                         <input
                           {...register('full_name')}
                           autoFocus
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                           placeholder="Ej. Juan Pérez"
                         />
                         {errors.full_name && <p className="text-red-500 text-[11px] font-bold mt-1">{errors.full_name.message}</p>}
@@ -608,7 +608,7 @@ export function Members() {
                         <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Documento / ID</label>
                         <input
                           {...register('document_id')}
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                           placeholder="ID"
                         />
                       </div>
@@ -617,7 +617,7 @@ export function Members() {
                         <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Teléfono</label>
                         <input
                           {...register('phone')}
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                           placeholder="Móvil"
                         />
                       </div>
@@ -627,7 +627,7 @@ export function Members() {
                         <input
                           {...register('email')}
                           type="email"
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                           placeholder="correo@ejemplo.com"
                         />
                       </div>
@@ -637,7 +637,7 @@ export function Members() {
                         <input
                           {...register('birth_date')}
                           type="date"
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                         />
                       </div>
 
@@ -645,7 +645,7 @@ export function Members() {
                         <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Dirección</label>
                         <input
                           {...register('address')}
-                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none dark:text-white transition-all"
+                          className="w-full px-4 py-3 bg-muted/50 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none text-foreground transition-all"
                           placeholder="Dirección residencial"
                         />
                       </div>
@@ -742,7 +742,7 @@ export function Members() {
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-3.5 sm:py-3 text-sm font-black text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 order-1 sm:order-2 active:scale-95"
+                  className="px-8 py-3.5 sm:py-3 text-sm font-black text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2 order-1 sm:order-2 active:scale-95"
                 >
                   <Save size={18} />
                   {editingMember ? 'Actualizar' : 'Registrar'}

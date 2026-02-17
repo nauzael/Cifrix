@@ -235,8 +235,8 @@ export function Accounting() {
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-1 tracking-tight">Contabilidad</h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Gestión financiera y libros oficiales</p>
+          <h2 className="text-xl sm:text-2xl font-black text-foreground mb-1 tracking-tight">Contabilidad</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">Gestión financiera y libros oficiales</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -256,7 +256,7 @@ export function Accounting() {
             <CloudFog className="size-4" />
             <span className="hidden sm:inline">SINCRONIZAR</span>
           </button>
-          <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
+          <div className="flex items-center gap-1.5 bg-card p-1.5 rounded-xl border border-border shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
             {[
               { id: 'journal', label: 'Libro Diario', icon: BookOpen },
               { id: 'ledger', label: 'Mayor', icon: Library },
@@ -272,8 +272,8 @@ export function Accounting() {
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5",
                   activeTab === tab.id
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
               >
                 <tab.icon className="size-4" />
@@ -301,7 +301,7 @@ export function Accounting() {
           {/* Actions Bar */}
           <div className="flex flex-col gap-4">
             {/* Filters Panel */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end relative overflow-hidden">
+            <div className="bg-card p-4 rounded-xl border border-border shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 -mr-16 -mt-16 rounded-full blur-3xl"></div>
 
               <div className="lg:col-span-3 relative z-10">
@@ -311,7 +311,7 @@ export function Accounting() {
                   <input
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+                    className="w-full pl-9 pr-4 py-2.5 text-sm border border-border rounded-xl focus:ring-4 focus:ring-primary/10 outline-none bg-muted/50 text-foreground transition-all focus:border-primary/50"
                     placeholder="Descripción o referencia..."
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center pr-2">
@@ -326,7 +326,7 @@ export function Accounting() {
                   type="date"
                   value={dateRange.start}
                   onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:ring-4 focus:ring-primary/10 outline-none bg-muted/50 text-foreground transition-all focus:border-primary/50"
                 />
               </div>
 
@@ -336,7 +336,7 @@ export function Accounting() {
                   type="date"
                   value={dateRange.end}
                   onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:ring-4 focus:ring-primary/10 outline-none bg-muted/50 text-foreground transition-all focus:border-primary/50"
                 />
               </div>
 
@@ -345,7 +345,7 @@ export function Accounting() {
                 <select
                   value={selectedAccount}
                   onChange={(e) => setSelectedAccount(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:ring-4 focus:ring-primary/10 outline-none bg-muted/50 text-foreground transition-all focus:border-primary/50"
                 >
                   <option value="">Todas las cuentas</option>
                   {accounts
@@ -363,7 +363,7 @@ export function Accounting() {
                 <select
                   value={selectedProject}
                   onChange={(e) => setSelectedProject(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-blue-500/10 outline-none bg-slate-50 dark:bg-slate-950 dark:text-white transition-all focus:border-blue-500/50"
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:ring-4 focus:ring-primary/10 outline-none bg-muted/50 text-foreground transition-all focus:border-primary/50"
                 >
                   <option value="">General</option>
                   {projects?.map(p => (
@@ -378,7 +378,7 @@ export function Accounting() {
                     setEditingTransactionId(null);
                     setIsTransactionModalOpen(true);
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-black shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all h-[42px]"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-black shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-95 transition-all h-[42px]"
                 >
                   <Plus className="size-5" />
                   <span className="lg:hidden xl:inline uppercase tracking-tighter">Nuevo</span>
@@ -388,11 +388,11 @@ export function Accounting() {
           </div>
 
           {/* Journal Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
             <div className="overflow-x-auto scrollbar-hide">
               <table className="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                  <tr className="bg-muted/50 border-b border-border">
                     <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Fecha / Referencia</th>
                     <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Detalle del Asiento Contable</th>
                     <th className="px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">Débitos</th>
@@ -408,8 +408,8 @@ export function Accounting() {
                           <div className="size-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4 border border-dashed border-slate-200 dark:border-slate-700">
                             <History className="size-10 text-slate-300 dark:text-slate-600" />
                           </div>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">No se encontraron asientos</h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">Prueba ajustando los filtros o realiza tu primer registro contable hoy.</p>
+                          <h3 className="text-lg font-bold text-foreground">No se encontraron asientos</h3>
+                          <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">Prueba ajustando los filtros o realiza tu primer registro contable hoy.</p>
                         </div>
                       </td>
                     </tr>
@@ -419,14 +419,14 @@ export function Accounting() {
                     const totalCredit = entries.reduce((sum, e) => sum + e.credit, 0);
 
                     return (
-                      <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                      <tr key={tx.id} className="hover:bg-muted/50 transition-colors group">
                         <td className="px-4 sm:px-6 py-4 align-top w-32 sm:w-40">
                           <p className="text-xs sm:text-sm font-bold whitespace-nowrap">{formatDate(tx.date)}</p>
                           {tx.reference_no && <p className="text-[10px] sm:text-xs text-slate-500 mt-1 truncate max-w-[100px] sm:max-w-none">Ref: {tx.reference_no}</p>}
                           <p className="text-[9px] sm:text-[10px] text-slate-400 mt-2 truncate">{tx.id.substring(0, 8)}...</p>
                         </td>
                         <td className="px-4 sm:px-6 py-4 align-top min-w-[200px]">
-                          <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 mb-2 line-clamp-2">{tx.description}</p>
+                          <p className="text-xs sm:text-sm font-bold text-foreground mb-2 line-clamp-2">{tx.description}</p>
                           <div className="space-y-1">
                             {entries.map(entry => (
                               <div key={entry.id} className="flex justify-between text-[10px] sm:text-xs border-b border-slate-100 dark:border-slate-800 last:border-0 pb-1">
@@ -434,17 +434,17 @@ export function Accounting() {
                                   {getAccountInfo(entry.account_id)}
                                 </span>
                                 <div className="flex gap-2 sm:gap-4 whitespace-nowrap ml-2">
-                                  {entry.debit > 0 && <span className="text-slate-900 dark:text-slate-200 font-medium w-20 sm:w-24 text-right">D: {formatCurrency(entry.debit)}</span>}
-                                  {entry.credit > 0 && <span className="text-slate-900 dark:text-slate-200 font-medium w-20 sm:w-24 text-right">C: {formatCurrency(entry.credit)}</span>}
+                                  {entry.debit > 0 && <span className="text-foreground font-medium w-20 sm:w-24 text-right">D: {formatCurrency(entry.debit)}</span>}
+                                  {entry.credit > 0 && <span className="text-foreground font-medium w-20 sm:w-24 text-right">C: {formatCurrency(entry.credit)}</span>}
                                 </div>
                               </div>
                             ))}
                           </div>
                         </td>
-                        <td className="px-4 sm:px-6 py-4 text-right align-top font-mono text-xs sm:text-sm text-slate-900 dark:text-white whitespace-nowrap">
+                        <td className="px-4 sm:px-6 py-4 text-right align-top font-mono text-xs sm:text-sm text-foreground whitespace-nowrap">
                           $ {formatCurrency(totalDebit)}
                         </td>
-                        <td className="px-4 sm:px-6 py-4 text-right align-top font-mono text-xs sm:text-sm text-slate-900 dark:text-white whitespace-nowrap">
+                        <td className="px-4 sm:px-6 py-4 text-right align-top font-mono text-xs sm:text-sm text-foreground whitespace-nowrap">
                           $ {formatCurrency(totalCredit)}
                         </td>
                         <td className="px-4 sm:px-6 py-4 text-center align-top">
