@@ -12,7 +12,6 @@ import { useAuthStore } from '../../store/authStore';
 // Pasos del Wizard
 const STEPS = [
     { id: 'setup', title: 'Período', icon: Calendar },
-    { id: 'mapping', title: 'Mapeo Flujo', icon: Edit },
     { id: 'closing', title: 'Cierre Contable', icon: Lock },
     { id: 'reports', title: 'Ver Reportes', icon: FileText },
     { id: 'notes', title: 'Notas', icon: FileText },
@@ -82,7 +81,7 @@ export function FinancialStatementsWizard() {
                 });
             }
             toast.success('Configuración guardada');
-            setCurrentStep('mapping');
+            setCurrentStep('closing');
         } catch (error) {
             console.error(error);
             toast.error('Error al guardar configuración');
@@ -497,68 +496,6 @@ export function FinancialStatementsWizard() {
                         >
                             Verificar y Continuar
                         </button>
-                    </div>
-                );
-
-            case 'mapping':
-                return (
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">Mapeo de Flujo de Efectivo</h2>
-                            <button
-                                onClick={() => setCurrentStep('closing')}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2"
-                            >
-                                Continuar al Cierre <ArrowRight size={18} />
-                            </button>
-                        </div>
-
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="p-4 bg-yellow-50 border-b border-yellow-100 text-sm text-yellow-800 flex gap-2">
-                                <AlertTriangle size={18} />
-                                <p>
-                                    Clasifique sus cuentas de Activos, Pasivos y Patrimonio para el Estado de Flujos de Efectivo (Método Directo).
-                                </p>
-                            </div>
-
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
-                                        <tr>
-                                            <th className="px-6 py-3">Código</th>
-                                            <th className="px-6 py-3">Cuenta</th>
-                                            <th className="px-6 py-3">Tipo</th>
-                                            <th className="px-6 py-3 w-64">Categoría Flujo de Efectivo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {accountsForMapping?.filter(a => ['ACTIVO', 'PASIVO', 'PATRIMONIO'].includes(a.type)).map(acc => (
-                                            <tr key={acc.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 font-mono">{acc.code}</td>
-                                                <td className="px-6 py-4">{acc.name}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${acc.type === 'ACTIVO' ? 'bg-blue-100 text-blue-800' : acc.type === 'PASIVO' ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-800'}`}>
-                                                        {acc.type}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <select
-                                                        value={acc.cash_flow_category || ''}
-                                                        onChange={(e) => handleUpdateMapping(acc.id, e.target.value || null)}
-                                                        className="w-full p-1 border rounded"
-                                                    >
-                                                        <option value="">No clasificada (Ignorar)</option>
-                                                        <option value="OPERACION">Actividades de Operación</option>
-                                                        <option value="INVERSION">Actividades de Inversión</option>
-                                                        <option value="FINANCIACION">Actividades de Financiación</option>
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
                     </div>
                 );
 
