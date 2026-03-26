@@ -29,53 +29,78 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     const totalDebit = entries.reduce((sum, e) => sum + e.debit, 0);
     const totalCredit = entries.reduce((sum, e) => sum + e.credit, 0);
 
-    // IMPORTANTE: Para evitar descuadres con cuentas "contra" (ej. Dep. Acumulada que es un Activo pero naturaleza Crédito),
-    // debemos calcular el saldo base de toda la familia de cuentas de la misma forma para que si van en contra, queden negativas.
     const typeUpper = (accountType || '').toUpperCase();
-    if (typeUpper.includes('ACTIVO') || typeUpper.includes('EGRESO') || typeUpper.includes('GASTO') || typeUpper.includes('COSTO')) {
+    
+    // Naturaleza Débito: Activos, Gastos, Costos
+    if (
+      typeUpper.includes('ACTIVO') || 
+      typeUpper.includes('EGRESO') || 
+      typeUpper.includes('GASTO') || 
+      typeUpper.includes('COSTO')
+    ) {
       return totalDebit - totalCredit;
     }
+    // Naturaleza Crédito: Pasivos, Patrimonio, Ingresos
     return totalCredit - totalDebit;
   };
 
+  // Helper para normalizar y comparar tipos
+  const matchesType = (type: string, targets: string[]) => {
+    const t = (type || '').toUpperCase();
+    return targets.some(target => t.includes(target.toUpperCase()));
+  };
+
   // 1. Assets
-  const assets = accounts.filter(a => a.type === 'ACTIVO' || (a.type as string) === 'ACTIVOS').map(a => ({
+  const assets = accounts.filter(a => matchesType(a.type, ['ACTIVO'])).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
-  })).filter(a => Math.abs(a.balance) > 0);
+  })).filter(a => Math.abs(a.balance) > 0.001);
   const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
 
   // 2. Liabilities
-  const liabilities = accounts.filter(a => a.type === 'PASIVO' || (a.type as string) === 'PASIVOS').map(a => ({
+  const liabilities = accounts.filter(a => matchesType(a.type, ['PASIVO'])).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
-  })).filter(a => Math.abs(a.balance) > 0);
+  })).filter(a => Math.abs(a.balance) > 0.001);
   const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
 
   // 3. Equity
-  const equity = accounts.filter(a => a.type === 'PATRIMONIO' || (a.type as string) === 'PATRIMONIOS').map(a => ({
+  const equity = accounts.filter(a => matchesType(a.type, ['PATRIMONIO'])).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
-  })).filter(a => Math.abs(a.balance) > 0);
+  })).filter(a => Math.abs(a.balance) > 0.001);
   const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
 
   // 4. Income
-  const income = accounts.filter(a => a.type === 'INGRESO' || (a.type as string) === 'INGRESOS').map(a => ({
+  const income = accounts.filter(a => matchesType(a.type, ['INGRESO'])).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
-  })).filter(a => Math.abs(a.balance) > 0);
+  })).filter(a => Math.abs(a.balance) > 0.001);
   const totalIncome = income.reduce((sum, a) => sum + a.balance, 0);
 
-  // 5. Expenses
-  const expenses = accounts.filter(a => a.type === 'EGRESO' || (a.type as string) === 'EGRESOS' || (a.type as string).includes('COSTO') || (a.type as string).includes('GASTO')).map(a => ({
+  // 5. Expenses (Incluye Egresos, Gastos y Costos)
+  const expenses = accounts.filter(a => matchesType(a.type, ['EGRESO', 'GASTO', 'COSTO'])).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
-  })).filter(a => Math.abs(a.balance) > 0);
+  })).filter(a => Math.abs(a.balance) > 0.001);
   const totalExpenses = expenses.reduce((sum, a) => sum + a.balance, 0);
 
+  // 6. Cuentas No Clasificadas (Para diagnóstico)
+  const unclassifiedAccounts = accounts.filter(a => {
+    const hasBalance = journalEntries.some(e => e.account_id === a.id && (e.debit > 0 || e.credit > 0));
+    const isClassified = matchesType(a.type, ['ACTIVO', 'PASIVO', 'PATRIMONIO', 'INGRESO', 'EGRESO', 'GASTO', 'COSTO']);
+    return hasBalance && !isClassified;
+  }).map(a => ({
+    ...a,
+    balance: calculateBalance(a.id, a.type, a.nature)
+  }));
+
   const netResult = totalIncome - totalExpenses;
-  const accountingDifference = totalAssets - (totalLiabilities + totalEquity + netResult);
+  const totalEquityCalculated = totalEquity + netResult;
+  const totalLiabilitiesAndEquity = totalLiabilities + totalEquityCalculated;
+  const accountingDifference = totalAssets - totalLiabilitiesAndEquity;
   const isBalanced = Math.abs(accountingDifference) < 0.01;
+
   const today = new Date();
   const generatedAt = `${today.toLocaleDateString()} ${today.toLocaleTimeString()}`;
 
@@ -317,7 +342,37 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
         )}
       </div>
 
+      {/* Diagnóstico de Cuentas No Clasificadas */}
+      {unclassifiedAccounts.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 sm:p-6 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="size-10 bg-amber-500 text-white rounded-lg flex items-center justify-center shrink-0 shadow-lg">
+              <PieChart className="size-6" />
+            </div>
+            <div>
+              <h4 className="text-sm sm:text-base font-black text-amber-900 dark:text-amber-400 uppercase tracking-tight">
+                Cuentas No Clasificadas Detectadas
+              </h4>
+              <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-500/80 mb-4">
+                Se encontraron {unclassifiedAccounts.length} cuentas con movimientos que no están asignadas a un tipo válido (Activo, Pasivo, etc.). 
+                Esto causa que el reporte no las sume y aparezca descuadrado. Por favor, edita estas cuentas en el PUC:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {unclassifiedAccounts.map(acc => (
+                  <div key={acc.id} className="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50 shadow-sm">
+                    <span className="font-mono text-[10px] font-black text-amber-600 mr-2">{acc.code}</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{acc.name}</span>
+                    <span className="ml-3 text-xs font-black text-slate-900 dark:text-white">$ {formatCurrency(acc.balance)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {statementType === 'balance' ? (
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
           {/* Assets Column */}
           <div className="space-y-4">
