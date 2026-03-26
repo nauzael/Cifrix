@@ -31,42 +31,42 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
     // IMPORTANTE: Para evitar descuadres con cuentas "contra" (ej. Dep. Acumulada que es un Activo pero naturaleza Crédito),
     // debemos calcular el saldo base de toda la familia de cuentas de la misma forma para que si van en contra, queden negativas.
-    if (accountType === 'ACTIVO' || accountType === 'EGRESO') {
+    if (accountType === 'ACTIVO' || accountType === 'EGRESO' || accountType === 'COSTO' || accountType.includes('GASTO') || accountType.includes('COSTO')) {
       return totalDebit - totalCredit;
     }
     return totalCredit - totalDebit;
   };
 
   // 1. Assets
-  const assets = accounts.filter(a => a.type === 'ACTIVO').map(a => ({
+  const assets = accounts.filter(a => a.type === 'ACTIVO' || (a.type as string) === 'ACTIVOS').map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
   })).filter(a => Math.abs(a.balance) > 0);
   const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
 
   // 2. Liabilities
-  const liabilities = accounts.filter(a => a.type === 'PASIVO').map(a => ({
+  const liabilities = accounts.filter(a => a.type === 'PASIVO' || (a.type as string) === 'PASIVOS').map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
   })).filter(a => Math.abs(a.balance) > 0);
   const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
 
   // 3. Equity
-  const equity = accounts.filter(a => a.type === 'PATRIMONIO').map(a => ({
+  const equity = accounts.filter(a => a.type === 'PATRIMONIO' || (a.type as string) === 'PATRIMONIOS').map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
   })).filter(a => Math.abs(a.balance) > 0);
   const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
 
   // 4. Income
-  const income = accounts.filter(a => a.type === 'INGRESO').map(a => ({
+  const income = accounts.filter(a => a.type === 'INGRESO' || (a.type as string) === 'INGRESOS').map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
   })).filter(a => Math.abs(a.balance) > 0);
   const totalIncome = income.reduce((sum, a) => sum + a.balance, 0);
 
   // 5. Expenses
-  const expenses = accounts.filter(a => a.type === 'EGRESO').map(a => ({
+  const expenses = accounts.filter(a => a.type === 'EGRESO' || (a.type as string) === 'EGRESOS' || (a.type as string).includes('COSTO') || (a.type as string).includes('GASTO')).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
   })).filter(a => Math.abs(a.balance) > 0);
