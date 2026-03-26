@@ -65,11 +65,19 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
   const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
 
   // 3. Equity
-  const equity = accounts.filter(a => matchesType(a.type, ['PATRIMONIO'])).map(a => ({
+  // IMPORTANTE: Para evitar duplicidad en el reporte, excluimos las cuentas de "Resultado" (clase 36 en Colombia)
+  // del listado base de patrimonio, ya que el reporte calcula el 'netResult' (Utilidad/Pérdida) 
+  // de forma dinámica restando Ingresos de Gastos.
+  const equity = accounts.filter(a => {
+    const isEquity = matchesType(a.type, ['PATRIMONIO']);
+    const isResultAccount = a.code.startsWith('36'); // Excluir cuentas de utilidad/pérdida del periodo
+    return isEquity && !isResultAccount;
+  }).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.type, a.nature)
   })).filter(a => Math.abs(a.balance) > 0.001);
   const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
+
 
   // 4. Income
   const income = accounts.filter(a => matchesType(a.type, ['INGRESO'])).map(a => ({
