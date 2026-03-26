@@ -38,13 +38,17 @@ export class BalanceParser {
             throw new Error("No se pudo detectar la fila de encabezados. Asegúrese de que el archivo tenga columnas como 'Cuenta', 'NIT', 'Débito', 'Crédito'.");
         }
 
-        // 2. Mapear columnas con prioridad y exclusión
+        // Mapear columnas con lógica estricta
         const headerRow = data[headerRowIndex].map(cell => String(cell).toLowerCase().trim());
 
-        const findColIndex = (keywords: string[], excludeIndex: number = -1) => {
+        const findColIndex = (positiveKeywords: string[], negativeKeywords: string[] = [], excludeIndex: number = -1) => {
             return headerRow.findIndex((h, index) => {
                 if (index === excludeIndex) return false;
-                return keywords.some(k => h.includes(k));
+                // Debe contener al menos una keyword positiva
+                const hasPositive = positiveKeywords.some(k => h.includes(k));
+                // No debe contener ninguna keyword negativa
+                const hasNegative = negativeKeywords.some(k => h.includes(k));
+                return hasPositive && !hasNegative;
             });
         };
 
@@ -57,20 +61,30 @@ export class BalanceParser {
             saldo: -1
         };
 
-        // Identificar NIT (Alta prioridad)
-        colMap.nit = findColIndex(['nit', 'identifica', 'cedula', 'rut']);
+        // 1. Identificar NIT (Prioridad Máxima)
+        colMap.nit = findColIndex(['nit', 'identifica', 'cedula', 'rut'], []);
 
-        // Identificar Nombre (Excluyendo la columna ya identificada como NIT)
-        // Evita que "NIT Tercero" se identifique como Nombre por la palabra "Tercero"
-        colMap.nombre = findColIndex(['nombre', 'tercero', 'razon', 'apellidos'], colMap.nit);
+        // 2. Identificar Nombre del Tercero 
+        // Evitamos "Nombre Cuenta" o "Descripcion Cuenta" explícitamente
+        // Buscamos "Razón Social", "Nombre Tercero", "Apellidos", "Beneficiario"
+        colMap.nombre = findColIndex(
+            ['razon', 'nombre tercero', 'apellidos', 'beneficiario', 'tercero'],
+            ['cuenta', 'rubro', 'codigo', 'movimiento'],
+            colMap.nit
+        );
 
-        // Identificar Cuenta
-        colMap.cuenta = findColIndex(['cuenta', 'codigo'], -1);
+        // Fallback para nombre: si no encuentra específico, busca "Nombre" genérico pero asegura que no tenga "Cuenta"
+        if (colMap.nombre === -1) {
+            colMap.nombre = findColIndex(['nombre', 'detalle'], ['cuenta', 'saldo', 'debito', 'credito'], colMap.nit);
+        }
 
-        // Identificar Valores
-        colMap.debito = findColIndex(['debito', 'débito', 'cargo']);
-        colMap.credito = findColIndex(['credito', 'crédito', 'abono']);
-        colMap.saldo = findColIndex(['saldo', 'final', 'total']);
+        // 3. Identificar Cuenta
+        colMap.cuenta = findColIndex(['cuenta', 'codigo', 'puc'], ['nombre', 'descripcion'], -1);
+
+        // 4. Identificar Valores
+        colMap.debito = findColIndex(['debito', 'débito', 'cargo'], [], -1);
+        colMap.credito = findColIndex(['credito', 'crédito', 'abono'], [], -1);
+        colMap.saldo = findColIndex(['saldo', 'final', 'total', 'neto'], [], -1);
 
         if (colMap.cuenta === -1 && colMap.nit === -1) {
             throw new Error("No se encontraron columnas para Cuenta ni NIT. Verifique los encabezados del archivo.");

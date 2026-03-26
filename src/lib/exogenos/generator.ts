@@ -5,6 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { db, Exogeno, Account, Transaction, JournalEntry, Member, Customer } from '../db';
+import { getFormatById, DIAN_FORMATS } from './mappings';
 
 export class ExogenosGenerator {
     /**
@@ -59,19 +60,28 @@ export class ExogenosGenerator {
                 let formato = '';
                 let concepto = '';
 
-                // Lógica simplificada de mapeo (Debería ser configurable en DB)
-                if (formats.includes('1001') && (account.code.startsWith('5') || account.code.startsWith('15') || account.code.startsWith('2365'))) {
-                    // Gastos, Activos Fijos, Retenciones
-                    formato = '1001';
-                    concepto = '5001'; // Default: Honorarios (Ejemplo)
-
-                    if (account.code.startsWith('5110')) concepto = '5001'; // Honorarios
-                    else if (account.code.startsWith('5120')) concepto = '5002'; // Arrendamientos
-                    else if (account.code.startsWith('5135')) concepto = '5003'; // Servicios
-                } else if (formats.includes('1007') && account.code.startsWith('4')) {
-                    // Ingresos
-                    formato = '1007';
-                    concepto = '4001'; // Ingresos Brutos
+                // Usar mapeos dinámicos en lugar de lógica estática
+                for (const formatId of formats) {
+                    const mapping = getFormatById(formatId);
+                    if (mapping && mapping.prefijosPuc.some(prefix => account.code.startsWith(prefix))) {
+                        formato = formatId;
+                        // Para el concepto seguimos usando heurística simple basada en el código o cuenta
+                        // En el futuro esto también podría estar en mappings
+                        if (formato === '1001') {
+                            if (account.code.startsWith('5110')) concepto = '5001';
+                            else if (account.code.startsWith('5120')) concepto = '5002';
+                            else if (account.code.startsWith('5135')) concepto = '5003';
+                            else concepto = '5001';
+                        } else if (formato === '1007') {
+                            concepto = '4001';
+                        } else if (formato === '1003') {
+                            concepto = '1301';
+                        } else {
+                            // Concepto genérico basado en los primeros dígitos si no hay regla específica
+                            concepto = account.code.substring(0, 4);
+                        }
+                        break; // Encontró formato
+                    }
                 }
 
                 if (!formato) continue;
@@ -148,7 +158,7 @@ export class ExogenosGenerator {
                 finalExogenos.push({
                     id: uuidv4(),
                     organization_id: organizationId,
-                    tipo_exogeno: data.formato === '1001' ? '0210' : '0220', // TODO: Mapear códigos DIAN reales
+                    tipo_exogeno: data.formato, // Usar el ID del formato directamente
                     periodo_fiscal: year,
                     nit_informante: '',
                     nit_contribuyente: data.nit,

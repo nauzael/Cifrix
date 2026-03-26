@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { AlertCircle, CheckCircle, X, Save } from 'lucide-react';
+import { AlertCircle, CheckCircle, X, Save, List, Check } from 'lucide-react';
 import { useExogenosStore } from '@/store/exogenosStore';
 import { MapeoInconsistencia } from '@/lib/db';
 import { toast } from '@/store/toastStore';
+import { getFormatById } from '@/lib/exogenos/mappings';
+import { ExogenosValidator } from '@/lib/exogenos';
 
 interface InconsistencyTableProps {
     organizationId: string;
 }
 
 export const InconsistencyTable = ({ organizationId }: InconsistencyTableProps) => {
-    const { inconsistencias, reportes, resolverInconsistencia } = useExogenosStore();
+    const { inconsistencias, reportes, resolverInconsistencia, balanceLines } = useExogenosStore();
     const [selectedInconsistency, setSelectedInconsistency] = useState<MapeoInconsistencia | null>(null);
     const [resolutionNote, setResolutionNote] = useState('');
     const [adjustedValue, setAdjustedValue] = useState<string>('');
@@ -164,6 +166,60 @@ export const InconsistencyTable = ({ organizationId }: InconsistencyTableProps) 
                                     <span className="text-sm font-bold text-destructive">Diferencia a justificar:</span>
                                     <span className="text-lg font-bold text-destructive">{formatMoney(selectedInconsistency.diferencia_monto || 0)}</span>
                                 </div>
+                            </div>
+
+                            {/* Desglose del Balance */}
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                                    <List className="size-4 text-blue-500" />
+                                    Detalle del Balance (Cuentas relacionadas)
+                                </label>
+                                <div className="max-h-40 overflow-y-auto border border-border rounded-xl divide-y divide-border bg-muted/5">
+                                    {(() => {
+                                        const reporte = reportes.find(r => r.id === selectedInconsistency.exogeno_id);
+                                        const mapping = getFormatById(reporte?.tipo_exogeno || '');
+                                        const nitTarget = ExogenosValidator.normalizeNit(reporte?.nit_contribuyente || '');
+
+                                        const relevant = balanceLines.filter(line => {
+                                            const nitLine = ExogenosValidator.normalizeNit(line.nit_tercero);
+                                            const matchesNit = nitLine === nitTarget;
+                                            const matchesPUC = mapping
+                                                ? mapping.prefijosPuc.some(p => line.cuenta.startsWith(p))
+                                                : true;
+                                            return matchesNit && matchesPUC;
+                                        });
+
+                                        if (relevant.length === 0) {
+                                            return <p className="p-4 text-xs text-muted-foreground text-center italic">No se encontraron líneas individuales en el balance para este NIT y formato.</p>;
+                                        }
+
+                                        return relevant.map(line => (
+                                            <div
+                                                key={line.id}
+                                                className="p-3 flex items-center justify-between hover:bg-muted/50 cursor-pointer transition-colors group"
+                                                onClick={() => {
+                                                    setAdjustedValue(line.saldo.toString());
+                                                    setResolutionNote(prev => prev || `Referenciado a cuenta ${line.cuenta}`);
+                                                }}
+                                            >
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-foreground">Cuenta {line.cuenta}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{line.nombre_tercero || 'Tercero en Balance'}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="text-right">
+                                                        <p className="text-xs font-mono font-bold text-blue-600">{formatMoney(line.saldo)}</p>
+                                                        <p className="text-[9px] text-muted-foreground">D: {formatMoney(line.debito)} | C: {formatMoney(line.credito)}</p>
+                                                    </div>
+                                                    <div className="size-6 rounded-full border border-border flex items-center justify-center group-hover:border-primary group-hover:text-primary">
+                                                        <Check className="size-3" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">Haga clic en una cuenta para usar su saldo individual como valor de ajuste.</p>
                             </div>
 
                             <div className="space-y-4">

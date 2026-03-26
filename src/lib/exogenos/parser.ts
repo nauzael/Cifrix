@@ -148,9 +148,10 @@ export class ExogenosParser {
             const retencion = parseFloat(getValue(map.retencion) || '0');
 
             if (nit) {
+                const cleanedName = nombre.replace(/['"]/g, '').trim();
                 rows.push({
                     nit_contribuyente: nit.replace(/['"]/g, '').trim(),
-                    nombre_contribuyente: nombre.replace(/['"]/g, '').trim(),
+                    nombre_contribuyente: cleanedName || 'Desconocido',
                     concepto: concepto.replace(/['"]/g, '').trim(),
                     monto: isNaN(monto) ? 0 : monto,
                     retencion: isNaN(retencion) ? 0 : retencion,
@@ -168,50 +169,99 @@ export class ExogenosParser {
     /**
      * Procesa archivo Excel (.xlsx, .xls)
      */
-    async parseXLSX(buffer: ArrayBuffer, mapping?: ColumnMapping, fileName?: string): Promise<ExogenoRow[]> {
+    /**
+     * Busca los encabezados y mapea las columnas automáticamente
+     */
+    private findMapping(data: any[][]): { mapping: ColumnMapping, startRow: number } {
+        const keywords = {
+            nit: ['nit', 'identifica', 'cedula', 'documento', 'nid', 'id'],
+            nombre: ['nombre', 'razon', 'tercero', 'contribuyente', 'beneficiario', 'cliente', 'proveedor'],
+            concepto: ['concepto', 'cpt', 'rubro'],
+            monto: ['monto', 'valor', 'pago', 'debito', 'credito', 'saldo', 'total', 'final', 'actual', 'nuevo'],
+            retencion: ['retencion', 'rete', 'iva', 'fuente']
+        };
+
+        let startRow = 0;
+        let mapping: ColumnMapping = { nit: -1, nombre: -1, concepto: -1, monto: -1, retencion: -1 };
+
+        // Buscar la fila que tenga más coincidencias con palabras clave (primeras 20 filas)
+        for (let i = 0; i < Math.min(20, data.length); i++) {
+            const row = data[i].map(c => String(c || '').toLowerCase());
+
+            const currentMap: any = {};
+            let matchCount = 0;
+
+            Object.entries(keywords).forEach(([key, kws]) => {
+                const idx = row.findIndex(cell => kws.some(kw => cell.includes(kw)));
+                if (idx !== -1) {
+                    currentMap[key] = idx;
+                    matchCount++;
+                }
+            });
+
+            if (matchCount >= 2) { // Si encontramos al menos 2 columnas clave, esta es la fila de encabezados
+                mapping = currentMap as ColumnMapping;
+                startRow = i + 1;
+                break;
+            }
+        }
+
+        // Si no se encontró mapeo dinámico, usar fallback agresivo (inspeccionar contenido)
+        if (mapping.nit === -1) {
+            // Buscar una columna que parezca tener NITs (números largos)
+            const firstDataRow = data.find(r => r.some(c => /^\d{7,11}$/.test(String(c || '').replace(/[\.\-]/g, ''))));
+            if (firstDataRow) {
+                mapping.nit = firstDataRow.findIndex(c => /^\d{7,11}$/.test(String(c || '').replace(/[\.\-]/g, '')));
+                // Asumir que el nombre suele estar al lado del NIT
+                if (mapping.nit !== -1 && firstDataRow[mapping.nit + 1]) mapping.nombre = mapping.nit + 1;
+                startRow = 0; // Empezar desde el principio si no hay headers
+            }
+        }
+
+        return { mapping, startRow };
+    }
+
+    /**
+     * Procesa archivo Excel (.xlsx, .xls)
+     */
+    async parseXLSX(buffer: ArrayBuffer, mapping?: ColumnMapping, fileName?: string, onProgress?: (msg: string, pct: number) => void): Promise<ExogenoRow[]> {
         const wb = read(buffer, { type: 'array' });
         const sheetName = wb.SheetNames[0];
         const sheet = wb.Sheets[sheetName];
-        const data = utils.sheet_to_json(sheet, { header: 1 }) as any[][]; // Array de arrays
+        const data = utils.sheet_to_json(sheet, { header: 1 }) as any[][];
 
         const rows: ExogenoRow[] = [];
         const currentYear = new Date().getFullYear();
 
-        // Mapeo por defecto si no se provee (A=0, B=1, etc)
-        const map = mapping || { nit: 0, nombre: 1, concepto: 2, monto: 3, retencion: 4 };
+        const { mapping: autoMap, startRow } = mapping ? { mapping, startRow: 1 } : this.findMapping(data);
+        const map = autoMap;
 
-        // Empezamos en fila 1 (asumiendo fila 0 es header)
-        for (let i = 1; i < data.length; i++) {
+        for (let i = startRow; i < data.length; i++) {
             const row = data[i];
+            if (!row || row.length === 0) continue;
 
             const getValue = (idx: string | number | undefined): any => {
-                if (idx === undefined) return '';
+                if (idx === undefined || idx === -1) return '';
                 if (typeof idx === 'number') return row[idx];
-                // Si pasamos letras 'A', 'B', convertir a índice
-                if (typeof idx === 'string' && /^[A-Z]+$/.test(idx)) {
-                    // Simple conversión para A-Z (0-25)
-                    let colIndex = 0;
-                    for (let j = 0; j < idx.length; j++) {
-                        colIndex = colIndex * 26 + idx.charCodeAt(j) - 64;
-                    }
-                    return row[colIndex - 1]; // 0-based
-                }
                 return '';
             };
 
-            const nit = String(getValue(map.nit) || '').trim();
-            // Validar que tenga contenido mínimo
-            if (!nit) continue;
+            const nit = String(getValue(map.nit) || '').trim().replace(/[^0-9-]/g, '');
+            if (!nit || nit.length < 3) continue;
 
             const nombre = String(getValue(map.nombre) || '').trim();
             const concepto = String(getValue(map.concepto) || '').trim();
-            const monto = parseFloat(String(getValue(map.monto) || '0').replace(/[^0-9.-]/g, ''));
-            const retencion = parseFloat(String(getValue(map.retencion) || '0').replace(/[^0-9.-]/g, ''));
+
+            const rawMonto = String(getValue(map.monto) || '0').replace(/[^0-9.-]/g, '');
+            const monto = parseFloat(rawMonto);
+
+            const rawRet = String(getValue(map.retencion) || '0').replace(/[^0-9.-]/g, '');
+            const retencion = parseFloat(rawRet);
 
             rows.push({
                 nit_contribuyente: nit,
-                nombre_contribuyente: nombre,
-                concepto: concepto,
+                nombre_contribuyente: nombre && nombre !== 'undefined' ? nombre : 'Desconocido',
+                concepto: concepto || 'GENERAL',
                 monto: isNaN(monto) ? 0 : monto,
                 retencion: isNaN(retencion) ? 0 : retencion,
                 periodo_fiscal: currentYear - 1,
@@ -219,6 +269,12 @@ export class ExogenosParser {
                 linea_origen: i + 1,
                 archivo_origen: fileName
             });
+
+            // Cada 200 filas, liberar el hilo principal por un instante
+            if (i % 200 === 0) {
+                if (onProgress) onProgress(`Extrayendo datos de fila ${i}...`, 10 + Math.floor((i / data.length) * 20));
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
         }
 
         return rows;
@@ -227,15 +283,15 @@ export class ExogenosParser {
     /**
      * Detecta tipo y procesa
      */
-    async parseFile(file: File, mapping?: ColumnMapping): Promise<ExogenoRow[]> {
+    async parseFile(file: File, mapping?: ColumnMapping, onProgress?: (msg: string, pct: number) => void): Promise<ExogenoRow[]> {
         const buffer = await file.arrayBuffer();
         const extension = file.name.split('.').pop()?.toLowerCase();
 
         if (extension === 'xlsx' || extension === 'xls') {
-            return this.parseXLSX(buffer, mapping, file.name);
+            return this.parseXLSX(buffer, mapping, file.name, onProgress);
         }
 
-        const decoder = new TextDecoder('utf-8'); // TODO: Detectar encoding
+        const decoder = new TextDecoder('utf-8');
         let content = decoder.decode(buffer);
 
         if (extension === 'xml') {
@@ -250,15 +306,11 @@ export class ExogenosParser {
     }
 
     /**
-     * Parsea un archivo de Balance de Prueba (Formato: Cuenta, Nit, Nombre, Debito, Credito, Saldo)
+     * Parsea un archivo de Balance de Prueba (Dinámico)
      */
-    async parseBalance(file: File): Promise<BalanceRow[]> {
+    async parseBalance(file: File, onProgress?: (msg: string, pct: number) => void): Promise<BalanceRow[]> {
         const buffer = await file.arrayBuffer();
         const extension = file.name.split('.').pop()?.toLowerCase();
-
-        if (extension !== 'xlsx' && extension !== 'xls' && extension !== 'csv') {
-            throw new Error('Solo se soportan archivos Excel (.xlsx, .xls) o CSV para balances.');
-        }
 
         let data: any[][] = [];
 
@@ -266,61 +318,59 @@ export class ExogenosParser {
             const wb = read(buffer, { type: 'array' });
             const sheet = wb.Sheets[wb.SheetNames[0]];
             data = utils.sheet_to_json(sheet, { header: 1 }) as any[][];
-        } else {
-            // Basic CSV support
+        } else if (extension === 'csv') {
             const decoder = new TextDecoder('utf-8');
             const content = decoder.decode(buffer);
             data = content.split('\n').map(line => line.split(','));
+        } else {
+            throw new Error('Solo se soportan archivos Excel o CSV.');
         }
 
+        const { mapping, startRow } = this.findMapping(data);
         const rows: BalanceRow[] = [];
 
-        // Estrategia heurística simple: Ignorar headers, buscar primera fila con números
-        // Asumimos orden: [0]Cuenta, [1]Nit, [2]Nombre, ... [N-2]Debito, [N-1]Credito, [N]Saldo
-        // O: Nit, Nombre, Saldo...
+        // Definir columnas clave para balance (sobre el mapeo general)
+        const colMap = {
+            cuenta: data[0].findIndex((h: any) => String(h || '').toLowerCase().includes('cuenta') || String(h || '').toLowerCase().includes('codigo')),
+            nit: mapping.nit as number,
+            nombre: mapping.nombre as number,
+            debito: data[0].findIndex((h: any) => String(h || '').toLowerCase().includes('debito')),
+            credito: data[0].findIndex((h: any) => String(h || '').toLowerCase().includes('credito')),
+            saldo: mapping.monto as number // Usar la columna detectada como "monto/valor" como saldo final
+        };
 
-        // Mapeo por defecto: 0:Cuenta, 1:Nit, 2:Nombre, 3:Debito, 4:Credito, 5:Saldo
-        // Ajustar según necesidad o pedir mapeo en UI
-
-        for (let i = 1; i < data.length; i++) {
+        for (let i = startRow; i < data.length; i++) {
             const row = data[i];
-            if (!row || row.length < 3) continue;
+            if (!row || row.length < 2) continue;
 
             const getValue = (idx: number) => {
+                if (idx === -1 || idx === undefined) return '';
                 const val = row[idx];
                 return val !== undefined ? String(val).trim() : '';
             };
 
             const getNumber = (idx: number) => {
-                const val = getValue(idx);
-                return parseFloat(val.replace(/[^0-9.-]/g, '')) || 0;
+                const val = getValue(idx).replace(/[^0-9.-]/g, '');
+                return parseFloat(val) || 0;
             };
 
-            // Intento de detectar columnas por contenido si es necesario, 
-            // por ahora hardcoded al formato más común (Siigo/WorldOffice export sencillo)
-            // Columnas típicas: Cuenta - Nit - Tercero - Saldo Inicial - Debito - Credito - Saldo Final
-
-            // Asumimos un formato simple de 6 columnas Clave:
-            // 0: Cuenta (opcional)
-            // 1: Nit
-            // 2: Nombre
-            // 3: Debito
-            // 4: Credito
-            // 5: Saldo (Final)
-
-            // Si el archivo tiene menos columnas, ajustamos
-
-            const nit = getValue(1).replace(/[^0-9-]/g, ''); // Limpiar nit
-            if (!nit || nit.length < 3) continue; // Saltar filas totalizadoras o vacías
+            const nit = getValue(colMap.nit).replace(/[^0-9-]/g, '');
+            if (!nit || nit.length < 3) continue;
 
             rows.push({
-                cuenta: getValue(0),
+                cuenta: getValue(colMap.cuenta),
                 nit_tercero: nit,
-                nombre_tercero: getValue(2),
-                debito: getNumber(3),
-                credito: getNumber(4),
-                saldo: getNumber(5)
+                nombre_tercero: getValue(colMap.nombre),
+                debito: getNumber(colMap.debito),
+                credito: getNumber(colMap.credito),
+                saldo: getNumber(colMap.saldo)
             });
+
+            // Liberar el hilo principal periódicamente
+            if (i % 200 === 0) {
+                if (onProgress) onProgress(`Analizando balance: fila ${i}...`, Math.floor((i / data.length) * 90));
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
         }
 
         return rows;

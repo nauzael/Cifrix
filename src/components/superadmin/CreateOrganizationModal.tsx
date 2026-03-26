@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Building2, Save, Loader2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../ui/Modal';
 import { toast } from '../../store/toastStore';
@@ -33,7 +34,9 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
         p_name: formData.name,
         p_tax_id: formData.tax_id,
         p_type: formData.type,
-        p_founder_user_id: user.id
+        p_founder_user_id: user.id,
+        p_plan_code: 'FREE',
+        p_id: uuidv4()
       });
 
       if (rpcError) {

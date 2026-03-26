@@ -13,6 +13,7 @@ import { GeneratorTab } from '@/components/exogenos/GeneratorTab';
 import { ThirdPartyTable } from '@/components/exogenos/ThirdPartyTable';
 import { InconsistencyTable } from '@/components/exogenos/InconsistencyTable';
 import { ExporterTab } from '@/components/exogenos/ExporterTab';
+import { ProcessingModal } from '@/components/exogenos/ProcessingModal';
 
 export default function Exogenos() {
     const { profile } = useAuthStore();
@@ -42,6 +43,7 @@ export default function Exogenos() {
 
     return (
         <div className="space-y-6">
+            <ProcessingModal />
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-6 rounded-2xl shadow-sm border border-border">
                 <div>
@@ -162,7 +164,12 @@ export default function Exogenos() {
                 {profile?.organizationId && (
                     <>
                         {activeTab === 'generar' && <GeneratorTab organizationId={profile.organizationId} />}
-                        {activeTab === 'importar' && <FileImporter organizationId={profile.organizationId} />}
+                        {activeTab === 'importar' && (
+                            <FileImporter
+                                organizationId={profile.organizationId}
+                                onComplete={() => setActiveTab('terceros')}
+                            />
+                        )}
                         {activeTab === 'terceros' && <ThirdPartyTable organizationId={profile.organizationId} />}
                         {activeTab === 'inconsistencias' && <InconsistencyTable organizationId={profile.organizationId} />}
                         {activeTab === 'exportar' && <ExporterTab organizationId={profile.organizationId} />}

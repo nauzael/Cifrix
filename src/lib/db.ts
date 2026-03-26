@@ -348,7 +348,7 @@ export interface FinancialNote {
 export interface Exogeno {
   id: string;
   organization_id: string;
-  tipo_exogeno: '0210' | '0220' | '0230' | '0240' | '0250' | '0260';
+  tipo_exogeno: string; // Ej: '1001', '1007', '2275' o códigos internos DIAN
   periodo_fiscal: number;
 
   // Datos del informante (quien reporta)
@@ -383,12 +383,18 @@ export interface MapeoInconsistencia {
   organization_id: string;
   exogeno_id: string;
 
+  // Detalles de la inconsistencia
+  tipo?: string;
+  descripcion?: string;
+  valor_reportado?: number;
+  valor_contable?: number;
+
   // Referencia a operación interna
   entidad_tipo?: string; // 'INVOICE', 'PAYMENT', 'TRANSACTION', etc.
   entidad_id?: string;
 
   // Estado de validación
-  estado_validacion: 'VALIDADO' | 'DISCREPANCIA' | 'SIN_CORRESPONDENCIA' | 'PENDIENTE';
+  estado_validacion: 'VALIDADO' | 'DISCREPANCIA' | 'SIN_CORRESPONDENCIA' | 'PENDIENTE' | 'RESUELTO'; // Added RESUELTO
   diferencia_monto?: number;
   diferencia_fecha?: number; // días de diferencia
 

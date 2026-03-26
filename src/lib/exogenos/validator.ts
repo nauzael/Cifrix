@@ -9,14 +9,30 @@ import { calculateExpectedRetention } from './rates';
 
 export interface InconsistencyResult {
     hayInconsistencia: boolean;
-    tipo: 'VALOR_DISCORDANTE' | 'TERCERO_FALTANTE' | 'TERCERO_DESCONOCIDO' | 'RETENCION_ERRONEA';
+    tipo: 'VALOR_DISCORDANTE' | 'TERCERO_FALTANTE' | 'TERCERO_DESCONOCIDO' | 'RETENCION_ERRONEA' | 'DIFERENCIA_SALDO' | 'DIFERENCIA_VALOR';
     descripcion: string;
     valorReportado: number;
     valorInterno: number;
     diferencia: number;
+    nombreTercero?: string;
 }
 
 export class ExogenosValidator {
+    /**
+     * Normaliza un NIT para comparaciones consistentes:
+     * Elimina puntos, comas, espacios y guiones (incluyendo el dígito de verificación si existe)
+     */
+    static normalizeNit(nit: string | number): string {
+        if (!nit) return '';
+        let str = String(nit).trim().replace(/[\.\,\s]/g, '');
+        // Si tiene guión, tomar solo la parte izquierda (NIT base)
+        if (str.includes('-')) {
+            str = str.split('-')[0];
+        }
+        // Retener solo dígitos
+        return str.replace(/[^0-9]/g, '');
+    }
+
     /**
      * Valida un registro de exógena (IMPORTADO) contra los datos contables internos (GENERADOS)
      * Requiere que previamente se haya ejecutado el Generador para el mismo periodo.
@@ -47,10 +63,11 @@ export class ExogenosValidator {
         // 3. Obtener Valor Interno (Contabilidad)
         // Estrategia: Buscar en los registros GENERADOS AUTOMATICAMENTE
         let valorInterno = 0;
+        const nitNormalizado = ExogenosValidator.normalizeNit(exogenoImportado.nit_contribuyente);
 
         if (generatedRecordsMap) {
             // Busqueda rápida si se provee el mapa
-            const key = `${exogenoImportado.nit_contribuyente}-${exogenoImportado.concepto}`;
+            const key = `${nitNormalizado}-${exogenoImportado.concepto}`;
             const match = generatedRecordsMap.get(key);
             if (match) valorInterno = match.monto;
         } else {
@@ -59,7 +76,7 @@ export class ExogenosValidator {
                 .where('organization_id').equals(exogenoImportado.organization_id)
                 .and(e =>
                     e.periodo_fiscal === exogenoImportado.periodo_fiscal &&
-                    e.nit_contribuyente === exogenoImportado.nit_contribuyente &&
+                    ExogenosValidator.normalizeNit(e.nit_contribuyente) === nitNormalizado &&
                     e.concepto === exogenoImportado.concepto &&
                     e.archivo_origen === 'GENERADO_AUTOMATICO'
                 )
@@ -125,7 +142,8 @@ export class ExogenosValidator {
         // Crear Map clave: NIT-CONCEPTO
         const generatedMap = new Map<string, Exogeno>();
         generated.forEach(g => {
-            generatedMap.set(`${g.nit_contribuyente}-${g.concepto}`, g);
+            const key = `${ExogenosValidator.normalizeNit(g.nit_contribuyente)}-${g.concepto}`;
+            generatedMap.set(key, g);
         });
 
         for (const ex of exogenosImportados) {
@@ -137,15 +155,55 @@ export class ExogenosValidator {
 
         return resultados;
     }
+
+    /**
+     * Valida un NIT de forma consolidada: Suma todos los reportes exógenos para ese NIT y compara con el saldo en balance.
+     */
+    validarNitConsolidado(
+        nit: string,
+        reportes: Exogeno[],
+        balanceMap: Map<string, { debito: number, credito: number, saldo: number, nombre_tercero?: string }>
+    ): InconsistencyResult | null {
+        // Normalización estricta para búsqueda
+        const nitClean = ExogenosValidator.normalizeNit(nit);
+
+        // 1. Calcular total reportado en exógena para este NIT
+        // Sumamos 'monto' de todos los reportes asociados
+        const totalReportado = reportes.reduce((acc, r) => acc + (r.monto || 0), 0);
+
+        // 2. Obtener saldo contable
+        const balanceData = balanceMap.get(nitClean);
+        const saldoContable = balanceData ? balanceData.saldo : 0;
+
+        // 3. Comparar
+        // Tolerancia de $1000 pesos por temas de redondeo
+        const diferencia = Math.abs(totalReportado - saldoContable);
+
+        if (diferencia > 1000) {
+            // Intentar obtener el nombre desde el balance si no está en los reportes
+            const nombreBalance = balanceData?.nombre_tercero;
+            const nombreReporte = reportes.find(r => r.nombre_contribuyente && r.nombre_contribuyente !== 'Desconocido')?.nombre_contribuyente;
+
+            return {
+                hayInconsistencia: true,
+                tipo: 'DIFERENCIA_SALDO',
+                descripcion: `El valor total reportado ($${totalReportado.toLocaleString()}) no cruza con el saldo contable ($${saldoContable.toLocaleString()}).`,
+                valorReportado: totalReportado,
+                valorInterno: saldoContable,
+                diferencia: totalReportado - saldoContable,
+                nombreTercero: nombreReporte || nombreBalance
+            };
+        }
+
+        return null;
+    }
+
     /**
      * Valida un reporte exógeno contra un mapa de saldos de balance
      */
     validarContraBalance(exogeno: Exogeno, balanceMap: Map<string, { debito: number, credito: number, saldo: number }>): InconsistencyResult {
         // Normalización básica de NIT reportado
-        let nit = exogeno.nit_contribuyente.replace(/[\.\,\s]/g, '');
-        if (nit.includes('-')) {
-            nit = nit.split('-')[0];
-        }
+        const nit = ExogenosValidator.normalizeNit(exogeno.nit_contribuyente);
 
         const balanceData = balanceMap.get(nit);
 
@@ -165,13 +223,6 @@ export class ExogenosValidator {
             }
         } else {
             // Caso 2: Tercero existe. Comparar valores.
-            // El reporte exógeno suele ser un acumulado anual de un concepto.
-            // El balance tiene el saldo final o movimiento del año.
-
-            // Estrategia simple: Comparar el valor reportado con el movimiento total (mayor de debito o credito) o saldo
-            // Dado que no sabemos la naturaleza exacta (ingreso/gasto) sin mapeo de cuentas, 
-            // usamos una heurística: ¿El monto reportado se parece a alguno de los totales del balance?
-
             const { debito, credito, saldo } = balanceData;
 
             // Buscamos coincidencia con Debito, Credito o Saldo Neto

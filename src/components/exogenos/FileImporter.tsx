@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Check, ArrowRight } from 'lucide-react';
 import { useExogenosStore } from '@/store/exogenosStore';
 import { toast } from '@/store/toastStore';
+import { getAllFormats, getFormatById } from '@/lib/exogenos/mappings';
 
 interface FileImporterProps {
     organizationId: string;
+    onComplete?: () => void;
 }
 
-export const FileImporter = ({ organizationId }: FileImporterProps) => {
+export const FileImporter = ({ organizationId, onComplete }: FileImporterProps) => {
     const { importarArchivo, importarBalance, loading } = useExogenosStore();
     const [dragActive, setDragActive] = useState(false);
     const [fileName, setFileName] = useState<string | null>(null);
     const [tipoArchivo, setTipoArchivo] = useState<'exogeno' | 'balance'>('balance');
     const [balanceCargado, setBalanceCargado] = useState(false);
+    const [selectedFormatId, setSelectedFormatId] = useState<string>('1001');
 
     const handleFile = async (file: File) => {
         if (!file) return;
@@ -36,8 +39,9 @@ export const FileImporter = ({ organizationId }: FileImporterProps) => {
                     setFileName(null);
                 }, 1500);
             } else {
-                await importarArchivo(file, organizationId);
-                toast.success(`Archivo importado: Se procesó ${file.name} correctamente`);
+                await importarArchivo(file, organizationId, selectedFormatId);
+                toast.success(`Archivo importado: Se procesó ${file.name} correctamente como Formato ${selectedFormatId}`);
+                if (onComplete) onComplete();
             }
         } catch (error) {
             console.error(error);
@@ -126,6 +130,29 @@ export const FileImporter = ({ organizationId }: FileImporterProps) => {
                     ? 'Suba el Archivo Plano o Excel de su Balance de Comprobación anual.'
                     : 'Suba los reportes exógenos recibidos para cruzar contra el balance.'}
             </p>
+
+            {tipoArchivo === 'exogeno' && !fileName && (
+                <div className="mb-6 p-4 bg-primary/5 rounded-xl border border-primary/20 animate-in fade-in slide-in-from-top-2">
+                    <label className="text-sm font-bold text-foreground block mb-2">Seleccione el Formato DIAN a cargar:</label>
+                    <select
+                        value={selectedFormatId}
+                        onChange={(e) => setSelectedFormatId(e.target.value)}
+                        className="w-full p-2 bg-background border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary"
+                    >
+                        {getAllFormats().map(f => (
+                            <option key={f.id} value={f.id}>{f.id} - {f.nombre}</option>
+                        ))}
+                    </select>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Cuentas PUC Relacionadas:</span>
+                        {getFormatById(selectedFormatId)?.prefijosPuc.map(p => (
+                            <span key={p} className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">
+                                {p}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div
                 className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-2xl transition-all ${dragActive ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'
