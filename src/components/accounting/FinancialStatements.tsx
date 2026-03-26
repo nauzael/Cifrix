@@ -31,7 +31,8 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
     // IMPORTANTE: Para evitar descuadres con cuentas "contra" (ej. Dep. Acumulada que es un Activo pero naturaleza Crédito),
     // debemos calcular el saldo base de toda la familia de cuentas de la misma forma para que si van en contra, queden negativas.
-    if (accountType === 'ACTIVO' || accountType === 'EGRESO' || accountType === 'COSTO' || accountType.includes('GASTO') || accountType.includes('COSTO')) {
+    const typeUpper = (accountType || '').toUpperCase();
+    if (typeUpper.includes('ACTIVO') || typeUpper.includes('EGRESO') || typeUpper.includes('GASTO') || typeUpper.includes('COSTO')) {
       return totalDebit - totalCredit;
     }
     return totalCredit - totalDebit;
