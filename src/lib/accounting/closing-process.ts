@@ -36,16 +36,16 @@ export class ClosingProcessService {
         const startDate = `${year}-01-01`;
         const endDate = `${year}-12-31`;
 
-        // 2. Obtener cuentas de Ingresos (4) y Gastos (5, 6, 7)
-        const incomeAccounts = await db.accounts
+        // 2. Obtener cuentas de Ingresos (4) y Gastos/Costos (5, 6, 7) por primer dígito del código PUC
+        const allAccounts = await db.accounts
             .where('organization_id').equals(organizationId)
-            .and(acc => acc.type === 'INGRESO')
             .toArray();
 
-        const expenseAccounts = await db.accounts
-            .where('organization_id').equals(organizationId)
-            .and(acc => acc.type === 'EGRESO')
-            .toArray();
+        const incomeAccounts = allAccounts.filter(acc => (acc.code || '').startsWith('4'));
+        const expenseAccounts = allAccounts.filter(acc => {
+            const firstDigit = (acc.code || '')[0];
+            return ['5', '6', '7'].includes(firstDigit);
+        });
 
         // 3. Obtener todas las transacciones del año
         const transactions = await db.transactions
