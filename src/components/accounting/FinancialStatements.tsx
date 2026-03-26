@@ -39,21 +39,35 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     return totalCredit - totalDebit;
   };
 
-  // 1. Assets (Código empieza por 1)
-  const assets = accounts.filter(a => (a.code || '').startsWith('1')).map(a => ({
+  // 1. Assets (Clasificación Corriente / No Corriente)
+  const allAssets = accounts.filter(a => (a.code || '').startsWith('1')).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
-  const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
+  const totalAssets = allAssets.reduce((sum, a) => sum + a.balance, 0);
 
-  // 2. Liabilities (Código empieza por 2)
-  const liabilities = accounts.filter(a => (a.code || '').startsWith('2')).map(a => ({
+  const currentAssets = allAssets.filter(a => {
+    const group = (a.code || '').substring(0, 2);
+    return ['11', '12', '13', '14'].includes(group); // Caja, Inversiones, Deudores, Inventarios
+  });
+  const nonCurrentAssets = allAssets.filter(a => !currentAssets.includes(a));
+  const totalCurrentAssets = currentAssets.reduce((sum, a) => sum + a.balance, 0);
+
+  // 2. Liabilities (Clasificación Corriente / No Corriente)
+  const allLiabilities = accounts.filter(a => (a.code || '').startsWith('2')).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
-  const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
+  const totalLiabilities = allLiabilities.reduce((sum, a) => sum + a.balance, 0);
 
-  // 3. Equity (Código empieza por 3, excluyendo cuentas de Resultado del Ejercicio 36)
+  const currentLiabilities = allLiabilities.filter(a => {
+    const group = (a.code || '').substring(0, 2);
+    return ['21', '22', '23', '24', '25'].includes(group); // Obligaciones, Proveedores, Cuentas por pagar, Impuestos, Obligaciones laborales
+  });
+  const nonCurrentLiabilities = allLiabilities.filter(a => !currentLiabilities.includes(a));
+  const totalCurrentLiabilities = currentLiabilities.reduce((sum, a) => sum + a.balance, 0);
+
+  // 3. Equity
   const equity = accounts.filter(a => {
     const code = a.code || '';
     return code.startsWith('3') && !code.startsWith('36');
@@ -61,24 +75,26 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     ...a,
     balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
-  const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
+  const totalEquityBase = equity.reduce((sum, a) => sum + a.balance, 0);
 
-  // 4. Income (Código empieza por 4)
+  // 4. Results
   const income = accounts.filter(a => (a.code || '').startsWith('4')).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
   const totalIncome = income.reduce((sum, a) => sum + a.balance, 0);
 
-  // 5. Expenses (Código empieza por 5 o 6 - Gastos y Costos)
-  const expenses = accounts.filter(a => {
-    const code = a.code || '';
-    return code.startsWith('5') || code.startsWith('6');
-  }).map(a => ({
+  const expenses = accounts.filter(a => (a.code || '').startsWith('5') || (a.code || '').startsWith('6')).map(a => ({
     ...a,
     balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
   const totalExpenses = expenses.reduce((sum, a) => sum + a.balance, 0);
+
+  const netResult = totalIncome - totalExpenses;
+  const totalEquity = totalEquityBase + netResult;
+  const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
+  const accountingDifference = totalAssets - totalLiabilitiesAndEquity;
+  const isBalanced = Math.abs(accountingDifference) < 0.01;
 
   // 6. Cuentas Fuera de Rango (Ej: Cuentas de Orden o Códigos Inválidos)
   const unclassifiedAccounts = accounts.filter(a => {
@@ -91,11 +107,10 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     balance: calculateBalance(a.id, a.code)
   }));
 
-  const netResult = totalIncome - totalExpenses;
-  const totalEquityCalculated = totalEquity + netResult;
-  const totalLiabilitiesAndEquity = totalLiabilities + totalEquityCalculated;
-  const accountingDifference = totalAssets - totalLiabilitiesAndEquity;
-  const isBalanced = Math.abs(accountingDifference) < 0.01;
+  // Indicadores Financieros
+  const currentRatio = totalCurrentLiabilities > 0 ? totalCurrentAssets / totalCurrentLiabilities : totalCurrentAssets > 0 ? 99.9 : 0;
+  const workingCapital = totalCurrentAssets - totalCurrentLiabilities;
+
 
 
   const today = new Date();
@@ -160,19 +175,19 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     y += 16;
     doc.text(`Total Pasivos: $ ${formatCurrency(totalLiabilities)}`, margin, y);
     y += 16;
-    doc.text(`Patrimonio Neto: $ ${formatCurrency(totalEquity + netResult)}`, margin, y);
+    doc.text(`Patrimonio Neto: $ ${formatCurrency(totalEquity)}`, margin, y);
     y += 24;
 
     const head = [['Código', 'Nombre de la Cuenta', 'Tipo', 'Saldo']];
 
-    const assetsBody = assets.map(a => [
+    const assetsBody = allAssets.map(a => [
       a.code,
       a.name,
       'Activo',
       `$ ${formatCurrency(a.balance)}`
     ]);
 
-    const liabilitiesBody = liabilities.map(a => [
+    const liabilitiesBody = allLiabilities.map(a => [
       a.code,
       a.name,
       'Pasivo',
@@ -367,9 +382,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
           </div>
         </div>
       )}
-
       {statementType === 'balance' ? (
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
           {/* Assets Column */}
           <div className="space-y-4">
@@ -378,20 +391,62 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             </h4>
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-3 sm:p-4">
               <div className="space-y-1 sm:space-y-2">
-                {assets.map(acc => (
-                  <div key={acc.id} className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0">
-                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium truncate mr-2">
-                      <span className="font-mono text-[10px] sm:text-xs mr-2 opacity-60">{acc.code}</span>
-                      {acc.name}
-                    </span>
-                    <span className="font-mono text-xs sm:text-sm font-bold whitespace-nowrap">$ {formatCurrency(acc.balance)}</span>
+                {currentAssets.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Activo Corriente</p>
+                    {currentAssets.map(acc => (
+                      <div key={acc.id} className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-2">
+                        <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium truncate mr-2">
+                          <span className="font-mono text-[10px] sm:text-xs mr-2 opacity-60">{acc.code}</span>
+                          {acc.name}
+                        </span>
+                        <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-bold text-slate-400">{((acc.balance / totalAssets) * 100).toFixed(1)}%</span>
+                          <span className="font-mono text-xs sm:text-sm font-bold whitespace-nowrap">$ {formatCurrency(acc.balance)}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                {assets.length === 0 && <p className="text-xs sm:text-sm text-slate-400 italic">No hay activos registrados.</p>}
+                )}
+                {nonCurrentAssets.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-2 mt-4">Activo No Corriente</p>
+                    {nonCurrentAssets.map(acc => (
+                      <div key={acc.id} className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-2">
+                        <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium truncate mr-2">
+                          <span className="font-mono text-[10px] sm:text-xs mr-2 opacity-60">{acc.code}</span>
+                          {acc.name}
+                        </span>
+                        <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-bold text-slate-400">{((acc.balance / totalAssets) * 100).toFixed(1)}%</span>
+                          <span className="font-mono text-xs sm:text-sm font-bold whitespace-nowrap">$ {formatCurrency(acc.balance)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {allAssets.length === 0 && <p className="text-xs sm:text-sm text-slate-400 italic">No hay activos registrados.</p>}
               </div>
               <div className="mt-4 pt-4 border-t-2 border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <span className="text-xs sm:text-sm font-black uppercase">Total Activos</span>
                 <span className="font-mono text-base sm:text-lg font-black text-blue-600">$ {formatCurrency(totalAssets)}</span>
+              </div>
+            </div>
+
+            {/* Liquidity Indicators Widget */}
+            <div className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-xl p-4">
+              <h5 className="text-[10px] font-black text-emerald-800 dark:text-emerald-500 uppercase tracking-widest mb-4">Análisis de Liquidez (NIIF)</h5>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800 shadow-sm">
+                  <p className="text-[10px] text-slate-500 font-bold mb-1">Razón Corriente</p>
+                  <p className="text-lg font-black text-emerald-600">{currentRatio.toFixed(2)}</p>
+                  <p className="text-[9px] text-slate-400 italic mt-1">{currentRatio > 1.2 ? 'Excelente liquidez' : currentRatio >= 1 ? 'Liquidez ajustada' : 'Riesgo de iliquidez'}</p>
+                </div>
+                <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800 shadow-sm">
+                  <p className="text-[10px] text-slate-500 font-bold mb-1">Capital de Trabajo</p>
+                  <p className="text-lg font-black text-blue-600">$ {formatCurrency(workingCapital)}</p>
+                  <p className="text-[9px] text-slate-400 italic mt-1">Recursos para operar</p>
+                </div>
               </div>
             </div>
           </div>
@@ -404,16 +459,41 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
               </h4>
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-3 sm:p-4">
                 <div className="space-y-1 sm:space-y-2">
-                  {liabilities.map(acc => (
-                    <div key={acc.id} className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0">
-                      <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium truncate mr-2">
-                        <span className="font-mono text-[10px] sm:text-xs mr-2 opacity-60">{acc.code}</span>
-                        {acc.name}
-                      </span>
-                      <span className="font-mono text-xs sm:text-sm font-bold whitespace-nowrap">$ {formatCurrency(acc.balance)}</span>
+                  {currentLiabilities.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Pasivo Corriente</p>
+                      {currentLiabilities.map(acc => (
+                        <div key={acc.id} className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-2">
+                          <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium truncate mr-2">
+                            <span className="font-mono text-[10px] sm:text-xs mr-2 opacity-60">{acc.code}</span>
+                            {acc.name}
+                          </span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-bold text-slate-400">{((acc.balance / totalLiabilities) * 100).toFixed(1)}%</span>
+                            <span className="font-mono text-xs sm:text-sm font-bold whitespace-nowrap">$ {formatCurrency(acc.balance)}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  {liabilities.length === 0 && <p className="text-xs sm:text-sm text-slate-400 italic">No hay pasivos registrados.</p>}
+                  )}
+                  {nonCurrentLiabilities.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-2 mt-4">Pasivo No Corriente</p>
+                      {nonCurrentLiabilities.map(acc => (
+                        <div key={acc.id} className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-2">
+                          <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium truncate mr-2">
+                            <span className="font-mono text-[10px] sm:text-xs mr-2 opacity-60">{acc.code}</span>
+                            {acc.name}
+                          </span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-bold text-slate-400">{((acc.balance / totalLiabilities) * 100).toFixed(1)}%</span>
+                            <span className="font-mono text-xs sm:text-sm font-bold whitespace-nowrap">$ {formatCurrency(acc.balance)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {allLiabilities.length === 0 && <p className="text-xs sm:text-sm text-slate-400 italic">No hay pasivos registrados.</p>}
                 </div>
                 <div className="mt-4 pt-4 border-t-2 border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <span className="text-xs sm:text-sm font-black uppercase">Total Pasivos</span>
@@ -429,24 +509,30 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
               <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-3 sm:p-4">
                 <div className="space-y-1 sm:space-y-2">
                   {equity.map(acc => (
-                    <div key={acc.id} className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0">
+                    <div key={acc.id} className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 pl-2">
                       <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium truncate mr-2">
                         <span className="font-mono text-[10px] sm:text-xs mr-2 opacity-60">{acc.code}</span>
                         {acc.name}
                       </span>
-                      <span className="font-mono text-xs sm:text-sm font-bold whitespace-nowrap">$ {formatCurrency(acc.balance)}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-[10px] font-bold text-slate-400">{((acc.balance / totalEquity) * 100).toFixed(1)}%</span>
+                        <span className="font-mono text-xs sm:text-sm font-bold whitespace-nowrap">$ {formatCurrency(acc.balance)}</span>
+                      </div>
                     </div>
                   ))}
-                  <div className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 italic">
+                  <div className="flex justify-between py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 italic pl-2">
                     <span className="text-xs sm:text-sm text-slate-500 font-medium mr-2">Resultado del Ejercicio</span>
-                    <span className={`font-mono text-xs sm:text-sm font-bold whitespace-nowrap ${netResult >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                      $ {formatCurrency(netResult)}
-                    </span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-[10px] font-bold text-slate-400">{((netResult / totalEquity) * 100).toFixed(1)}%</span>
+                      <span className={`font-mono text-xs sm:text-sm font-bold whitespace-nowrap ${netResult >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        $ {formatCurrency(netResult)}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t-2 border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <span className="text-xs sm:text-sm font-black uppercase">Total Patrimonio</span>
-                  <span className="font-mono text-base sm:text-lg font-black text-amber-600">$ {formatCurrency(totalEquity + netResult)}</span>
+                  <span className="font-mono text-base sm:text-lg font-black text-amber-600">$ {formatCurrency(totalEquity)}</span>
                 </div>
               </div>
             </div>
@@ -454,7 +540,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             {/* Final Check */}
             <div className={`p-4 sm:p-6 rounded-xl border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isBalanced ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400' : 'bg-red-50 border-red-200 text-red-800'}`}>
               <div className="w-full sm:w-auto">
-                <h5 className="font-black uppercase tracking-widest text-[10px] mb-1">Ecuación Contable</h5>
+                <h5 className="font-black uppercase tracking-widest text-[10px] mb-1">Ecuación Contable (ESF)</h5>
                 <p className="text-xs sm:text-sm font-medium">Activo = Pasivo + Patrimonio</p>
                 {!isBalanced && (
                   <p className="text-xs sm:text-sm mt-1 font-bold">
@@ -470,6 +556,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             </div>
           </div>
         </div>
+
       ) : (
         <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8">
           {/* P&L View */}
@@ -575,7 +662,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
               </div>
               <div className="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20">
                 <p className="text-[10px] font-bold text-blue-600 uppercase mb-1">Patrimonio Neto</p>
-                <p className="text-lg font-black text-blue-600">$ {formatCurrency(totalEquity + netResult)}</p>
+                <p className="text-lg font-black text-blue-600">$ {formatCurrency(totalEquity)}</p>
               </div>
             </div>
           </div>
@@ -595,7 +682,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
                   <tr className="bg-slate-50/50">
                     <td className="px-4 py-2 text-[10px] font-black text-blue-600 uppercase tracking-wider" colSpan={4}>1. Activos</td>
                   </tr>
-                  {assets.map((acc, i) => (
+                  {allAssets.map((acc, i) => (
                     <tr key={acc.id} className={i % 2 === 1 ? 'text-sm bg-slate-50/30' : 'text-sm'}>
                       <td className="px-4 py-3 text-slate-500">{acc.code}</td>
                       <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">{acc.name}</td>
@@ -611,7 +698,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
                   <tr className="bg-slate-50/50">
                     <td className="px-4 py-2 text-[10px] font-black text-blue-600 uppercase tracking-wider" colSpan={4}>2. Pasivos</td>
                   </tr>
-                  {liabilities.map((acc, i) => (
+                  {allLiabilities.map((acc, i) => (
                     <tr key={acc.id} className={i % 2 === 1 ? 'text-sm bg-slate-50/30' : 'text-sm'}>
                       <td className="px-4 py-3 text-slate-500">{acc.code}</td>
                       <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">{acc.name}</td>
