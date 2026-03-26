@@ -6,12 +6,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2, FolderTree, ChevronRight, Loader2, Tag } from 'lucide-react';
+import { Plus, Trash2, FolderTree, ChevronRight, Loader2, Tag, Upload } from 'lucide-react';
 import { UNIVERSAL_PUC } from '../../lib/pucTemplates';
 import { logActivity } from '../../lib/audit';
 import { SearchableSelect } from '../ui/SearchableSelect';
 import PUC_MD from '../../../.documentacion/PUC.md?raw';
 import { Modal } from '../ui/Modal';
+import { PUCImportModal } from './PUCImportModal';
 import { toast } from '../../store/toastStore';
 import { confirm } from '../../store/confirmStore';
 import { insertRecord, deleteRecord } from '../../lib/dbOperations';
@@ -37,6 +38,7 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
   const { user } = useAuthStore();
   const [query, setQuery] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedParent, setSelectedParent] = useState<Account | null>(null);
 
   useEffect(() => {
@@ -393,6 +395,12 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
             <FolderTree size={16} /> Cargar Universal
           </button>
           <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex-1 lg:flex-none text-[11px] font-black uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 hover:bg-emerald-100 px-5 py-3 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Upload size={16} /> Importar Excel
+          </button>
+          <button
             onClick={cleanupDuplicates}
             className="flex-1 lg:flex-none text-[11px] font-black uppercase tracking-widest bg-amber-50 dark:bg-amber-900/10 text-amber-600 hover:bg-amber-100 px-5 py-3 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
@@ -575,6 +583,13 @@ export function PUCManager({ organizationId }: PUCManagerProps) {
           </div>
         </form>
       </Modal>
+
+      <PUCImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        organizationId={orgId}
+        onSuccess={() => {}}
+      />
     </div>
   );
 }
