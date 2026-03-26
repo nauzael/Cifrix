@@ -82,11 +82,21 @@ export function PUCImportModal({ isOpen, onClose, organizationId, onSuccess }: P
         const row = jsonData[i];
         const rawCode = String(row['Código']).trim();
         const rawName = String(row['Nombre']).trim();
-        const rawClass = String(row['Clase'] || '').trim().toUpperCase();
-        const rawNature = String(row['Naturaleza'] || '').trim().toUpperCase();
+        let rawClass = String(row['Clase'] || '').trim().toUpperCase();
+        let rawNature = String(row['Naturaleza'] || '').trim().toUpperCase();
         const rawAccepts = String(row['Recibe Movimientos'] || '').trim().toUpperCase();
 
         if (!rawCode) continue;
+
+        // Limpiar acentos (ej: DÉBITO -> DEBITO) y variaciones comunes (ej: plurables)
+        rawClass = rawClass.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        rawNature = rawNature.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        if (rawClass === 'ACTIVOS') rawClass = 'ACTIVO';
+        if (rawClass === 'PASIVOS') rawClass = 'PASIVO';
+        if (rawClass === 'INGRESOS') rawClass = 'INGRESO';
+        if (rawClass === 'EGRESOS' || rawClass === 'GASTO' || rawClass === 'GASTOS' || rawClass === 'COSTO' || rawClass === 'COSTOS') rawClass = 'EGRESO';
+        if (rawClass === 'PATRIMONIOS') rawClass = 'PATRIMONIO';
 
         if (!validTypes.includes(rawClass)) {
           throw new Error(`Fila ${i+2} (Código ${rawCode}): Clase inválida '${rawClass}'. Debe ser ACTIVO, PASIVO, PATRIMONIO, INGRESO o EGRESO.`);
