@@ -36,7 +36,7 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
         name: formData.name,
         tax_id: formData.tax_id,
         type: formData.type,
-        status: 'ACTIVE',
+        status: 'active',
         created_by: user.id
       });
 
