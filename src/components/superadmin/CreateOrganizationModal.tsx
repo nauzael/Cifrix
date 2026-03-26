@@ -30,26 +30,27 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No hay usuario autenticado');
 
-      const { data: newOrgId, error: rpcError } = await (supabase as any).rpc('create_organization_with_founder', {
-        p_name: formData.name,
-        p_tax_id: formData.tax_id,
-        p_type: formData.type,
-        p_founder_user_id: user.id,
-        p_plan_code: 'FREE',
-        p_id: uuidv4()
+      const id = uuidv4();
+      const { error: insertError } = await supabase.from('organizations').insert({
+        id: id,
+        name: formData.name,
+        tax_id: formData.tax_id,
+        type: formData.type,
+        status: 'ACTIVE',
+        created_by: user.id
       });
 
-      if (rpcError) {
-        if (rpcError.code === '23505') {
-          if (rpcError.message?.includes('tax_id') || rpcError.message?.includes('nit')) {
+      if (insertError) {
+        if (insertError.code === '23505') {
+          if (insertError.message?.includes('tax_id') || insertError.message?.includes('nit')) {
             throw new Error(`Ya existe una organización registrada con el NIT "${formData.tax_id}". Por favor, verifique el documento.`);
           }
-          if (rpcError.message?.includes('name') || rpcError.message?.includes('nombre') || rpcError.message?.includes('unique')) {
+          if (insertError.message?.includes('name') || insertError.message?.includes('nombre') || insertError.message?.includes('unique')) {
             throw new Error(`Ya existe una organización con el nombre "${formData.name}". Por favor, elija un nombre diferente.`);
           }
           throw new Error('Ya existe un registro duplicado (Nombre o NIT). Verifique los datos.');
         }
-        throw new Error(`Error al crear la organización: ${rpcError.message}`);
+        throw new Error(`Error al crear la organización: ${insertError.message}`);
       }
 
       toast.success('Organización creada exitosamente');
