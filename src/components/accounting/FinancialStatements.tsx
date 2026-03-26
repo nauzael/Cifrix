@@ -22,7 +22,11 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
+  const today = new Date();
+  const generatedAt = `${today.toLocaleDateString()} ${today.toLocaleTimeString()}`;
+
   if (!accounts || !journalEntries) return <div className="p-8 text-center text-slate-500">Cargando estados financieros...</div>;
+  if (!organization) return <div className="p-8 text-center text-slate-500">Cargando organización...</div>;
 
   const calculateBalance = (accountId: string, code: string) => {
     const entries = journalEntries.filter(e => e.account_id === accountId);
@@ -113,8 +117,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
 
 
-  const today = new Date();
-  const generatedAt = `${today.toLocaleDateString()} ${today.toLocaleTimeString()}`;
+
 
   const buildPdf = () => {
     const doc = new jsPDF('p', 'pt', 'letter');
