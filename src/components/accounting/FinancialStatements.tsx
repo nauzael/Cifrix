@@ -24,83 +24,71 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
   if (!accounts || !journalEntries) return <div className="p-8 text-center text-slate-500">Cargando estados financieros...</div>;
 
-  const calculateBalance = (accountId: string, accountType: string, _nature: string) => {
+  const calculateBalance = (accountId: string, code: string) => {
     const entries = journalEntries.filter(e => e.account_id === accountId);
     const totalDebit = entries.reduce((sum, e) => sum + e.debit, 0);
     const totalCredit = entries.reduce((sum, e) => sum + e.credit, 0);
 
-    const typeUpper = (accountType || '').toUpperCase();
+    const firstDigit = (code || '')[0];
     
-    // Naturaleza Débito: Activos, Gastos, Costos
-    if (
-      typeUpper.includes('ACTIVO') || 
-      typeUpper.includes('EGRESO') || 
-      typeUpper.includes('GASTO') || 
-      typeUpper.includes('COSTO')
-    ) {
+    // Naturaleza DÉBITO: Activos (1), Gastos (5), Costos (6)
+    if (['1', '5', '6'].includes(firstDigit)) {
       return totalDebit - totalCredit;
     }
-    // Naturaleza Crédito: Pasivos, Patrimonio, Ingresos
+    // Naturaleza CRÉDITO: Pasivos (2), Patrimonio (3), Ingresos (4)
     return totalCredit - totalDebit;
   };
 
-  // Helper para normalizar y comparar tipos
-  const matchesType = (type: string, targets: string[]) => {
-    const t = (type || '').toUpperCase();
-    return targets.some(target => t.includes(target.toUpperCase()));
-  };
-
-  // 1. Assets
-  const assets = accounts.filter(a => matchesType(a.type, ['ACTIVO'])).map(a => ({
+  // 1. Assets (Código empieza por 1)
+  const assets = accounts.filter(a => (a.code || '').startsWith('1')).map(a => ({
     ...a,
-    balance: calculateBalance(a.id, a.type, a.nature)
+    balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
   const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
 
-  // 2. Liabilities
-  const liabilities = accounts.filter(a => matchesType(a.type, ['PASIVO'])).map(a => ({
+  // 2. Liabilities (Código empieza por 2)
+  const liabilities = accounts.filter(a => (a.code || '').startsWith('2')).map(a => ({
     ...a,
-    balance: calculateBalance(a.id, a.type, a.nature)
+    balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
   const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
 
-  // 3. Equity
-  // IMPORTANTE: Para evitar duplicidad en el reporte, excluimos las cuentas de "Resultado" (clase 36 en Colombia)
-  // del listado base de patrimonio, ya que el reporte calcula el 'netResult' (Utilidad/Pérdida) 
-  // de forma dinámica restando Ingresos de Gastos.
+  // 3. Equity (Código empieza por 3, excluyendo cuentas de Resultado del Ejercicio 36)
   const equity = accounts.filter(a => {
-    const isEquity = matchesType(a.type, ['PATRIMONIO']);
-    const isResultAccount = a.code.startsWith('36'); // Excluir cuentas de utilidad/pérdida del periodo
-    return isEquity && !isResultAccount;
+    const code = a.code || '';
+    return code.startsWith('3') && !code.startsWith('36');
   }).map(a => ({
     ...a,
-    balance: calculateBalance(a.id, a.type, a.nature)
+    balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
   const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
 
-
-  // 4. Income
-  const income = accounts.filter(a => matchesType(a.type, ['INGRESO'])).map(a => ({
+  // 4. Income (Código empieza por 4)
+  const income = accounts.filter(a => (a.code || '').startsWith('4')).map(a => ({
     ...a,
-    balance: calculateBalance(a.id, a.type, a.nature)
+    balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
   const totalIncome = income.reduce((sum, a) => sum + a.balance, 0);
 
-  // 5. Expenses (Incluye Egresos, Gastos y Costos)
-  const expenses = accounts.filter(a => matchesType(a.type, ['EGRESO', 'GASTO', 'COSTO'])).map(a => ({
+  // 5. Expenses (Código empieza por 5 o 6 - Gastos y Costos)
+  const expenses = accounts.filter(a => {
+    const code = a.code || '';
+    return code.startsWith('5') || code.startsWith('6');
+  }).map(a => ({
     ...a,
-    balance: calculateBalance(a.id, a.type, a.nature)
+    balance: calculateBalance(a.id, a.code)
   })).filter(a => Math.abs(a.balance) > 0.001);
   const totalExpenses = expenses.reduce((sum, a) => sum + a.balance, 0);
 
-  // 6. Cuentas No Clasificadas (Para diagnóstico)
+  // 6. Cuentas Fuera de Rango (Ej: Cuentas de Orden o Códigos Inválidos)
   const unclassifiedAccounts = accounts.filter(a => {
+    const code = a.code || '';
     const hasBalance = journalEntries.some(e => e.account_id === a.id && (e.debit > 0 || e.credit > 0));
-    const isClassified = matchesType(a.type, ['ACTIVO', 'PASIVO', 'PATRIMONIO', 'INGRESO', 'EGRESO', 'GASTO', 'COSTO']);
-    return hasBalance && !isClassified;
+    const isStandardClass = ['1', '2', '3', '4', '5', '6'].includes(code[0]);
+    return hasBalance && !isStandardClass;
   }).map(a => ({
     ...a,
-    balance: calculateBalance(a.id, a.type, a.nature)
+    balance: calculateBalance(a.id, a.code)
   }));
 
   const netResult = totalIncome - totalExpenses;
@@ -108,6 +96,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
   const totalLiabilitiesAndEquity = totalLiabilities + totalEquityCalculated;
   const accountingDifference = totalAssets - totalLiabilitiesAndEquity;
   const isBalanced = Math.abs(accountingDifference) < 0.01;
+
 
   const today = new Date();
   const generatedAt = `${today.toLocaleDateString()} ${today.toLocaleTimeString()}`;
