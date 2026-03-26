@@ -184,7 +184,7 @@ export function TransactionForm({ onClose, onSuccess, organizationId: propOrgId,
     try {
       const finalTransactionId = transactionId || uuidv4();
 
-      await db.transaction('rw', [db.transactions, db.journal_entries, db.audit_logs], async () => {
+      await db.transaction('rw', [db.transactions, db.journal_entries, db.audit_logs, db.deleted_records], async () => {
         if (transactionId) {
           await db.transactions.update(transactionId, {
             date: data.date,

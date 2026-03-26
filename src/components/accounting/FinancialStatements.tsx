@@ -24,12 +24,16 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
   if (!accounts || !journalEntries) return <div className="p-8 text-center text-slate-500">Cargando estados financieros...</div>;
 
-  const calculateBalance = (accountId: string, accountType: string, nature: string) => {
+  const calculateBalance = (accountId: string, accountType: string, _nature: string) => {
     const entries = journalEntries.filter(e => e.account_id === accountId);
     const totalDebit = entries.reduce((sum, e) => sum + e.debit, 0);
     const totalCredit = entries.reduce((sum, e) => sum + e.credit, 0);
 
-    if (nature === 'DEBITO') return totalDebit - totalCredit;
+    // IMPORTANTE: Para evitar descuadres con cuentas "contra" (ej. Dep. Acumulada que es un Activo pero naturaleza Crédito),
+    // debemos calcular el saldo base de toda la familia de cuentas de la misma forma para que si van en contra, queden negativas.
+    if (accountType === 'ACTIVO' || accountType === 'EGRESO') {
+      return totalDebit - totalCredit;
+    }
     return totalCredit - totalDebit;
   };
 
