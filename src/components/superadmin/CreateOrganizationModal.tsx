@@ -40,8 +40,14 @@ export function CreateOrganizationModal({ isOpen, onClose, onSuccess }: CreateOr
       });
 
       if (rpcError) {
-        if (rpcError.code === '23505' || rpcError.message?.includes('organizations_name_unique')) {
-          throw new Error(`Ya existe una organización con el nombre "${formData.name}". Por favor, elija un nombre diferente.`);
+        if (rpcError.code === '23505') {
+          if (rpcError.message?.includes('tax_id') || rpcError.message?.includes('nit')) {
+            throw new Error(`Ya existe una organización registrada con el NIT "${formData.tax_id}". Por favor, verifique el documento.`);
+          }
+          if (rpcError.message?.includes('name') || rpcError.message?.includes('nombre') || rpcError.message?.includes('unique')) {
+            throw new Error(`Ya existe una organización con el nombre "${formData.name}". Por favor, elija un nombre diferente.`);
+          }
+          throw new Error('Ya existe un registro duplicado (Nombre o NIT). Verifique los datos.');
         }
         throw new Error(`Error al crear la organización: ${rpcError.message}`);
       }
