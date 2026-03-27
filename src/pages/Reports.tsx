@@ -385,7 +385,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div>
@@ -426,7 +426,7 @@ ${equityRows}
   <div class="text-right">
     <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
     <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
-    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${selectedYear}</p>
   </div>
 </header><div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Liquidez</h3><div class="grid grid-cols-3 gap-4"><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Entradas</p><p class="text-xl font-black text-emerald-600">$ ${formatCurrency(totalIn)}</p></div><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Salidas</p><p class="text-xl font-black text-red-600">$ ${formatCurrency(totalOut)}</p></div><div class="bg-blue-600/5 p-5 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Saldo Neto</p><p class="text-xl font-black text-blue-600">$ ${formatCurrency(net)}</p></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Actividades</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase">Periodo</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Ingresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Egresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Saldo Neto</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-900 text-white"><tr><td class="px-6 py-4 text-sm font-black uppercase tracking-wider">Totales</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalIn)}</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalOut)}</td><td class="px-6 py-4 text-lg font-black text-right bg-white text-blue-600">$ ${formatCurrency(net)}</td></tr></tfoot></table></div></div><div class="grid grid-cols-2 gap-20 pt-10">
   <div class="text-center relative">
@@ -442,7 +442,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div></div></body></html>`;
@@ -492,7 +492,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div>
@@ -520,7 +520,7 @@ ${equityRows}
     <p class="text-slate-400 text-sm">${address}</p>
   </div>
 </header>
-<div class="text-center mb-16"><div class="inline-block border-y-2 border-blue-600/20 py-2 px-12 mb-4"><h2 class="text-4xl font-serif font-black text-slate-900 tracking-tight uppercase">Certificado de Donación</h2></div><p class="text-slate-500 font-medium italic">Expedido para fines tributarios y legales</p></div><div class="text-center mb-12 space-y-6"><p class="text-xl text-slate-800 leading-relaxed max-w-2xl mx-auto">La <span class="font-bold">${orgName}</span> debidamente constituida y reconocida legalmente,</p><h3 class="text-2xl font-black text-blue-600 uppercase tracking-wider">CERTIFICA QUE:</h3><div class="py-4"><p class="text-2xl font-bold text-slate-900 mb-1">${member?.full_name || 'CONTRIBUYENTE'}</p><p class="text-slate-500 text-lg uppercase tracking-widest">Identificación: ${member?.document_id || 'N/A'}</p></div><p class="text-lg text-slate-700 leading-relaxed text-justify px-8">Ha realizado aportes y donaciones voluntarias durante el año gravable ${new Date().getFullYear()}, por un valor total de <span class="font-black text-blue-600 underline underline-offset-4 tracking-tight uppercase">$ ${formatCurrency(total)}</span>.</p></div><div class="mb-12 px-8"><div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden"><div class="bg-blue-600/5 px-4 py-2 border-b border-slate-200"><h4 class="text-xs font-black text-blue-600 uppercase tracking-[0.1em]">Desglose de Aportaciones Anuales</h4></div><table class="w-full text-left text-sm whitespace-nowrap"><thead><tr class="text-slate-400 border-b border-slate-100"><th class="px-6 py-3 font-black uppercase text-[10px]">Concepto</th><th class="px-6 py-3 font-black uppercase text-[10px] text-right">Monto Acumulado</th></tr></thead><tbody class="divide-y divide-slate-100"><tr><td class="px-6 py-3 font-medium text-slate-700">Diezmos Anuales</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(diezmos)}</td></tr><tr><td class="px-6 py-3 font-medium text-slate-700">Ofrendas Especiales</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(ofrendas)}</td></tr><tr><td class="px-6 py-3 font-medium text-slate-700">Donaciones Extraordinarias</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(especiales)}</td></tr></tbody><tfoot class="bg-slate-100"><tr class="font-black"><td class="px-6 py-4 text-slate-900 uppercase tracking-wider">Total Certificado</td><td class="px-6 py-4 text-right text-lg text-blue-600">$ ${formatCurrency(total)}</td></tr></tfoot></table></div></div>
+<div class="text-center mb-16"><div class="inline-block border-y-2 border-blue-600/20 py-2 px-12 mb-4"><h2 class="text-4xl font-serif font-black text-slate-900 tracking-tight uppercase">Certificado de Donación</h2></div><p class="text-slate-500 font-medium italic">Expedido para fines tributarios y legales</p></div><div class="text-center mb-12 space-y-6"><p class="text-xl text-slate-800 leading-relaxed max-w-2xl mx-auto">La <span class="font-bold">${orgName}</span> debidamente constituida y reconocida legalmente,</p><h3 class="text-2xl font-black text-blue-600 uppercase tracking-wider">CERTIFICA QUE:</h3><div class="py-4"><p class="text-2xl font-bold text-slate-900 mb-1">${member?.full_name || 'CONTRIBUYENTE'}</p><p class="text-slate-500 text-lg uppercase tracking-widest">Identificación: ${member?.document_id || 'N/A'}</p></div><p class="text-lg text-slate-700 leading-relaxed text-justify px-8">Ha realizado aportes y donaciones voluntarias durante el año gravable ${selectedYear}, por un valor total de <span class="font-black text-blue-600 underline underline-offset-4 tracking-tight uppercase">$ ${formatCurrency(total)}</span>.</p></div><div class="mb-12 px-8"><div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden"><div class="bg-blue-600/5 px-4 py-2 border-b border-slate-200"><h4 class="text-xs font-black text-blue-600 uppercase tracking-[0.1em]">Desglose de Aportaciones Anuales</h4></div><table class="w-full text-left text-sm whitespace-nowrap"><thead><tr class="text-slate-400 border-b border-slate-100"><th class="px-6 py-3 font-black uppercase text-[10px]">Concepto</th><th class="px-6 py-3 font-black uppercase text-[10px] text-right">Monto Acumulado</th></tr></thead><tbody class="divide-y divide-slate-100"><tr><td class="px-6 py-3 font-medium text-slate-700">Diezmos Anuales</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(diezmos)}</td></tr><tr><td class="px-6 py-3 font-medium text-slate-700">Ofrendas Especiales</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(ofrendas)}</td></tr><tr><td class="px-6 py-3 font-medium text-slate-700">Donaciones Extraordinarias</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(especiales)}</td></tr></tbody><tfoot class="bg-slate-100"><tr class="font-black"><td class="px-6 py-4 text-slate-900 uppercase tracking-wider">Total Certificado</td><td class="px-6 py-4 text-right text-lg text-blue-600">$ ${formatCurrency(total)}</td></tr></tfoot></table></div></div>
 <div class="grid grid-cols-2 gap-20 pt-16 px-12">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
@@ -568,7 +568,7 @@ ${equityRows}
   <div class="text-right">
     <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
     <h2 class="text-xl font-bold text-slate-900 uppercase">${cajaAcc ? cajaAcc.name : 'Caja General'}</h2>
-    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${selectedYear}</p>
   </div>
 </header><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo Actual</p><p class="text-lg font-black text-blue-600">$ ${formatCurrency(saldoActual)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Movimientos</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalDebit)} / $ ${formatCurrency(totalCredit)}</p></div></div><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th>Fecha</th><th>Ref</th><th>Descripción</th><th class="text-right">Débito</th><th class="text-right">Crédito</th><th class="text-right">Saldo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 uppercase tracking-wider" colspan="3">Totales del periodo</td><td class="px-4 py-4 text-right font-bold text-emerald-600">$ ${formatCurrency(totalDebit)}</td><td class="px-4 py-4 text-right font-bold text-red-600">$ ${formatCurrency(totalCredit)}</td><td class="px-4 py-4 text-right font-black text-blue-600">$ ${formatCurrency(saldoActual)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">Este reporte muestra únicamente movimientos conciliados y registrados en el libro auxiliar de la cuenta seleccionada.</p>
 <div class="grid grid-cols-2 gap-20 pt-10">
@@ -585,7 +585,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
@@ -630,7 +630,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
@@ -666,7 +666,7 @@ ${equityRows}
   <div class="text-right">
     <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
     <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
-    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${selectedYear}</p>
   </div>
 </header>
 <div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Cumplimiento</h3><div class="grid grid-cols-4 gap-4"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Presupuestado</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalExec)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Ejecutado</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalExec)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Desviación Neta</p><p class="text-lg font-black text-amber-600">-$ 0</p></div><div class="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">% Cumplimiento Global</p><div class="flex items-end gap-2"><p class="text-2xl font-black text-blue-600 leading-none">100%</p><span class="text-[10px] text-blue-600/70 font-bold mb-0.5">YTD</span></div></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle por Centros de Costo</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th>Partida / Categoría</th><th class="text-right">Presupuestado</th><th class="text-right">Ejecutado</th><th class="text-right">Desviación</th><th class="text-center">% Ejec.</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 text-right uppercase tracking-wider">Totales de Ejecución</td><td class="px-4 py-4 text-sm font-black text-slate-900 text-right border-l border-slate-200">$ ${formatCurrency(totalExec)}</td><td class="px-4 py-4 text-sm font-black text-slate-900 text-right">$ ${formatCurrency(totalExec)}</td><td class="px-4 py-4 text-sm font-black text-blue-600 text-right">-$ 0</td><td class="px-4 py-4 text-lg font-black text-blue-600 text-center">100%</td></tr></tfoot></table></div></div>
@@ -684,7 +684,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
@@ -744,18 +744,38 @@ ${equityRows}
       )}
 
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-foreground mb-1 tracking-tight">Centro de Reportes</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">Análisis financiero y exportación de datos.</p>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-blue-600/10 rounded-xl text-blue-600">
+            <FileText className="size-8" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight uppercase">Centro de Reportes</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">Análisis financiero y exportación de datos oficiales.</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <Calendar className="size-4 text-blue-600" />
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="bg-transparent border-none text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-0 cursor-pointer min-w-[100px]"
+            >
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+
           <button
             onClick={() => generateReport('Consolidado Total')}
-            className="w-full sm:w-auto bg-primary text-primary-foreground px-6 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-tighter"
+            className="flex-1 sm:flex-none bg-blue-600 text-white px-6 py-2.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-tight"
           >
-            <Download className="size-5" />
-            Exportar Consolidado
+            <Download className="size-4" />
+            <span className="hidden sm:inline">Exportar Consolidado</span>
+            <span className="sm:hidden">Exportar</span>
           </button>
         </div>
       </div>
