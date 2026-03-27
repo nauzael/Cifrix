@@ -962,14 +962,14 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
           <div className="grid grid-cols-2 gap-20 pt-10">
             <div className="text-center">
-              <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
+              <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto flex flex-col items-center">
                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Representante Legal</p>
                 <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.rep_legal_name || ''}</p>
                 <p className="text-xs text-slate-500">{organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.'}</p>
               </div>
             </div>
             <div className="text-center">
-              <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
+              <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto flex flex-col items-center">
                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Contador Público</p>
                 <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.contador_name || ''}</p>
                 <p className="text-xs text-slate-500">{organization?.settings?.contador_tp ? `T.P. ${organization.settings.contador_tp}` : 'T.P.'}</p>
