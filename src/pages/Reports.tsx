@@ -320,18 +320,22 @@ ${equityRows}
 <div class="grid grid-cols-2 gap-20 pt-10">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
+    <div class="border-t border-slate-400 pt-4 px-4 w-[200px] mx-auto flex flex-col items-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
+      <div class="w-full flex justify-center">
+        <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
+      </div>
       <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C.'}</p>
     </div>
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
+    <div class="border-t border-slate-400 pt-4 px-4 w-[200px] mx-auto flex flex-col items-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <div class="w-full flex justify-center">
+        <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
+      </div>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div>
