@@ -26,6 +26,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isClosingProcess, setIsClosingProcess] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const today = new Date();
   const generatedAt = `${today.toLocaleDateString()} ${today.toLocaleTimeString()}`;
@@ -152,7 +153,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     }
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setTextColor(30, 41, 59); // Slate-800
     doc.text(organization?.name || 'Organización', margin, y);
     y += 20;
@@ -170,7 +171,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
       y += 14;
     }
     const currentYear = today.getFullYear();
-    doc.text(`Período: De 1 de enero a 31 de diciembre de ${currentYear}`, margin, y);
+    doc.text(`Período: De 1 de enero a 31 de diciembre de ${selectedYear}`, margin, y);
     y += 24;
 
     if (type === 'balance') {
@@ -532,21 +533,35 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
           </button>
         </div>
         {(statementType === 'balance' || statementType === 'pnl') && (
-          <button
-            onClick={() => {
-              const doc = buildPdf(statementType);
-              const blob = doc.output('blob');
-              const url = URL.createObjectURL(blob);
-              window.open(url, '_blank');
-              setTimeout(() => URL.revokeObjectURL(url), 60_000);
-            }}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border shadow-sm
-              ${statementType === 'balance' 
-                ? 'bg-blue-600 text-white hover:bg-blue-700 border-blue-500' 
-                : 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-500'}`}
-          >
-            <Printer size={16} className="sm:size-[18px]" /> Vista previa / PDF
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg shadow-sm">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Año:</span>
+              <select 
+                value={selectedYear} 
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="bg-transparent border-none text-sm font-black text-slate-900 dark:text-white focus:ring-0 cursor-pointer p-0"
+              >
+                {[2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030].map(y => (
+                  <option key={y} value={y} className="dark:bg-slate-800">{y}</option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                const doc = buildPdf(statementType as 'balance' | 'pnl');
+                const blob = doc.output('blob');
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                setTimeout(() => URL.revokeObjectURL(url), 60_000);
+              }}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border shadow-sm
+                ${statementType === 'balance' 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 border-blue-500' 
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-500'}`}
+            >
+              <Printer size={16} className="sm:size-[18px]" /> Vista previa / PDF
+            </button>
+          </div>
         )}
         <button
             onClick={handleClosing}
@@ -837,7 +852,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
           <header className="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
             <div className="flex items-center gap-4">
               {organization?.settings?.logo_url ? (
-                <img src={organization.settings.logo_url} className="size-16 object-contain" />
+                <img src={organization.settings.logo_url} className="h-28 w-auto object-contain" />
               ) : (
                 <div className="size-14 bg-blue-600 rounded-xl flex items-center justify-center text-white">
                   <Landmark className="size-8" />
@@ -855,7 +870,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             <div className="text-right">
               <div className="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Balance General</h2>
-              <p className="text-slate-500 text-sm">A corte de: {today.toLocaleDateString()}</p>
+              <p className="text-slate-500 text-sm">Del 1 de enero al 31 de diciembre de {selectedYear}</p>
               <p className="text-slate-400 text-xs mt-1 italic">Generado el {generatedAt}</p>
             </div>
           </header>
