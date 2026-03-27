@@ -25,7 +25,7 @@ export interface ReportAccount {
     code: string;
     name: string;
     balance: number;
-    previousBalance?: number; // Para comparativos
+    previousBalance?: number;
 }
 
 export class FinancialReportsService {
@@ -61,7 +61,6 @@ export class FinancialReportsService {
         }).filter(a => Math.abs(a.balance) > 0.01); // Filtrar saldo cero
 
         // 3. Calcular Resultado del Ejercicio (hasta la fecha de corte)
-        // Esto es necesario porque el Balance debe cuadrar A = P + PT + Resultado
         const incomeExpenseBalance = await this.calculatePnLResult(organizationId, cutOffDate);
 
         // 4. Estructurar reporte
@@ -164,7 +163,7 @@ export class FinancialReportsService {
     }
 
     /**
-     * Genera el Estado de Flujo de Efectivo (Método Directo Simplificado)
+     * Genera el Estado de Flujo de Efectivo (Método Indirecto Simplificado)
      */
     async getCashFlowStatement(organizationId: string, startDate: string, endDate: string): Promise<FinancialReportData> {
         const org = await db.organizations.get(organizationId);
@@ -178,14 +177,14 @@ export class FinancialReportsService {
             .where('organization_id').equals(organizationId)
             .toArray();
 
-        // 3. Calcular variaciones de saldos entre startDate (inicio) y endDate (fin)
+        // 3. Calcular variaciones
         const categories = {
             OPERACION: [] as ReportAccount[],
             INVERSION: [] as ReportAccount[],
             FINANCIACION: [] as ReportAccount[]
         };
 
-        let totalOperacion = netResult; // Iniciamos con la utilidad neta
+        let totalOperacion = netResult; 
         let totalInversion = 0;
         let totalFinanciacion = 0;
 
@@ -197,12 +196,6 @@ export class FinancialReportsService {
             const variation = finalBalance - initialBalance;
 
             if (Math.abs(variation) < 0.01) continue;
-
-            // En el método indirecto:
-            // - Aumento en Activo -> Salida de efectivo (-)
-            // - Disminución en Activo -> Entrada de efectivo (+)
-            // - Aumento en Pasivo/Patrimonio -> Entrada de efectivo (+)
-            // - Disminución en Pasivo/Patrimonio -> Salida de efectivo (-)
 
             const cashImpact = acc.type === 'ACTIVO' ? -variation : variation;
 
@@ -268,24 +261,6 @@ export class FinancialReportsService {
         };
     }
 
-    private async calculateAccountBalance(accountId: string, date: string, mode: 'on' | 'before'): Promise<number> {
-        const acc = await db.accounts.get(accountId);
-        if (!acc) return 0;
-
-        const transactions = await db.transactions
-            .where('organization_id').equals(acc.organization_id)
-            .and(t => mode === 'on' ? t.date <= date : t.date < date)
-            .toArray();
-
-        const txIds = transactions.map(t => t.id);
-        const entries = await db.journal_entries
-            .where('transaction_id').anyOf(txIds)
-            .filter(e => e.account_id === accountId)
-            .toArray();
-
-        return this.calculateNetBalance(entries, acc.nature);
-    }
-
     /**
      * Genera el Estado de Cambios en el Patrimonio
      */
@@ -293,11 +268,8 @@ export class FinancialReportsService {
         const org = await db.organizations.get(organizationId);
         if (!org) throw new Error('Organización no encontrada');
 
-        // Saldo inicial de patrimonio
         const initialEquity = await this.calculateAccountGroupBalance(organizationId, '3', startDate, 'before');
 
-        // Resultado del periodo anterior (acumulado)
-        // Movimientos del periodo en cuentas 3xxx
         const equityAccounts = await db.accounts
             .where('organization_id').equals(organizationId)
             .filter(a => a.code.startsWith('3'))
@@ -311,30 +283,16 @@ export class FinancialReportsService {
         const transactionIds = transactions.map(t => t.id);
         const entries = await db.journal_entries
             .where('transaction_id').anyOf(transactionIds)
-            .filter(e => equityAccounts.map(a => a.id).includes(e.account_id))
             .toArray();
 
-        // Agrupar por cuenta
         const equityMovements = equityAccounts.map(acc => {
             const accEntries = entries.filter(e => e.account_id === acc.id);
-            const netMovement = this.calculateNetBalance(accEntries, acc.nature); // Movimiento neto del periodo
-            return {
-                code: acc.code,
-                name: acc.name,
-                balance: netMovement // Aquí balance representa la variación
-            };
+            const netMovement = this.calculateNetBalance(accEntries, acc.nature);
+            return { code: acc.code, name: acc.name, balance: netMovement };
         }).filter(a => Math.abs(a.balance) > 0.01);
 
         const totalVariations = equityMovements.reduce((sum, a) => sum + a.balance, 0);
-
-        // Resultado del ejercicio actual
-        const currentResult = await this.calculatePnLResult(organizationId, endDate); // Resultado acumulado a la fecha final
-
-        // Ajuste: El resultado del ejercicio actual es parte del patrimonio final, pero no necesariamente una "variación" de cuenta 3xxx directa si no se ha cerrado.
-        // Si el año NO se ha cerrado, el resultado está en P&L (cuentas 4, 5, 6) y se suma al patrimonio final.
-        // Si el año YA se ha cerrado, el resultado ya está en una cuenta 3xxx (Resultado del Ejercicio) y se incluye en equityMovements.
-        // Asumiremos lógica de reporte "en proceso" donde sumamos el resultado actual.
-
+        const currentResult = await this.calculatePnLResult(organizationId, endDate);
         const finalEquity = initialEquity + totalVariations + currentResult;
 
         return {
@@ -361,7 +319,7 @@ export class FinancialReportsService {
                 {
                     title: 'PATRIMONIO FINAL',
                     groups: [],
-                    total: initialEquity + totalVariations + currentResult
+                    total: finalEquity
                 }
             ],
             summary: {
@@ -370,52 +328,103 @@ export class FinancialReportsService {
         };
     }
 
-    // Helper privado para calcular resultado del ejercicio
-    private async calculatePnLResult(organizationId: string, cutOffDate: string): Promise<number> {
-        // Asumimos desde el inicio del año fiscal hasta la fecha de corte
-        const year = new Date(cutOffDate).getFullYear();
-        const startDate = `${year}-01-01`;
+    /**
+     * Genera los datos resumidos para la renovación de Cámara de Comercio (RUES)
+     */
+    async getRUESData(organizationId: string, year: number): Promise<any> {
+        const org = await db.organizations.get(organizationId);
+        if (!org) throw new Error('Organización no encontrada');
 
-        // Reutilizamos la lógica de P&L pero solo retornando el neto
-        const pnL = await this.getIncomeStatement(organizationId, startDate, cutOffDate);
-        return pnL.summary.netResult;
+        const startDate = `${year}-01-01`;
+        const endDate = `${year}-12-31`;
+
+        const accounts = await db.accounts
+            .where('organization_id').equals(organizationId)
+            .toArray();
+
+        const transactions = await db.transactions
+            .where('organization_id').equals(organizationId)
+            .and(t => t.date <= endDate)
+            .toArray();
+
+        const txIds = transactions.map(t => t.id);
+        const entries = await db.journal_entries
+            .where('transaction_id').anyOf(txIds)
+            .toArray();
+
+        const balances = accounts.map(acc => {
+            const accEntries = entries.filter(e => e.account_id === acc.id);
+            const yearEntries = accEntries.filter(e => {
+                const tx = transactions.find(t => t.id === e.transaction_id);
+                return tx && tx.date >= startDate && tx.date <= endDate;
+            });
+
+            const isPnL = ['4', '5', '6', '7'].includes(acc.code[0]);
+            const balance = this.calculateNetBalance(isPnL ? yearEntries : accEntries, acc.nature);
+            return { code: acc.code, balance };
+        }).filter(b => Math.abs(b.balance) > 0.01);
+
+        const getGroupBalance = (prefixes: string[]) => 
+            balances.filter(b => prefixes.some(p => b.code.startsWith(p)))
+                    .reduce((sum, b) => sum + b.balance, 0);
+
+        const activoCorriente = getGroupBalance(['11', '12', '13', '14', '19']);
+        const activoNoCorriente = getGroupBalance(['15', '16', '17', '18']);
+        const pasivoCorriente = getGroupBalance(['21', '22', '23', '24', '25', '26', '27']);
+        const pasivoNoCorriente = getGroupBalance(['29']);
+        const patrimonioNeto = getGroupBalance(['3']);
+
+        const ingresosOrdinarios = getGroupBalance(['41']);
+        const otrosIngresos = getGroupBalance(['42']);
+        const costoVentas = getGroupBalance(['6']);
+        const gastosAdmin = getGroupBalance(['51']);
+        const gastosVenta = getGroupBalance(['52']);
+        const gastosFinancieros = getGroupBalance(['5305']);
+        const otrosGastos = getGroupBalance(['53', '54', '59']) - gastosFinancieros;
+
+        const utilidadOperacional = ingresosOrdinarios - (gastosAdmin + gastosVenta + costoVentas);
+        const utilidadNeta = (ingresosOrdinarios + otrosIngresos) - (gastosAdmin + gastosVenta + costoVentas + otrosGastos + gastosFinancieros);
+
+        return {
+            year,
+            organizationName: org.name,
+            taxId: org.tax_id,
+            data: {
+                activoCorriente,
+                activoNoCorriente,
+                activoTotal: activoCorriente + activoNoCorriente,
+                pasivoCorriente,
+                pasivoNoCorriente,
+                pasivoTotal: pasivoCorriente + pasivoNoCorriente,
+                patrimonioNeto: patrimonioNeto + utilidadNeta,
+                pasivoPatrimonio: (pasivoCorriente + pasivoNoCorriente) + (patrimonioNeto + utilidadNeta),
+                ingresosOrdinarios,
+                otrosIngresos,
+                ingresosTotales: ingresosOrdinarios + otrosIngresos,
+                costoVentas,
+                gastosAdmin,
+                gastosVenta,
+                otrosGastos,
+                gastosFinancieros,
+                utilidadOperacional,
+                utilidadNeta
+            }
+        };
     }
 
+    // Helpers privados
+    
     private calculateNetBalance(entries: JournalEntry[], nature: 'DEBITO' | 'CREDITO'): number {
         const debit = entries.reduce((sum, e) => sum + e.debit, 0);
         const credit = entries.reduce((sum, e) => sum + e.credit, 0);
         return nature === 'DEBITO' ? debit - credit : credit - debit;
     }
 
-    private async calculateAccountGroupBalance(organizationId: string, codePrefix: string, date: string, mode: 'on' | 'before'): Promise<number> {
-        const operator = mode === 'on' ? '<=' : '<';
-
-        const accounts = await db.accounts
-            .where('organization_id').equals(organizationId)
-            .filter(a => a.code.startsWith(codePrefix))
-            .toArray();
-
-        const transactions = await db.transactions
-            .where('organization_id').equals(organizationId)
-            .and(t => t.date <= date && (mode === 'on' || t.date < date)) // Dexie string comparison
-            .toArray();
-
-        // Fix logic: Dexie filter above is approximate for operators on strings if not indexed exactly.
-        // Better filter manually:
-        const validTransactions = transactions.filter(t => mode === 'on' ? t.date <= date : t.date < date);
-        const validTxIds = validTransactions.map(t => t.id);
-
-        const entries = await db.journal_entries
-            .where('transaction_id').anyOf(validTxIds)
-            .filter(e => accounts.map(a => a.id).includes(e.account_id))
-            .toArray();
-
-        let total = 0;
-        for (const acc of accounts) {
-            const accEntries = entries.filter(e => e.account_id === acc.id);
-            total += this.calculateNetBalance(accEntries, acc.nature);
-        }
-        return total;
+    private async calculatePnLResult(organizationId: string, cutOffDate: string): Promise<number> {
+        const year = new Date(cutOffDate).getFullYear();
+        const startDate = `${year}-01-01`;
+        const pnL = await this.getIncomeStatement(organizationId, startDate, cutOffDate);
+        return pnL.summary.netResult;
     }
 
     private mapToReportAccounts(accounts: any[]): ReportAccount[] {
@@ -424,6 +433,51 @@ export class FinancialReportsService {
             name: a.name,
             balance: a.balance
         }));
+    }
+
+    private async calculateAccountBalance(accountId: string, date: string, mode: 'on' | 'before'): Promise<number> {
+        const acc = await db.accounts.get(accountId);
+        if (!acc) return 0;
+
+        const transactions = await db.transactions
+            .where('organization_id').equals(acc.organization_id)
+            .and(t => mode === 'on' ? t.date <= date : t.date < date)
+            .toArray();
+
+        const txIds = transactions.map(t => t.id);
+        const entries = await db.journal_entries
+            .where('transaction_id').anyOf(txIds)
+            .filter(e => e.account_id === accountId)
+            .toArray();
+
+        return this.calculateNetBalance(entries, acc.nature);
+    }
+
+    private async calculateAccountGroupBalance(organizationId: string, codePrefix: string, date: string, mode: 'on' | 'before'): Promise<number> {
+        const accounts = await db.accounts
+            .where('organization_id').equals(organizationId)
+            .filter(a => a.code.startsWith(codePrefix))
+            .toArray();
+
+        const transactions = await db.transactions
+            .where('organization_id').equals(organizationId)
+            .toArray();
+
+        const validTransactions = transactions.filter(t => mode === 'on' ? t.date <= date : t.date < date);
+        const validTxIds = validTransactions.map(t => t.id);
+
+        const entries = await db.journal_entries
+            .where('transaction_id').anyOf(validTxIds)
+            .toArray();
+
+        let total = 0;
+        const accountIds = new Set(accounts.map(a => a.id));
+        
+        for (const acc of accounts) {
+            const accEntries = entries.filter(e => e.account_id === acc.id);
+            total += this.calculateNetBalance(accEntries, acc.nature);
+        }
+        return total;
     }
 }
 

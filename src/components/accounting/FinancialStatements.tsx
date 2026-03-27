@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
 import { useAccountingStore } from '../../store/accountingStore';
-import { FileText, TrendingUp, Landmark, PieChart, Printer, X } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { closingProcessService } from '../../lib/accounting/closing-process';
+import { FileText, TrendingUp, Landmark, PieChart, Printer, X, Building2, Lock } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
+import { ChamberOfCommerceReport } from './ChamberOfCommerceReport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -19,8 +22,10 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
   const accounts = useLiveQuery(() => db.accounts.where('organization_id').equals(organizationId).toArray(), [organizationId]);
   const journalEntries = useLiveQuery(() => db.journal_entries.toArray());
   const organization = useLiveQuery(() => db.organizations.get(organizationId), [organizationId]);
+  const { user } = useAuthStore();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isClosingProcess, setIsClosingProcess] = useState(false);
 
   const today = new Date();
   const generatedAt = `${today.toLocaleDateString()} ${today.toLocaleTimeString()}`;
@@ -319,6 +324,52 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     doc.save(fileName);
   };
 
+  const handleClosing = async () => {
+    const currentYear = today.getFullYear();
+    
+    if (!confirm(`¿Está seguro de emitir el cierre fiscal definitivo para el año ${currentYear}? Esto consolidará los resultados en el patrimonio e impedirá modificaciones de los periodos anteriores. Esta acción NO se puede deshacer.`)) {
+        return;
+    }
+
+    setIsClosingProcess(true);
+    try {
+        const equityAccount = await db.accounts
+            .where('organization_id').equals(organizationId)
+            .and(a => a.code.startsWith('36'))
+            .first();
+
+        if (!equityAccount) {
+            import('../../store/toastStore').then(({ toast }) => {
+                toast.error('No se encontró una cuenta de patrimonio válida (36xx) donde depositar los Resultados del Ejercicio. Por favor, créela en su PUC.');
+            });
+            setIsClosingProcess(false);
+            return;
+        }
+
+        const result = await closingProcessService.performAnnualClosing(
+            organizationId,
+            currentYear,
+            user?.id || 'SYSTEM',
+            equityAccount.id
+        );
+
+        import('../../store/toastStore').then(({ toast }) => {
+            if (result.success) {
+                toast.success('Cierre Contable consolidado correctamente.');
+            } else {
+                toast.error(result.message);
+            }
+        });
+    } catch (error) {
+        console.error('Error in annual closing:', error);
+        import('../../store/toastStore').then(({ toast }) => {
+            toast.error('Error procesando el Cierre Contable.');
+        });
+    } finally {
+        setIsClosingProcess(false);
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* View Selector */}
@@ -340,6 +391,14 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             <span className="hidden xs:inline">Estado de Resultados</span>
             <span className="xs:hidden">Resultados</span>
           </button>
+          <button
+            onClick={() => setStatementType('rues')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${statementType === 'rues' ? 'bg-white dark:bg-slate-900 shadow-lg text-indigo-600' : 'text-slate-500'}`}
+          >
+            <Building2 size={16} className="sm:size-[18px]" />
+            <span className="hidden xs:inline">Cámara y Comercio</span>
+            <span className="xs:hidden">RUES</span>
+          </button>
         </div>
         {statementType === 'balance' && (
           <button
@@ -355,6 +414,18 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             <Printer size={16} className="sm:size-[18px]" /> Vista previa / PDF
           </button>
         )}
+        <button
+            onClick={handleClosing}
+            disabled={isClosingProcess}
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ml-auto sm:ml-0
+              ${isClosingProcess 
+                ? 'bg-slate-200 text-slate-500 cursor-not-allowed dark:bg-slate-800' 
+                : 'bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-500/10 dark:text-rose-400 border-rose-200 dark:border-rose-500/20 border shadow-sm'
+              }`}
+        >
+            <Lock size={16} className={`sm:size-[18px] ${isClosingProcess ? 'animate-pulse' : ''}`} /> 
+            {isClosingProcess ? 'PROCESANDO...' : 'CERRAR AÑO FISCAL'}
+        </button>
       </div>
 
       {/* Diagnóstico de Cuentas No Clasificadas */}
@@ -385,7 +456,9 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
           </div>
         </div>
       )}
-      {statementType === 'balance' ? (
+      {statementType === 'rues' ? (
+        <ChamberOfCommerceReport organizationId={organizationId} />
+      ) : statementType === 'balance' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
           {/* Assets Column */}
           <div className="space-y-4">

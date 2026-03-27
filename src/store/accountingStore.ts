@@ -10,7 +10,7 @@ interface AccountingState {
     end: string;
   };
   categoriesActiveType: 'ingreso' | 'egreso';
-  financialStatementType: 'balance' | 'pnl';
+  financialStatementType: 'balance' | 'pnl' | 'rues';
   
   // Actions
   setActiveTab: (tab: AccountingState['activeTab']) => void;
@@ -18,7 +18,7 @@ interface AccountingState {
   setLedgerSelectedAccount: (accountId: string | null) => void;
   setLedgerDateRange: (range: { start: string; end: string }) => void;
   setCategoriesActiveType: (type: 'ingreso' | 'egreso') => void;
-  setFinancialStatementType: (type: 'balance' | 'pnl') => void;
+  setFinancialStatementType: (type: 'balance' | 'pnl' | 'rues') => void;
 }
 
 export const useAccountingStore = create<AccountingState>()(
