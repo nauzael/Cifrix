@@ -318,19 +318,19 @@ export function FinancialStatementsWizard() {
                                         {group.accounts.map((acc: any, aIdx: number) => (
                                             <div key={aIdx} className="flex justify-between text-sm py-1 border-b border-dashed border-gray-100">
                                                 <span className="text-gray-600">{acc.code} - {acc.name}</span>
-                                                <span className="font-mono">{acc.balance.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                                                    <span className="font-mono">{(acc.balance || 0).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="flex justify-between font-bold text-sm mt-2 pt-2 border-t">
                                         <span>Total {group.name}</span>
-                                        <span>{group.total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                                        <span>{(group.total || 0).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
                                     </div>
                                 </div>
                             ))}
                             <div className="flex justify-between font-bold text-base bg-gray-50 p-2 rounded">
                                 <span>TOTAL {section.title}</span>
-                                <span>{section.total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+                                <span>{(section.total || 0).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     ))}
@@ -340,14 +340,14 @@ export function FinancialStatementsWizard() {
                     <div className="mt-8 pt-4 border-t-2 border-gray-200">
                         {reportData.summary.isBalanced !== undefined && (
                             <div className={`p-3 rounded text-center font-bold ${reportData.summary.isBalanced ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {reportData.summary.isBalanced ? 'BALANCE CUADRADO' : `DESCUADRE: ${reportData.summary.difference.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
+                                {reportData.summary.isBalanced ? 'BALANCE CUADRADO' : `DESCUADRE: ${(reportData.summary.difference || 0).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
                             </div>
                         )}
                         {reportData.summary.netResult !== undefined && (
                             <div className="flex justify-between font-bold text-lg p-3 bg-blue-50 rounded">
                                 <span>RESULTADO NETO DEL EJERCICIO</span>
                                 <span className={reportData.summary.netResult >= 0 ? 'text-green-600' : 'text-red-600'}>
-                                    {reportData.summary.netResult.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                                    {(reportData.summary.netResult || 0).toLocaleString('es-CO', { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         )}

@@ -256,7 +256,8 @@ export class FinancialReportsService {
             ],
             summary: {
                 netChange: totalOperacion + totalInversion + totalFinanciacion,
-                isBalanced: Math.abs((initialCash + (totalOperacion + totalInversion + totalFinanciacion)) - finalCash) < 1.0
+                isBalanced: Math.abs((initialCash + (totalOperacion + totalInversion + totalFinanciacion)) - finalCash) < 1.0,
+                difference: (initialCash + (totalOperacion + totalInversion + totalFinanciacion)) - finalCash
             }
         };
     }

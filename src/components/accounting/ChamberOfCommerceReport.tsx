@@ -65,39 +65,58 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
   const handleDownloadPdf = () => {
     if (!data || !organization) return;
 
-    const doc = new jsPDF();
+    const doc = new jsPDF('p', 'pt', 'letter');
     const pageWidth = doc.internal.pageSize.getWidth();
-
-    // Estilos de cabecera
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(100);
+    const margin = 40;
+    let y = margin;
     const today = new Date();
-    doc.text(`Generado el: ${today.toLocaleDateString()} ${today.toLocaleTimeString()}`, pageWidth - 14, 15, { align: 'right' });
+    const generatedAt = `${today.toLocaleDateString()} ${today.toLocaleTimeString()}`;
 
-    doc.setFontSize(16);
-    doc.setTextColor(30);
+    // 1. Metadata del Documento
+    doc.setProperties({
+      title: 'Reporte RUES - ' + organization.name,
+      author: 'Cifrix Contable',
+      subject: 'Renovación Cámara de Comercio',
+      creator: 'Cifrix Application'
+    });
+
+    // 2. Logo (si existe)
+    if (organization.settings?.logo_url) {
+      try {
+        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 60, 60, undefined, 'FAST');
+        y += 70;
+      } catch (e) {
+        console.error('Error adding logo to PDF:', e);
+        y += 10;
+      }
+    }
+
+    // 3. Encabezado Estilo Cifrix (Igual a Balance General)
     doc.setFont('helvetica', 'bold');
-    doc.text(organization.name.toUpperCase(), 14, 20);
-
-    doc.setFontSize(12);
-    doc.setTextColor(80);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`NIT: ${organization.tax_id || 'N/A'}`, 14, 26);
+    doc.setFontSize(18);
+    doc.setTextColor(30, 41, 59); // Slate-800
+    doc.text(organization.name.toUpperCase(), margin, y);
+    y += 22;
 
     doc.setFontSize(14);
-    doc.setTextColor(40);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`INFORMACIÓN FINANCIERA PARA RENOVACIÓN RUES`, 14, 38);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(60);
-    doc.text(`PERÍODO FISCAL: ${year}`, 14, 44);
+    doc.setTextColor(71, 85, 105); // Slate-600
+    doc.text('INFORMACIÓN FINANCIERA PARA CORTE RUES', margin, y);
+    y += 18;
 
-    // Tabla de Estado de Situación Financiera
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.text(`NIT: ${organization.tax_id || 'N/A'}`, margin, y);
+    y += 14;
+    doc.text(`Período Fiscal Renovado: Año ${year}`, margin, y);
+    y += 14;
+    doc.text(`Generado el ${generatedAt}`, margin, y);
+    y += 30;
+
+    // 4. Tabla de Estado de Situación Financiera
     (autoTable as any)(doc, {
-      startY: 52,
-      head: [['ESTADO DE SITUACIÓN FINANCIERA', 'VALOR ($)']],
+      startY: y,
+      head: [['RUBRO RUES (BALANCE)', 'VALOR ($)']],
       body: [
         ['Activo Corriente', formatCurrency(data.activoCorriente)],
         ['Activo No Corriente', formatCurrency(data.activoNoCorriente)],
@@ -108,25 +127,37 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
         ['Patrimonio Neto', formatCurrency(data.patrimonioNeto)],
         ['Pasivo + Patrimonio', formatCurrency(data.pasivoPatrimonio)],
       ],
-      headStyles: { fillColor: [79, 70, 229] }, // Color Índigo acorde a la app
+      theme: 'striped',
+      headStyles: { 
+        fillColor: [37, 99, 235], // Blue-600 (Igual al Balance)
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [51, 65, 85] // Slate-700
+      },
       columnStyles: {
         0: { fontStyle: 'bold' },
         1: { halign: 'right', fontStyle: 'bold' }
       },
       didParseCell: function(data: any) {
-        if (data.row && data.row.raw && (data.row.raw[0] === 'Activo Total' || data.row.raw[0] === 'Patrimonio Neto' || data.row.raw[0] === 'Pasivo + Patrimonio')) {
-             data.cell.styles.fillColor = [240, 240, 250];
-             data.cell.styles.textColor = [50, 50, 150];
+        const highlights = ['Activo Total', 'Patrimonio Neto', 'Pasivo + Patrimonio'];
+        if (data.row && data.row.raw && highlights.some(h => data.row.raw[0] === h)) {
+             data.cell.styles.fillColor = [239, 246, 255]; // Blue-50
+             data.cell.styles.textColor = [37, 99, 235]; // Blue-600
         }
-      }
+      },
+      margin: { left: margin, right: margin }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 15;
+    y = (doc as any).lastAutoTable.finalY + 25;
 
-    // Tabla de Estado de Resultados
+    // 5. Tabla de Estado de Resultados
     (autoTable as any)(doc, {
-      startY: finalY,
-      head: [['ESTADO DE RESULTADOS', 'VALOR ($)']],
+      startY: y,
+      head: [['RUBRO RUES (RESULTADOS)', 'VALOR ($)']],
       body: [
         ['Ingresos Actividad Ordinaria', formatCurrency(data.ingresosOrdinarios)],
         ['Otros Ingresos', formatCurrency(data.otrosIngresos)],
@@ -139,23 +170,44 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
         ['Utilidad Operacional', formatCurrency(data.utilidadOperacional)],
         ['Utilidad/Pérdida Neta', formatCurrency(data.utilidadNeta)],
       ],
-      headStyles: { fillColor: [79, 70, 229] },
+      theme: 'striped',
+      headStyles: { 
+        fillColor: [79, 70, 229], // Indigo-600 (Diferenciador Resultados)
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: {
+        fontSize: 9,
+        textColor: [51, 65, 85]
+      },
       columnStyles: {
         0: { fontStyle: 'bold' },
         1: { halign: 'right', fontStyle: 'bold' }
       },
       didParseCell: function(data: any) {
-        if (data.row && data.row.raw && (data.row.raw[0] === 'Ingresos Totales' || data.row.raw[0] === 'Utilidad Operacional' || data.row.raw[0] === 'Utilidad/Pérdida Neta')) {
-             data.cell.styles.fillColor = [240, 240, 250];
-             data.cell.styles.textColor = [50, 50, 150];
+        const highlights = ['Ingresos Totales', 'Utilidad Operacional', 'Utilidad/Pérdida Neta'];
+        if (data.row && data.row.raw && highlights.some(h => data.row.raw[0] === h)) {
+             data.cell.styles.fillColor = [238, 242, 255]; // Indigo-50
+             data.cell.styles.textColor = [79, 70, 229]; // Indigo-600
         }
-      }
+      },
+      margin: { left: margin, right: margin }
     });
 
-    const newFinalY = (doc as any).lastAutoTable.finalY + 20;
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(`Reporte generado por Cifrix Contable - Los valores presentados deben verificarse con el soporte contable.`, pageWidth / 2, newFinalY, { align: 'center' });
+    // 6. Pie de Página y Numeración
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Página ${i} de ${totalPages} - Reporte RUES generado automáticamente por Cifrix Contable`, 
+        pageWidth / 2, 
+        doc.internal.pageSize.getHeight() - 20, 
+        { align: 'center' }
+      );
+    }
 
     doc.save(`RUES_${organization.name.replace(/[^a-zA-Z0-9]/g, '_')}_${year}.pdf`);
   };
