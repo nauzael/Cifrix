@@ -193,7 +193,7 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
       margin: { left: margin, right: margin }
     });
 
-    y = (doc as any).lastAutoTable.finalY + 80;
+    y = (doc as any).lastAutoTable.finalY + 100;
 
     // --- SECCIÓN DE FIRMAS ---
     const shadowY = y;
@@ -225,12 +225,12 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
 
     if (organization?.settings?.rep_legal_signature) {
       try {
-        doc.addImage(organization.settings.rep_legal_signature, 'PNG', margin + 10, shadowY - 45, 100, 40);
+        doc.addImage(organization.settings.rep_legal_signature, 'PNG', margin + 40, shadowY - 35, 80, 30);
       } catch (e) {}
     }
     if (organization?.settings?.contador_signature) {
       try {
-        doc.addImage(organization.settings.contador_signature, 'PNG', pageWidth - margin - sigLineContentWidth + 10, shadowY - 45, 100, 40);
+        doc.addImage(organization.settings.contador_signature, 'PNG', pageWidth - margin - sigLineContentWidth + 40, shadowY - 35, 80, 30);
       } catch (e) {}
     }
 
