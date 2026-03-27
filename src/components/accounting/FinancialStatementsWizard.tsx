@@ -239,8 +239,22 @@ export function FinancialStatementsWizard() {
                 {
                     title: `ESTADOS FINANCIEROS - AÑO ${year}`,
                     organizationName: currentOrganization.name,
-                    period: `DEL ${startDate} AL ${endDate}`,
-                    normativo: normativo
+                    period: `DEL 01 DE ENERO AL 31 DE DICIEMBRE DE ${year}`,
+                    normativo: normativo,
+                    signatures: [
+                      {
+                        name: currentOrganization.settings?.rep_legal_name || '',
+                        role: 'Representante Legal',
+                        id_number: currentOrganization.settings?.rep_legal_document,
+                        signature_base64: currentOrganization.settings?.rep_legal_signature
+                      },
+                      {
+                        name: currentOrganization.settings?.contador_name || '',
+                        role: 'Contador Público',
+                        tp_number: currentOrganization.settings?.contador_tp,
+                        signature_base64: currentOrganization.settings?.contador_signature
+                      }
+                    ]
                 }
             );
 

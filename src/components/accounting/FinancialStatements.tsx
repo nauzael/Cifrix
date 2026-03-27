@@ -141,8 +141,8 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
     if (organization?.settings?.logo_url) {
       try {
-        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 60, 60, undefined, 'FAST');
-        y += 70;
+        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 80, 80, undefined, 'FAST');
+        y += 90;
       } catch (e) {
         console.error('Error adding logo to PDF:', e);
         y += 10; // Fallback spacing
@@ -150,15 +150,15 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     }
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.setTextColor(30, 41, 59); // Slate-800
     doc.text(organization?.name || 'Organización', margin, y);
-    y += 22;
+    y += 20;
 
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setTextColor(71, 85, 105); // Slate-600
     doc.text('Balance General', margin, y);
-    y += 18;
+    y += 16;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
@@ -167,9 +167,8 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
       doc.text(`NIT: ${organization.tax_id}`, margin, y);
       y += 14;
     }
-    doc.text(`A corte de: ${today.toLocaleDateString()}`, margin, y);
-    y += 14;
-    doc.text(`Generado el ${generatedAt}`, margin, y);
+    const currentYear = today.getFullYear();
+    doc.text(`Período: De 1 de enero a 31 de diciembre de ${currentYear}`, margin, y);
     y += 24;
 
     doc.setFont('helvetica', 'bold');
@@ -231,11 +230,11 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
         fillColor: [37, 99, 235], // Blue-600
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 10,
+        fontSize: 9,
         halign: 'left'
       },
       bodyStyles: {
-        fontSize: 9,
+        fontSize: 8,
         textColor: [51, 65, 85] // Slate-700
       },
       alternateRowStyles: {
@@ -295,9 +294,49 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     doc.text(`$ ${formatCurrency(totalAssets)}`, pageWidth - margin, y, { align: 'right' });
     y += 24;
 
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.text('Este balance ha sido generado automáticamente de acuerdo a los PCGA.', margin, y);
+    y += 60;
+
+    // --- SECCIÓN DE FIRMAS ---
+    const shadowY = y;
+    const sigLineContentWidth = 180;
+    
+    // Líneas de firma
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, margin + sigLineContentWidth, y);
+    doc.line(pageWidth - margin - sigLineContentWidth, y, pageWidth - margin, y);
+    
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 41, 59);
+    doc.text('REPRESENTANTE LEGAL', margin, y);
+    doc.text('CONTADOR PÚBLICO', pageWidth - margin - sigLineContentWidth, y);
+    
+    y += 14;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    doc.text(organization?.settings?.rep_legal_name || '________________________', margin, y);
+    doc.text(organization?.settings?.contador_name || '________________________', pageWidth - margin - sigLineContentWidth, y);
+    
+    y += 12;
+    doc.text(organization?.settings?.rep_legal_document || 'C.C. ___________________', margin, y);
+    doc.text(organization?.settings?.contador_tp || 'T.P. ___________________', pageWidth - margin - sigLineContentWidth, y);
+
+    // Imágenes de firmas (si existen en settings)
+    if (organization?.settings?.rep_legal_signature) {
+      try {
+        doc.addImage(organization.settings.rep_legal_signature, 'PNG', margin + 10, shadowY - 45, 100, 40);
+      } catch (e) {}
+    }
+    if (organization?.settings?.contador_signature) {
+      try {
+        doc.addImage(organization.settings.contador_signature, 'PNG', pageWidth - margin - sigLineContentWidth + 10, shadowY - 45, 100, 40);
+      } catch (e) {}
+    }
 
     const totalPages = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {

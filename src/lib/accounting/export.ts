@@ -12,28 +12,37 @@ export class FinancialExportService {
             organizationName: string;
             period: string;
             normativo?: string;
-            signatures?: { name: string; role: string }[];
+            signatures?: { 
+              name: string; 
+              role: string; 
+              id_number?: string; 
+              tp_number?: string;
+              signature_base64?: string;
+            }[];
         }
     ) {
         const doc = new jsPDF();
         let yPos = 20;
+        const pageWidth = doc.internal.pageSize.getWidth();
 
-        // 1. Portada
-        doc.setFontSize(22);
-        doc.text(options.organizationName, 105, yPos, { align: 'center' });
-        yPos += 15;
-        doc.setFontSize(18);
-        doc.text(options.title, 105, yPos, { align: 'center' });
-        yPos += 10;
-        doc.setFontSize(12);
-        doc.text(options.period, 105, yPos, { align: 'center' });
-        yPos += 10;
+        doc.setFontSize(24); // Mas presencia al nombre
+        doc.setTextColor(30, 41, 59);
+        doc.text(options.organizationName.toUpperCase(), 105, 110, { align: 'center' });
+        
+        doc.setFontSize(16); // Un poco mas pequeño
+        doc.text(options.title, 105, 130, { align: 'center' });
+        
+        doc.setFontSize(11); // Un poco mas pequeño
+        doc.setTextColor(71, 85, 105);
+        doc.text(options.period, 105, 145, { align: 'center' });
+        
         if (options.normativo) {
-            doc.text(`Bajo Normatividad: ${options.normativo}`, 105, yPos, { align: 'center' });
-            yPos += 10;
+            doc.setFontSize(10);
+            doc.text(`Bajo Normatividad: ${options.normativo}`, 105, 160, { align: 'center' });
         }
 
         doc.setFontSize(10);
+        doc.setTextColor(148, 163, 184);
         doc.text('Generado por Cifrix - Software Contable Inteligente', 105, 280, { align: 'center' });
 
         // 2. Páginas de Reportes
@@ -41,14 +50,16 @@ export class FinancialExportService {
             doc.addPage();
             yPos = 20;
             doc.setFontSize(16);
+            doc.setTextColor(30, 41, 59);
             doc.text(report.organizationName, 20, yPos);
             yPos += 8;
             doc.setFontSize(14);
             doc.text(report.sections[0]?.title || 'REPORTE FINANCIERO', 20, yPos);
             yPos += 6;
             doc.setFontSize(10);
+            doc.setTextColor(100, 116, 139);
             doc.text(report.period, 20, yPos);
-            yPos += 10;
+            yPos += 15;
 
             for (const section of report.sections) {
                 doc.setFontSize(12);
@@ -76,7 +87,7 @@ export class FinancialExportService {
                     head: [['Descripción', 'Saldo']],
                     body: tableData,
                     theme: 'striped',
-                    styles: { fontSize: 8 },
+                    styles: { fontSize: 7.5 }, // Tipografia mas pequeña para mas elegancia
                     margin: { left: 20, right: 20 },
                     didDrawPage: (data) => {
                         yPos = data.cursor?.y || yPos;
@@ -85,8 +96,7 @@ export class FinancialExportService {
 
                 yPos = (doc as any).lastAutoTable.finalY + 10;
 
-                // Nueva página si es necesario
-                if (yPos > 250) {
+                if (yPos > 260) {
                     doc.addPage();
                     yPos = 20;
                 }
@@ -97,17 +107,18 @@ export class FinancialExportService {
         if (notes.length > 0) {
             doc.addPage();
             doc.setFontSize(16);
-            doc.setTextColor(0, 0, 0);
+            doc.setTextColor(30, 41, 59);
             doc.text('NOTAS A LOS ESTADOS FINANCIEROS', 20, 20);
             yPos = 35;
 
-            notes.sort((a, b) => a.order - b.order).forEach((note, index) => {
+            notes.sort((a, b) => a.order - b.order).forEach((note) => {
                 doc.setFontSize(12);
-                doc.setFont('', 'bold');
+                doc.setFont('helvetica', 'bold');
                 doc.text(`${note.title}`, 20, yPos);
                 yPos += 7;
                 doc.setFontSize(10);
-                doc.setFont('', 'normal');
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(71, 85, 105);
                 const splitContent = doc.splitTextToSize(note.content, 170);
                 doc.text(splitContent, 20, yPos);
                 yPos += (splitContent.length * 5) + 10;
@@ -121,25 +132,47 @@ export class FinancialExportService {
 
         // 4. Firmas
         doc.addPage();
-        yPos = 50;
-        doc.setFontSize(12);
+        yPos = 60;
+        doc.setFontSize(14);
+        doc.setTextColor(30, 41, 59);
         doc.text('CERTIFICACIÓN Y FIRMAS', 105, 30, { align: 'center' });
 
-        const sigs = options.signatures || [
-            { name: '__________________________', role: 'Representante Legal' },
-            { name: '__________________________', role: 'Contador Público' },
-            { name: '__________________________', role: 'Revisor Fiscal' }
-        ];
+        const sigs = options.signatures || [];
+        const sigWidth = 70;
+        const spacing = 20;
+        let xPos = 20;
 
-        let xPos = 40;
-        sigs.forEach((sig, i) => {
-            doc.text(sig.name, xPos, yPos);
-            doc.text(sig.role, xPos, yPos + 10);
-            xPos += 60;
-            if (xPos > 160) {
-                xPos = 40;
-                yPos += 40;
+        sigs.forEach((sig) => {
+            if (xPos + sigWidth > pageWidth - 20) {
+                xPos = 20;
+                yPos += 80;
             }
+
+            // Imagen de firma
+            if (sig.signature_base64) {
+              try {
+                doc.addImage(sig.signature_base64, 'PNG', xPos + 5, yPos - 45, 60, 30);
+              } catch (e) {}
+            }
+
+            // Línea
+            doc.setDrawColor(200);
+            doc.line(xPos, yPos - 10, xPos + sigWidth, yPos - 10);
+
+            // Texto
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text(sig.name.toUpperCase(), xPos, yPos);
+            
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105);
+            doc.text(sig.role, xPos, yPos + 5);
+            
+            if (sig.id_number) doc.text(`Doc: ${sig.id_number}`, xPos, yPos + 10);
+            if (sig.tp_number) doc.text(`T.P: ${sig.tp_number}`, xPos, yPos + 10);
+
+            xPos += sigWidth + spacing;
         });
 
         doc.save(`${options.title.replace(/ /g, '_')}_${options.period.replace(/ /g, '_')}.pdf`);

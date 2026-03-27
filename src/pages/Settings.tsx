@@ -36,6 +36,10 @@ const orgSchema = z.object({
   address: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
+  rep_legal_name: z.string().optional(),
+  rep_legal_document: z.string().optional(),
+  contador_name: z.string().optional(),
+  contador_tp: z.string().optional(),
 });
 
 type OrgForm = z.infer<typeof orgSchema>;
@@ -67,6 +71,10 @@ export function Settings() {
       setValue('address', org.settings?.address || '');
       setValue('phone', org.settings?.phone || '');
       setValue('email', org.settings?.email || '');
+      setValue('rep_legal_name', org.settings?.rep_legal_name || '');
+      setValue('rep_legal_document', org.settings?.rep_legal_document || '');
+      setValue('contador_name', org.settings?.contador_name || '');
+      setValue('contador_tp', org.settings?.contador_tp || '');
     }
   }, [org, setValue]);
 
@@ -84,7 +92,11 @@ export function Settings() {
           ...org.settings,
           address: data.address,
           phone: data.phone,
-          email: data.email
+          email: data.email,
+          rep_legal_name: data.rep_legal_name,
+          rep_legal_document: data.rep_legal_document,
+          contador_name: data.contador_name,
+          contador_tp: data.contador_tp
         },
         address: data.address, // Update top-level columns too
         phone: data.phone,
@@ -359,6 +371,142 @@ export function Settings() {
                                 <Trash2 size={16} />
                               </button>
                             )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-border">
+                    <div className="flex items-center gap-4 text-foreground mb-6">
+                      <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600">
+                        <User size={20} />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black tracking-tight">Representación y Firmas</h3>
+                        <p className="text-xs text-muted-foreground mt-1">Configura quiénes firman los estados financieros y reportes oficiales.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                      {/* Representante Legal Section */}
+                      <div className="space-y-4 p-5 bg-muted/20 rounded-2xl border border-border">
+                        <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                          <Info size={12} /> Representante Legal
+                        </h4>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Nombre Completo</label>
+                            <input
+                              {...register('rep_legal_name')}
+                              className="w-full px-4 py-2 bg-background border border-border rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/50"
+                              placeholder="Nombre del Rep. Legal"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Cédula / Documento</label>
+                            <input
+                              {...register('rep_legal_document')}
+                              className="w-full px-4 py-2 bg-background border border-border rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500/50"
+                              placeholder="Ej. C.C. 1.234.567.890"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Firma Digital</label>
+                            <div className="flex items-center gap-4">
+                              <div className="size-24 bg-background border-2 border-dashed border-border rounded-xl flex items-center justify-center overflow-hidden">
+                                {org?.settings?.rep_legal_signature ? (
+                                  <img src={org.settings.rep_legal_signature} className="w-full h-full object-contain p-2" alt="Firma Rep" />
+                                ) : (
+                                  <span className="text-[9px] font-black text-slate-300 uppercase">Sin Firma</span>
+                                )}
+                              </div>
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file && org) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = async () => {
+                                        const base64 = reader.result as string;
+                                        await db.organizations.update(org.id, {
+                                          settings: { ...org.settings, rep_legal_signature: base64 }
+                                        });
+                                        toast.success('Firma de Rep. Legal cargada');
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                                <div className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
+                                  Cargar
+                                </div>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contador Section */}
+                      <div className="space-y-4 p-5 bg-muted/20 rounded-2xl border border-border">
+                        <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                          <Info size={12} /> Contador Público
+                        </h4>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Nombre Completo</label>
+                            <input
+                              {...register('contador_name')}
+                              className="w-full px-4 py-2 bg-background border border-border rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/50"
+                              placeholder="Nombre del Contador"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Tarjeta Profesional (TP)</label>
+                            <input
+                              {...register('contador_tp')}
+                              className="w-full px-4 py-2 bg-background border border-border rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500/50"
+                              placeholder="Ej. T.P. 123456-T"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Firma Digital</label>
+                            <div className="flex items-center gap-4">
+                              <div className="size-24 bg-background border-2 border-dashed border-border rounded-xl flex items-center justify-center overflow-hidden">
+                                {org?.settings?.contador_signature ? (
+                                  <img src={org.settings.contador_signature} className="w-full h-full object-contain p-2" alt="Firma Contador" />
+                                ) : (
+                                  <span className="text-[9px] font-black text-slate-300 uppercase">Sin Firma</span>
+                                )}
+                              </div>
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file && org) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = async () => {
+                                        const base64 = reader.result as string;
+                                        await db.organizations.update(org.id, {
+                                          settings: { ...org.settings, contador_signature: base64 }
+                                        });
+                                        toast.success('Firma de Contador cargada');
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                                <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">
+                                  Cargar
+                                </div>
+                              </label>
+                            </div>
                           </div>
                         </div>
                       </div>

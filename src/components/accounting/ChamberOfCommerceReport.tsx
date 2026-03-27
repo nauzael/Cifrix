@@ -83,8 +83,8 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
     // 2. Logo (si existe)
     if (organization.settings?.logo_url) {
       try {
-        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 60, 60, undefined, 'FAST');
-        y += 70;
+        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 85, 85, undefined, 'FAST');
+        y += 95;
       } catch (e) {
         console.error('Error adding logo to PDF:', e);
         y += 10;
@@ -93,24 +93,22 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
 
     // 3. Encabezado Estilo Cifrix (Igual a Balance General)
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.setTextColor(30, 41, 59); // Slate-800
     doc.text(organization.name.toUpperCase(), margin, y);
-    y += 22;
+    y += 20;
 
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setTextColor(71, 85, 105); // Slate-600
     doc.text('INFORMACIÓN FINANCIERA PARA CORTE RUES', margin, y);
-    y += 18;
+    y += 16;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139); // Slate-500
     doc.text(`NIT: ${organization.tax_id || 'N/A'}`, margin, y);
     y += 14;
-    doc.text(`Período Fiscal Renovado: Año ${year}`, margin, y);
-    y += 14;
-    doc.text(`Generado el ${generatedAt}`, margin, y);
+    doc.text(`Período: De 1 de enero a 31 de diciembre de ${year}`, margin, y);
     y += 30;
 
     // 4. Tabla de Estado de Situación Financiera
@@ -132,10 +130,10 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
         fillColor: [37, 99, 235], // Blue-600 (Igual al Balance)
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 10
+        fontSize: 9
       },
       bodyStyles: {
-        fontSize: 9,
+        fontSize: 8,
         textColor: [51, 65, 85] // Slate-700
       },
       columnStyles: {
@@ -175,10 +173,10 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
         fillColor: [79, 70, 229], // Indigo-600 (Diferenciador Resultados)
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 10
+        fontSize: 9
       },
       bodyStyles: {
-        fontSize: 9,
+        fontSize: 8,
         textColor: [51, 65, 85]
       },
       columnStyles: {
@@ -194,6 +192,46 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
       },
       margin: { left: margin, right: margin }
     });
+
+    y = (doc as any).lastAutoTable.finalY + 60;
+
+    // --- SECCIÓN DE FIRMAS ---
+    const shadowY = y;
+    const sigLineContentWidth = 180;
+    
+    doc.setDrawColor(200);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, margin + sigLineContentWidth, y);
+    doc.line(pageWidth - margin - sigLineContentWidth, y, pageWidth - margin, y);
+    
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 41, 59);
+    doc.text('REPRESENTANTE LEGAL', margin, y);
+    doc.text('CONTADOR PÚBLICO', pageWidth - margin - sigLineContentWidth, y);
+    
+    y += 14;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    doc.text(organization?.settings?.rep_legal_name || '________________________', margin, y);
+    doc.text(organization?.settings?.contador_name || '________________________', pageWidth - margin - sigLineContentWidth, y);
+    
+    y += 12;
+    doc.text(organization?.settings?.rep_legal_document || 'C.C. ___________________', margin, y);
+    doc.text(organization?.settings?.contador_tp || 'T.P. ___________________', pageWidth - margin - sigLineContentWidth, y);
+
+    if (organization?.settings?.rep_legal_signature) {
+      try {
+        doc.addImage(organization.settings.rep_legal_signature, 'PNG', margin + 10, shadowY - 45, 100, 40);
+      } catch (e) {}
+    }
+    if (organization?.settings?.contador_signature) {
+      try {
+        doc.addImage(organization.settings.contador_signature, 'PNG', pageWidth - margin - sigLineContentWidth + 10, shadowY - 45, 100, 40);
+      } catch (e) {}
+    }
 
     // 6. Pie de Página y Numeración
     const totalPages = (doc as any).internal.getNumberOfPages();
