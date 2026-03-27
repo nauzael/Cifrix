@@ -416,7 +416,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     
     y += 12;
     doc.text(organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.', margin, y);
-    doc.text(organization?.settings?.contador_tp ? `T.P. ${organization.settings.contador_tp}` : 'T.P.', pageWidth - margin - sigLineContentWidth, y);
+    doc.text(organization?.settings?.contador_tp || '', pageWidth - margin - sigLineContentWidth, y);
 
     // Imágenes de firmas (si existen en settings)
     if (organization?.settings?.rep_legal_signature) {
@@ -972,7 +972,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
               <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto flex flex-col items-center">
                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Contador Público</p>
                 <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.contador_name || ''}</p>
-                <p className="text-xs text-slate-500">{organization?.settings?.contador_tp ? `T.P. ${organization.settings.contador_tp}` : 'T.P.'}</p>
+                <p className="text-xs text-slate-500">{organization?.settings?.contador_tp || ''}</p>
               </div>
             </div>
           </div>

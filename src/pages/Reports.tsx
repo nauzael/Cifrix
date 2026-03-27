@@ -299,7 +299,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div>
@@ -349,7 +349,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div>
@@ -403,7 +403,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div></div></body></html>`;
@@ -449,7 +449,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div>
@@ -542,7 +542,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
@@ -587,7 +587,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
@@ -641,7 +641,7 @@ ${equityRows}
     <div class="border-t border-slate-400 pt-4 px-8">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P.'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;

@@ -220,7 +220,7 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
     
     y += 12;
     doc.text(organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.', margin, y);
-    doc.text(organization?.settings?.contador_tp ? `T.P. ${organization.settings.contador_tp}` : 'T.P.', pageWidth - margin - sigLineContentWidth, y);
+    doc.text(organization?.settings?.contador_tp || '', pageWidth - margin - sigLineContentWidth, y);
 
     if (organization?.settings?.rep_legal_signature) {
       try {
