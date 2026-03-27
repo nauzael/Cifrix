@@ -32,13 +32,15 @@ export function Ledger({ organizationId }: LedgerProps) {
 
       const txIds = entries.map(e => e.transaction_id);
       
-      // Fetch both transactions and invoices (since invoices act as transactions for sales)
+      // Fetch both transactions and invoices (filtered by organizationId for safety)
       const transactions = await db.transactions
-        .where('id').anyOf(txIds)
+        .where('organization_id').equals(organizationId)
+        .and(t => txIds.includes(t.id))
         .toArray();
         
       const invoices = await db.invoices
-        .where('id').anyOf(txIds)
+        .where('organization_id').equals(organizationId)
+        .and(i => txIds.includes(i.id))
         .toArray();
 
       // Normalize invoices to transaction structure
@@ -69,7 +71,7 @@ export function Ledger({ organizationId }: LedgerProps) {
         }))
         .sort((a, b) => a.transaction.date.localeCompare(b.transaction.date));
     },
-    [selectedAccount, dateRange]
+    [selectedAccount, dateRange, organizationId]
   );
 
   const calculateRunningBalance = () => {

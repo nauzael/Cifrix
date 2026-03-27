@@ -28,10 +28,18 @@ export function BankReconciliation({ organizationId }: BankReconciliationProps) 
     [organizationId]
   );
 
-  const bookEntries = useLiveQuery(
-    () => selectedAccount ? db.journal_entries.where('account_id').equals(selectedAccount).toArray() : [],
-    [selectedAccount]
-  );
+  const bookEntries = useLiveQuery(async () => {
+    if (!selectedAccount) return [];
+    
+    // Get organization's transactions first to ensure isolation
+    const txs = await db.transactions.where('organization_id').equals(organizationId).toArray();
+    const txIds = txs.map(t => t.id);
+    
+    return db.journal_entries
+        .where('account_id').equals(selectedAccount)
+        .filter(e => txIds.includes(e.transaction_id))
+        .toArray();
+  }, [selectedAccount, organizationId]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

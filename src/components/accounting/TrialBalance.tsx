@@ -9,7 +9,11 @@ interface TrialBalanceProps {
 
 export function TrialBalance({ organizationId }: TrialBalanceProps) {
   const accounts = useLiveQuery(() => db.accounts.where('organization_id').equals(organizationId).toArray(), [organizationId]);
-  const journalEntries = useLiveQuery(() => db.journal_entries.toArray());
+  const journalEntries = useLiveQuery(async () => {
+    const txs = await db.transactions.where('organization_id').equals(organizationId).toArray();
+    const txIds = txs.map(t => t.id);
+    return db.journal_entries.where('transaction_id').anyOf(txIds).toArray();
+  }, [organizationId]);
 
   if (!accounts || !journalEntries) return <div className="p-8 text-center text-slate-500">Cargando balance...</div>;
 
