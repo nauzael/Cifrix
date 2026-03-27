@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from '../store/toastStore';
 import { createPortal } from 'react-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -17,7 +17,8 @@ import {
   Heart,
   ClipboardCheck,
   Table,
-  Loader2
+  Loader2,
+  Calendar
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { useAuthStore } from '../store/authStore';
@@ -26,6 +27,7 @@ export function Reports() {
   const [org, setOrg] = useState<Organization | null>(null);
   const [orgId, setOrgId] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [stats, setStats] = useState({
     incomeYTD: 0,
     expenseYTD: 0,
@@ -55,27 +57,44 @@ export function Reports() {
   }, []);
 
   const journalEntries = useLiveQuery(
-    () => orgId ? db.journal_entries.toArray() : [],
+    async () => {
+      if (!orgId) return [];
+      const txs = await db.transactions.where('organization_id').equals(orgId).toArray();
+      const txIds = txs.map(t => t.id);
+      const entries = await db.journal_entries.where('transaction_id').anyOf(txIds).toArray();
+      const txMap = new Map(txs.map(t => [t.id, t.date]));
+      return entries.map(e => ({ ...e, date: txMap.get(e.transaction_id) }));
+    },
     [orgId]
   );
 
   const accounts = useLiveQuery(
-    () => orgId ? db.accounts.toArray() : [],
+    () => orgId ? db.accounts.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
   const transactions = useLiveQuery(
-    () => orgId ? db.transactions.toArray() : [],
+    () => orgId ? db.transactions.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
+  // Derivar años disponibles
+  const availableYears = useMemo(() => {
+    if (!journalEntries || journalEntries.length === 0) return [new Date().getFullYear()];
+    const years = journalEntries
+      .map(e => e.date ? new Date(e.date).getFullYear() : 0)
+      .filter(y => y > 0);
+    const uniqueYears = Array.from(new Set(years)).sort((a, b) => b - a);
+    return uniqueYears.length > 0 ? uniqueYears : [new Date().getFullYear()];
+  }, [journalEntries]);
+
   const contributions = useLiveQuery(
-    () => orgId ? db.contributions.toArray() : [],
+    () => orgId ? db.contributions.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
   const members = useLiveQuery(
-    () => orgId ? db.members.toArray() : [],
+    () => orgId ? db.members.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
@@ -90,10 +109,13 @@ export function Reports() {
       const detailAccounts = accounts.filter(a => a.accepts_movement);
 
       journalEntries.forEach(entry => {
+        if (!entry.date) return;
+        const entryYear = new Date(entry.date).getFullYear();
+        if (entryYear !== selectedYear) return;
+
         const account = detailAccounts.find(a => a.id === entry.account_id);
         if (account) {
-          if (account.type === 'INGRESO') income += entry.credit;
-          if (account.type === 'EGRESO') income -= entry.debit; // Correcting: Income is Credit - Debit
+          if (account.type === 'INGRESO') income += (entry.credit - entry.debit);
           if (account.type === 'EGRESO') expense += (entry.debit - entry.credit);
         }
       });
@@ -195,7 +217,17 @@ body {
 </style>
 `;
     const calcBalance = (accId: string, nature: 'DEBITO' | 'CREDITO') => {
-      const entries = journalEntries?.filter(e => e.account_id === accId) || [];
+      const acc = (accounts || []).find(a => a.id === accId);
+      if (!acc) return 0;
+      const entries = (journalEntries || []).filter(e => {
+        if (!e.date || e.account_id !== accId) return false;
+        const entryYear = new Date(e.date).getFullYear();
+        if (['INGRESO', 'EGRESO'].includes(acc.type)) {
+          return entryYear === selectedYear;
+        } else {
+          return entryYear <= selectedYear;
+        }
+      });
       const totalDebit = entries.reduce((s, e) => s + e.debit, 0);
       const totalCredit = entries.reduce((s, e) => s + e.credit, 0);
       return nature === 'DEBITO' ? (totalDebit - totalCredit) : (totalCredit - totalDebit);
@@ -255,7 +287,7 @@ body {
 <div class="text-right">
   <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
   <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
-  <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+  <p class="text-slate-600 text-sm font-bold">A 31 de diciembre de ${selectedYear}</p>
 </div>
 </header>
 <div class="mb-10">
@@ -330,7 +362,7 @@ ${equityRows}
   <div class="text-right">
     <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
     <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
-    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${selectedYear}</p>
   </div>
 </header>
 <div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen del Periodo</h3><div class="grid grid-cols-3 gap-4"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Ingresos</p><p class="text-lg font-black text-emerald-600">$ ${formatCurrency(totalInc)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Gastos</p><p class="text-lg font-black text-red-600">$ ${formatCurrency(totalExp)}</p></div><div class="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Resultado del Ejercicio</p><p class="text-lg font-black text-blue-600">$ ${formatCurrency(net)}</p></div></div></div>
@@ -358,12 +390,15 @@ ${equityRows}
     }
     if (title === 'Flujo de Caja') {
       const cashAccs = (accounts || []).filter(a => a.accepts_movement && (a.name.toLowerCase().includes('caja') || a.name.toLowerCase().includes('banco') || a.code.startsWith('11')));
-      const cashEntries = (journalEntries || []).filter(e => cashAccs.some(a => a.id === e.account_id));
+      const cashEntries = (journalEntries || []).filter(e => {
+        if (!e.date) return false;
+        const entryYear = new Date(e.date).getFullYear();
+        return entryYear === selectedYear && cashAccs.some(a => a.id === e.account_id);
+      });
       const monthly = new Map<string, { in: number; out: number }>();
       cashEntries.forEach(e => {
-        const tx = transactions?.find(t => t.id === e.transaction_id);
-        if (!tx) return;
-        const monthKey = tx.date.substring(0, 7);
+        if (!e.date) return;
+        const monthKey = e.date.substring(0, 7);
         if (!monthly.has(monthKey)) monthly.set(monthKey, { in: 0, out: 0 });
         const m = monthly.get(monthKey)!;
         m.in += e.debit;
@@ -409,11 +444,15 @@ ${equityRows}
 </div></div></body></html>`;
     }
     if (title === 'Diezmos y Ofrendas') {
-      const diezmos = (contributions || []).filter(c => c.category === 'DIEZMO').reduce((s, c) => s + c.amount, 0);
-      const ofrendas = (contributions || []).filter(c => c.category === 'OFRENDA').reduce((s, c) => s + c.amount, 0);
-      const especiales = (contributions || []).filter(c => c.category === 'ESPECIAL').reduce((s, c) => s + c.amount, 0);
+      const filteredContribs = (contributions || []).filter(c => {
+        if (!c.date) return false;
+        return new Date(c.date).getFullYear() === selectedYear;
+      });
+      const diezmos = filteredContribs.filter(c => c.category === 'DIEZMO').reduce((s, c) => s + c.amount, 0);
+      const ofrendas = filteredContribs.filter(c => c.category === 'OFRENDA').reduce((s, c) => s + c.amount, 0);
+      const especiales = filteredContribs.filter(c => c.category === 'ESPECIAL').reduce((s, c) => s + c.amount, 0);
       const total = diezmos + ofrendas + especiales;
-      const rows = (contributions || []).map(c => {
+      const rows = filteredContribs.map(c => {
         const m = members?.find(x => x.id === c.member_id);
         return `<tr class="text-sm"><td class="px-4 py-2">${formatDate(c.date)}</td><td class="px-4 py-2">${m?.full_name || 'Anónimo'}</td><td class="px-4 py-2">${c.category === 'DIEZMO' ? 'Diezmo' : c.category === 'OFRENDA' ? 'Ofrenda' : 'Especial'}</td><td class="px-4 py-2">${c.method}</td><td class="px-4 py-2 text-right font-bold">$ ${formatCurrency(c.amount)}</td></tr>`;
       }).join('');
@@ -431,7 +470,7 @@ ${equityRows}
   <div class="text-right">
     <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
     <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
-    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${selectedYear}</p>
   </div>
 </header>
 <div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Recaudación</h3><div class="grid grid-cols-4 gap-4"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Diezmos</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(diezmos)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Ofrendas</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(ofrendas)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Proyectos Esp.</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(especiales)}</p></div><div class="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Gran Total</p><p class="text-lg font-black text-blue-600">$ ${formatCurrency(total)}</p></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Contribuyentes</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th>Fecha</th><th>Miembro</th><th>Categoría</th><th>Método</th><th class="text-right">Monto</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 uppercase tracking-wider" colspan="4">Subtotal Reportado</td><td class="px-4 py-4 text-lg font-black text-blue-600 text-right">$ ${formatCurrency(total)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">* Este listado corresponde al periodo seleccionado.</p></div>
