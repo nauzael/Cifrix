@@ -12,9 +12,12 @@ import {
   TrendingUp, 
   Wallet,
   ShieldAlert,
-  Calendar
+  Calendar,
+  FileDown
 } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ChamberOfCommerceReportProps {
   organizationId: string;
@@ -57,6 +60,104 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
     navigator.clipboard.writeText(allText);
     setCopiedField('all');
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleDownloadPdf = () => {
+    if (!data || !organization) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Estilos de cabecera
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    const today = new Date();
+    doc.text(`Generado el: ${today.toLocaleDateString()} ${today.toLocaleTimeString()}`, pageWidth - 14, 15, { align: 'right' });
+
+    doc.setFontSize(16);
+    doc.setTextColor(30);
+    doc.setFont('helvetica', 'bold');
+    doc.text(organization.name.toUpperCase(), 14, 20);
+
+    doc.setFontSize(12);
+    doc.setTextColor(80);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`NIT: ${organization.tax_id || 'N/A'}`, 14, 26);
+
+    doc.setFontSize(14);
+    doc.setTextColor(40);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`INFORMACIÓN FINANCIERA PARA RENOVACIÓN RUES`, 14, 38);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(60);
+    doc.text(`PERÍODO FISCAL: ${year}`, 14, 44);
+
+    // Tabla de Estado de Situación Financiera
+    (autoTable as any)(doc, {
+      startY: 52,
+      head: [['ESTADO DE SITUACIÓN FINANCIERA', 'VALOR ($)']],
+      body: [
+        ['Activo Corriente', formatCurrency(data.activoCorriente)],
+        ['Activo No Corriente', formatCurrency(data.activoNoCorriente)],
+        ['Activo Total', formatCurrency(data.activoTotal)],
+        ['Pasivo Corriente', formatCurrency(data.pasivoCorriente)],
+        ['Pasivo No Corriente', formatCurrency(data.pasivoNoCorriente)],
+        ['Pasivo Total', formatCurrency(data.pasivoTotal)],
+        ['Patrimonio Neto', formatCurrency(data.patrimonioNeto)],
+        ['Pasivo + Patrimonio', formatCurrency(data.pasivoPatrimonio)],
+      ],
+      headStyles: { fillColor: [79, 70, 229] }, // Color Índigo acorde a la app
+      columnStyles: {
+        0: { fontStyle: 'bold' },
+        1: { halign: 'right', fontStyle: 'bold' }
+      },
+      didParseCell: function(data: any) {
+        if (data.row && data.row.raw && (data.row.raw[0] === 'Activo Total' || data.row.raw[0] === 'Patrimonio Neto' || data.row.raw[0] === 'Pasivo + Patrimonio')) {
+             data.cell.styles.fillColor = [240, 240, 250];
+             data.cell.styles.textColor = [50, 50, 150];
+        }
+      }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 15;
+
+    // Tabla de Estado de Resultados
+    (autoTable as any)(doc, {
+      startY: finalY,
+      head: [['ESTADO DE RESULTADOS', 'VALOR ($)']],
+      body: [
+        ['Ingresos Actividad Ordinaria', formatCurrency(data.ingresosOrdinarios)],
+        ['Otros Ingresos', formatCurrency(data.otrosIngresos)],
+        ['Ingresos Totales', formatCurrency(data.ingresosTotales)],
+        ['Costo de Ventas', formatCurrency(data.costoVentas)],
+        ['Gastos de Administración', formatCurrency(data.gastosAdmin)],
+        ['Gastos de Ventas', formatCurrency(data.gastosVenta)],
+        ['Otros Gastos', formatCurrency(data.otrosGastos)],
+        ['Gastos Financieros', formatCurrency(data.gastosFinancieros)],
+        ['Utilidad Operacional', formatCurrency(data.utilidadOperacional)],
+        ['Utilidad/Pérdida Neta', formatCurrency(data.utilidadNeta)],
+      ],
+      headStyles: { fillColor: [79, 70, 229] },
+      columnStyles: {
+        0: { fontStyle: 'bold' },
+        1: { halign: 'right', fontStyle: 'bold' }
+      },
+      didParseCell: function(data: any) {
+        if (data.row && data.row.raw && (data.row.raw[0] === 'Ingresos Totales' || data.row.raw[0] === 'Utilidad Operacional' || data.row.raw[0] === 'Utilidad/Pérdida Neta')) {
+             data.cell.styles.fillColor = [240, 240, 250];
+             data.cell.styles.textColor = [50, 50, 150];
+        }
+      }
+    });
+
+    const newFinalY = (doc as any).lastAutoTable.finalY + 20;
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Reporte generado por Cifrix Contable - Los valores presentados deben verificarse con el soporte contable.`, pageWidth / 2, newFinalY, { align: 'center' });
+
+    doc.save(`RUES_${organization.name.replace(/[^a-zA-Z0-9]/g, '_')}_${year}.pdf`);
   };
 
   if (loading) {
@@ -117,7 +218,7 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
             <Calendar className="w-4 h-4 text-slate-400" />
             <select 
@@ -134,10 +235,18 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
           
           <button 
             onClick={handleCopyAll}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium shadow-sm active:scale-95"
           >
-            {copiedField === 'all' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copiedField === 'all' ? 'Copiado' : 'Copiar Todo'}
+            {copiedField === 'all' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+            <span className="hidden sm:inline">{copiedField === 'all' ? 'Copiado' : 'Copiar'}</span>
+          </button>
+          
+          <button 
+            onClick={handleDownloadPdf}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm active:scale-95 whitespace-nowrap"
+          >
+            <FileDown className="w-4 h-4" />
+            Descargar PDF
           </button>
         </div>
       </div>
