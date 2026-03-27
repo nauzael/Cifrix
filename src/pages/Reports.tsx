@@ -143,16 +143,16 @@ html, body {
   color-adjust: exact !important;
 }
 body { 
-  background: #ffffff; 
+  background: #ffffff !important; 
   margin: 0;
   padding: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 .pdf-container { 
   width: 100%;
-  max-width: 8in;
+  max-width: 8.5in;
   margin: 0 auto; 
-  background: #ffffff;
+  background: #ffffff !important;
   position: relative;
 }
 @media print {
@@ -171,41 +171,26 @@ body {
     border-collapse: collapse !important;
     page-break-inside: auto; 
   }
-  thead { display: table-header-group !important; }
-  tfoot { display: table-footer-group !important; }
-  tr { page-break-inside: avoid !important; page-break-after: auto !important; }
-  
-  /* Repeating header for tables */
-  .table-header {
-    background-color: #f8fafc !important;
-    -webkit-print-color-adjust: exact;
-  }
 }
 
-/* Custom Table Styling for Reports */
-.report-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+/* Tipografía estándar solicitada: 8pt para tablas */
+.report-table th, table th {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  font-size: 8pt !important;
+  padding: 8px 12px !important;
+  border-bottom: 2px solid #e2e8f0 !important;
 }
-.report-table th {
-  background-color: #f1f5f9;
-  color: #475569;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  padding: 12px 16px;
-  border-bottom: 2px solid #e2e8f0;
+.report-table td, table td {
+  padding: 6px 12px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  font-size: 8pt !important;
+  color: #334155 !important;
 }
-.report-table td {
-  padding: 10px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 12px;
-  color: #334155;
-}
-.report-table tr:nth-child(even) {
-  background-color: #f8fafc;
+.report-table tr:nth-child(even), table tr:nth-child(even) {
+  background-color: #f8fafc !important;
 }
 </style>
 `;
@@ -259,11 +244,19 @@ body {
 </div>
 <div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200">
 <header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
-<div class="flex items-center gap-4">
-  ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="size-20 object-contain" />` : `<div class="size-14 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
-  <div><h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p><p class="text-slate-400 text-xs">${address}${phone ? ' • ' + phone : ''}${email ? ' • ' + email : ''}</p></div>
+<div class="flex items-center gap-6">
+  ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-20 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+  <div>
+    <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1>
+    <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
+    <p class="text-slate-400 text-[10px] mt-0.5">${address}${phone ? ' • ' + phone : ''}${email ? ' • ' + email : ''}</p>
+  </div>
 </div>
-<div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div><h2 class="text-xl font-bold text-slate-900">Balance General</h2><p class="text-slate-500 text-sm">A corte de: ${nowDate}</p><p class="text-slate-400 text-xs mt-1 italic">Generado el ${nowDate} ${nowTime}</p></div>
+<div class="text-right">
+  <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
+  <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
+  <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+</div>
 </header>
 <div class="mb-10">
 <h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Estado de Situación Financiera</h3>
@@ -292,7 +285,24 @@ ${equityRows}
 <p class="mt-4 text-[10px] text-slate-400 italic">* Este balance ha sido generado automáticamente de acuerdo a los principios de contabilidad generalmente aceptados.</p>
 </div>
 
-<div class="grid grid-cols-2 gap-20 pt-10"><div class="text-center"><div class="border-t border-slate-400 pt-4 px-8"><p class="text-sm font-black text-slate-900 uppercase">Tesorero General</p><p class="text-xs text-slate-500 mt-1">Nombre: ________________________</p><p class="text-xs text-slate-500">C.C. ___________________________</p></div></div><div class="text-center"><div class="border-t border-slate-400 pt-4 px-8"><p class="text-sm font-black text-slate-900 uppercase">Contador Público</p><p class="text-xs text-slate-500 mt-1">Nombre: ________________________</p><p class="text-xs text-slate-500">T.P. ___________________________</p></div></div></div>
+<div class="grid grid-cols-2 gap-20 pt-10">
+  <div class="text-center relative">
+    ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C. ___________________'}</p>
+    </div>
+  </div>
+  <div class="text-center relative">
+    ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P. ___________________'}</p>
+    </div>
+  </div>
+</div>
 <footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Código Interno: BG-${new Date().getFullYear()}</div><div>Cifrix Contable</div></footer>
 </div></body></html>`;
     }
@@ -305,18 +315,46 @@ ${equityRows}
       const incRows = incAccs.map(a => `<tr class="text-sm"><td class="px-4 py-2 pl-8 text-slate-600">${a.code}. ${a.name}</td><td class="px-4 py-2 text-right text-slate-500">$ ${formatCurrency(a.balance)}</td><td class="px-4 py-2 text-right"></td></tr>`).join('');
       const expRows = expAccs.map(a => `<tr class="text-sm"><td class="px-4 py-2 pl-8 text-slate-600">${a.code}. ${a.name}</td><td class="px-4 py-2 text-right text-slate-500">$ ${formatCurrency(a.balance)}</td><td class="px-4 py-2 text-right"></td></tr>`).join('');
       return `
-<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Estado de Resultados</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10">
+<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Estado de Resultados</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10">
 <div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div>
 <div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200">
 <header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
-  <div class="flex items-center gap-4">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="size-20 object-contain" />` : `<div class="size-14 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
-    <div><h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p><p class="text-slate-400 text-xs">${address}${phone ? ' • ' + phone : ''}${email ? ' • ' + email : ''}</p></div>
+  <div class="flex items-center gap-6">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-20 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div>
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
+      <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
+      <p class="text-slate-400 text-[10px] mt-0.5">${address}</p>
+    </div>
   </div>
-  <div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Financiero</div><h2 class="text-xl font-bold text-slate-900 uppercase">Estado de Resultados</h2><p class="text-slate-500 text-sm">Periodo: ${nowDate}</p><p class="text-slate-400 text-xs mt-1 italic">Generado el ${nowDate} ${nowTime}</p></div>
+  <div class="text-right">
+    <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
+    <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+  </div>
 </header>
 <div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen del Periodo</h3><div class="grid grid-cols-3 gap-4"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Ingresos</p><p class="text-lg font-black text-emerald-600">$ ${formatCurrency(totalInc)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Gastos</p><p class="text-lg font-black text-red-600">$ ${formatCurrency(totalExp)}</p></div><div class="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Resultado del Ejercicio</p><p class="text-lg font-black text-blue-600">$ ${formatCurrency(net)}</p></div></div></div>
-<div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Cuentas</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase w-1/2">Descripción de la Cuenta</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Parcial</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Total</th></tr></thead><tbody class="divide-y divide-slate-100"><tr class="bg-slate-50/50"><td class="px-4 py-2 font-black text-xs text-blue-600 uppercase" colspan="3">INGRESOS</td></tr>${incRows}<tr class="text-sm font-bold border-t border-slate-100"><td class="px-4 py-3 text-slate-900">TOTAL INGRESOS OPERACIONALES</td><td class="px-4 py-3 text-right"></td><td class="px-4 py-3 text-right text-emerald-600">$ ${formatCurrency(totalInc)}</td></tr><tr class="bg-slate-50/50"><td class="px-4 py-2 font-black text-xs text-red-500 uppercase" colspan="3">GASTOS</td></tr>${expRows}<tr class="text-sm font-bold border-t border-slate-100"><td class="px-4 py-3 text-slate-900">TOTAL GASTOS OPERACIONALES</td><td class="px-4 py-3 text-right"></td><td class="px-4 py-3 text-right text-red-600">$ ${formatCurrency(totalExp)}</td></tr></tbody><tfoot class="bg-blue-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 uppercase tracking-wider">Resultado del Ejercicio (Excedente/Déficit)</td><td class="px-4 py-4 text-right"></td><td class="px-4 py-4 text-xl font-black text-blue-600 text-right">$ ${formatCurrency(net)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">* Reporte consolidado basado en los registros del libro mayor auxiliar.</p></div></div></body></html>`;
+<div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Cuentas</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="w-1/2">Descripción de la Cuenta</th><th class="text-right">Parcial</th><th class="text-right">Total</th></tr></thead><tbody class="divide-y divide-slate-100"><tr class="bg-slate-50/50"><td class="px-4 py-2 font-black text-xs text-blue-600 uppercase" colspan="3">INGRESOS</td></tr>${incRows}<tr class="text-sm font-bold border-t border-slate-100"><td class="px-4 py-3 text-slate-900">TOTAL INGRESOS OPERACIONALES</td><td class="px-4 py-3 text-right"></td><td class="px-4 py-3 text-right text-emerald-600">$ ${formatCurrency(totalInc)}</td></tr><tr class="bg-slate-50/50"><td class="px-4 py-2 font-black text-xs text-red-500 uppercase" colspan="3">GASTOS</td></tr>${expRows}<tr class="text-sm font-bold border-t border-slate-100"><td class="px-4 py-3 text-slate-900">TOTAL GASTOS OPERACIONALES</td><td class="px-4 py-3 text-right"></td><td class="px-4 py-3 text-right text-red-600">$ ${formatCurrency(totalExp)}</td></tr></tbody><tfoot class="bg-blue-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 uppercase tracking-wider">Resultado del Ejercicio (Excedente/Déficit)</td><td class="px-4 py-4 text-right"></td><td class="px-4 py-4 text-lg font-black text-blue-600 text-right">$ ${formatCurrency(net)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">* Reporte consolidado basado en los registros del libro mayor auxiliar.</p></div>
+<div class="grid grid-cols-2 gap-20 pt-10">
+  <div class="text-center relative">
+    ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C. ___________________'}</p>
+    </div>
+  </div>
+  <div class="text-center relative">
+    ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P. ___________________'}</p>
+    </div>
+  </div>
+</div>
+<footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Código Interno: ER-${new Date().getFullYear()}</div><div>Cifrix Contable</div></footer>
+</div></body></html>`;
     }
     if (title === 'Flujo de Caja') {
       const cashAccs = (accounts || []).filter(a => a.accepts_movement && (a.name.toLowerCase().includes('caja') || a.name.toLowerCase().includes('banco') || a.code.startsWith('11')));
@@ -337,13 +375,38 @@ ${equityRows}
       const totalOut = sorted.reduce((s, [, v]) => s + v.out, 0);
       const net = totalIn - totalOut;
       return `
-<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Flujo de Caja</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/></head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
-  <div class="flex items-center gap-4">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="size-16 object-contain" />` : ''}
-    <div><h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p></div>
+<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Flujo de Caja</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
+  <div class="flex items-center gap-6">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-20 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div>
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
+      <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
+      <p class="text-slate-400 text-[10px] mt-0.5">${address}</p>
+    </div>
   </div>
-  <div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Estado Financiero</div><h2 class="text-xl font-bold text-slate-900">Flujo de Caja</h2><p class="text-slate-500 text-sm">Periodo: ${nowDate}</p><p class="text-slate-400 text-[10px] mt-1 italic uppercase">Generado el ${nowDate} ${nowTime}</p></div>
-</header><div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Liquidez</h3><div class="grid grid-cols-3 gap-4"><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Entradas</p><p class="text-xl font-black text-emerald-600">$ ${formatCurrency(totalIn)}</p></div><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Salidas</p><p class="text-xl font-black text-red-600">$ ${formatCurrency(totalOut)}</p></div><div class="bg-blue-600/5 p-5 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Saldo Neto</p><p class="text-xl font-black text-blue-600">$ ${formatCurrency(net)}</p></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Actividades</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase">Periodo</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Ingresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Egresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Saldo Neto</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-900 text-white"><tr><td class="px-6 py-4 text-sm font-black uppercase tracking-wider">Totales</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalIn)}</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalOut)}</td><td class="px-6 py-4 text-lg font-black text-right bg-white text-blue-600">$ ${formatCurrency(net)}</td></tr></tfoot></table></div></div></div></body></html>`;
+  <div class="text-right">
+    <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
+    <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+  </div>
+</header><div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Liquidez</h3><div class="grid grid-cols-3 gap-4"><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Entradas</p><p class="text-xl font-black text-emerald-600">$ ${formatCurrency(totalIn)}</p></div><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Salidas</p><p class="text-xl font-black text-red-600">$ ${formatCurrency(totalOut)}</p></div><div class="bg-blue-600/5 p-5 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Saldo Neto</p><p class="text-xl font-black text-blue-600">$ ${formatCurrency(net)}</p></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Actividades</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase">Periodo</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Ingresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Egresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Saldo Neto</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-900 text-white"><tr><td class="px-6 py-4 text-sm font-black uppercase tracking-wider">Totales</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalIn)}</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalOut)}</td><td class="px-6 py-4 text-lg font-black text-right bg-white text-blue-600">$ ${formatCurrency(net)}</td></tr></tfoot></table></div></div><div class="grid grid-cols-2 gap-20 pt-10">
+  <div class="text-center relative">
+    ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C. ___________________'}</p>
+    </div>
+  </div>
+  <div class="text-center relative">
+    ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P. ___________________'}</p>
+    </div>
+  </div>
+</div></div></body></html>`;
     }
     if (title === 'Diezmos y Ofrendas') {
       const diezmos = (contributions || []).filter(c => c.category === 'DIEZMO').reduce((s, c) => s + c.amount, 0);
@@ -355,13 +418,42 @@ ${equityRows}
         return `<tr class="text-sm"><td class="px-4 py-2">${formatDate(c.date)}</td><td class="px-4 py-2">${m?.full_name || 'Anónimo'}</td><td class="px-4 py-2">${c.category === 'DIEZMO' ? 'Diezmo' : c.category === 'OFRENDA' ? 'Ofrenda' : 'Especial'}</td><td class="px-4 py-2">${c.method}</td><td class="px-4 py-2 text-right font-bold">$ ${formatCurrency(c.amount)}</td></tr>`;
       }).join('');
       return `
-<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Diezmos y Ofrendas</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
-  <div class="flex items-center gap-4">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="size-20 object-contain" />` : ''}
-    <div><h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p><p class="text-slate-400 text-xs">${address}</p></div>
+<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Diezmos y Ofrendas</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200">
+<header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
+  <div class="flex items-center gap-6">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-20 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div>
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
+      <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
+      <p class="text-slate-400 text-[10px] mt-0.5">${address}</p>
+    </div>
   </div>
-  <div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div><h2 class="text-xl font-bold text-slate-900">Diezmos y Ofrendas</h2><p class="text-slate-500 text-sm">Periodo: ${nowDate}</p><p class="text-slate-400 text-xs mt-1 italic">Generado el ${nowDate} ${nowTime}</p></div>
-</header><div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Recaudación</h3><div class="grid grid-cols-4 gap-4"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Diezmos</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(diezmos)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Ofrendas</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(ofrendas)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Proyectos Esp.</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(especiales)}</p></div><div class="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Gran Total</p><p class="text-lg font-black text-blue-600">$ ${formatCurrency(total)}</p></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Contribuyentes</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Fecha</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Miembro</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Categoría</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Método</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Monto</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 uppercase tracking-wider" colspan="4">Subtotal Reportado</td><td class="px-4 py-4 text-lg font-black text-blue-600 text-right">$ ${formatCurrency(total)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">* Este listado corresponde al periodo seleccionado.</p></div><div class="grid grid-cols-2 gap-20 pt-10"><div class="text-center"><div class="border-t border-slate-400 pt-4 px-8"><p class="text-sm font-black text-slate-900 uppercase">Tesorero General</p><p class="text-xs text-slate-500 mt-1">Nombre: ________________________</p><p class="text-xs text-slate-500">C.C. ___________________________</p></div></div><div class="text-center"><div class="border-t border-slate-400 pt-4 px-8"><p class="text-sm font-black text-slate-900 uppercase">Revisor Fiscal / Pastor</p><p class="text-xs text-slate-500 mt-1">Nombre: ________________________</p><p class="text-xs text-slate-500">C.C. ___________________________</p></div></div></div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Código Interno: DO-${new Date().getFullYear()}</div><div>Cifrix Contable</div></footer></div></body></html>`;
+  <div class="text-right">
+    <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
+    <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+  </div>
+</header>
+<div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Recaudación</h3><div class="grid grid-cols-4 gap-4"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Diezmos</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(diezmos)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Ofrendas</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(ofrendas)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Proyectos Esp.</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(especiales)}</p></div><div class="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Gran Total</p><p class="text-lg font-black text-blue-600">$ ${formatCurrency(total)}</p></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Contribuyentes</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th>Fecha</th><th>Miembro</th><th>Categoría</th><th>Método</th><th class="text-right">Monto</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 uppercase tracking-wider" colspan="4">Subtotal Reportado</td><td class="px-4 py-4 text-lg font-black text-blue-600 text-right">$ ${formatCurrency(total)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">* Este listado corresponde al periodo seleccionado.</p></div>
+<div class="grid grid-cols-2 gap-20 pt-10">
+  <div class="text-center relative">
+    ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C. ___________________'}</p>
+    </div>
+  </div>
+  <div class="text-center relative">
+    ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P. ___________________'}</p>
+    </div>
+  </div>
+</div>
+<footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Código Interno: DO-${new Date().getFullYear()}</div><div>Cifrix Contable</div></footer></div></body></html>`;
     }
     if (title === 'Certificado de Donación') {
       const sums = new Map<string, number>();
@@ -376,10 +468,33 @@ ${equityRows}
       const ofrendas = (contributions || []).filter(c => c.member_id === member?.id && c.category === 'OFRENDA').reduce((s, c) => s + c.amount, 0);
       const especiales = (contributions || []).filter(c => c.member_id === member?.id && c.category === 'ESPECIAL').reduce((s, c) => s + c.amount, 0);
       return `
-<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Certificado de Donación</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/></head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Descargar Certificado</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-16 border-[12px] border-blue-600/10 relative overflow-hidden"><header class="flex flex-col items-center text-center mb-12">
+<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Certificado de Donación</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Descargar Certificado</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-16 border-[12px] border-blue-600/10 relative overflow-hidden">
+<header class="flex flex-col items-center text-center mb-12">
   ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-24 object-contain mb-6" />` : `<div class="size-24 bg-blue-600 rounded-full flex items-center justify-center text-white mb-6 shadow-xl"><span class="material-symbols-outlined text-6xl">church</span></div>`}
-  <div class="space-y-1"><h1 class="text-3xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1><p class="text-slate-600 font-bold text-base tracking-widest uppercase">NIT: ${taxId}</p><p class="text-slate-400 text-sm">${address}</p></div>
-</header><div class="text-center mb-16"><div class="inline-block border-y-2 border-blue-600/20 py-2 px-12 mb-4"><h2 class="text-4xl font-serif font-black text-slate-900 tracking-tight uppercase">Certificado de Donación</h2></div><p class="text-slate-500 font-medium italic">Expedido para fines tributarios y legales</p></div><div class="text-center mb-12 space-y-6"><p class="text-xl text-slate-800 leading-relaxed max-w-2xl mx-auto">La <span class="font-bold">${orgName}</span> debidamente constituida y reconocida legalmente,</p><h3 class="text-2xl font-black text-blue-600 uppercase tracking-wider">CERTIFICA QUE:</h3><div class="py-4"><p class="text-2xl font-bold text-slate-900 mb-1">${member?.full_name || 'CONTRIBUYENTE'}</p><p class="text-slate-500 text-lg uppercase tracking-widest">Identificación: ${member?.document_id || 'N/A'}</p></div><p class="text-lg text-slate-700 leading-relaxed text-justify px-8">Ha realizado aportes y donaciones voluntarias durante el año gravable ${new Date().getFullYear()}, por un valor total de <span class="font-black text-blue-600 underline underline-offset-4 tracking-tight uppercase">$ ${formatCurrency(total)}</span>.</p></div><div class="mb-12 px-8"><div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden"><div class="bg-blue-600/5 px-4 py-2 border-b border-slate-200"><h4 class="text-xs font-black text-blue-600 uppercase tracking-[0.1em]">Desglose de Aportaciones Anuales</h4></div><table class="w-full text-left text-sm"><thead><tr class="text-slate-400 border-b border-slate-100"><th class="px-6 py-3 font-black uppercase text-[10px]">Concepto</th><th class="px-6 py-3 font-black uppercase text-[10px] text-right">Monto Acumulado</th></tr></thead><tbody class="divide-y divide-slate-100"><tr><td class="px-6 py-3 font-medium text-slate-700">Diezmos Anuales</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(diezmos)}</td></tr><tr><td class="px-6 py-3 font-medium text-slate-700">Ofrendas Especiales</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(ofrendas)}</td></tr><tr><td class="px-6 py-3 font-medium text-slate-700">Donaciones Extraordinarias</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(especiales)}</td></tr></tbody><tfoot class="bg-slate-100"><tr class="font-black"><td class="px-6 py-4 text-slate-900 uppercase tracking-wider">Total Certificado</td><td class="px-6 py-4 text-right text-lg text-blue-600">$ ${formatCurrency(total)}</td></tr></tfoot></table></div></div><div class="grid grid-cols-2 gap-20 pt-16 px-12"><div class="text-center"><div class="h-20 flex items-end justify-center mb-2"><div class="border-b border-slate-300 w-full mb-4"></div></div><p class="text-sm font-black text-slate-900 uppercase">Representante Legal / Pastor Principal</p></div><div class="text-center"><div class="h-20 flex items-end justify-center mb-2"><div class="border-b border-slate-300 w-full mb-4"></div></div><p class="text-sm font-black text-slate-900 uppercase">Tesorera General</p></div></div><footer class="mt-24 pt-8 border-t border-slate-100 flex justify-between items-center text-[9px] text-slate-400 uppercase font-bold tracking-[0.2em]"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">lock</span>Código: CERT-${new Date().getFullYear()}</div><div>Generado por Cifrix</div><div>Página 1 de 1</div></footer></div></body></html>`;
+  <div class="space-y-1">
+    <h1 class="text-3xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1>
+    <p class="text-slate-600 font-bold text-base tracking-widest uppercase">NIT: ${taxId}</p>
+    <p class="text-slate-400 text-sm">${address}</p>
+  </div>
+</header>
+<div class="text-center mb-16"><div class="inline-block border-y-2 border-blue-600/20 py-2 px-12 mb-4"><h2 class="text-4xl font-serif font-black text-slate-900 tracking-tight uppercase">Certificado de Donación</h2></div><p class="text-slate-500 font-medium italic">Expedido para fines tributarios y legales</p></div><div class="text-center mb-12 space-y-6"><p class="text-xl text-slate-800 leading-relaxed max-w-2xl mx-auto">La <span class="font-bold">${orgName}</span> debidamente constituida y reconocida legalmente,</p><h3 class="text-2xl font-black text-blue-600 uppercase tracking-wider">CERTIFICA QUE:</h3><div class="py-4"><p class="text-2xl font-bold text-slate-900 mb-1">${member?.full_name || 'CONTRIBUYENTE'}</p><p class="text-slate-500 text-lg uppercase tracking-widest">Identificación: ${member?.document_id || 'N/A'}</p></div><p class="text-lg text-slate-700 leading-relaxed text-justify px-8">Ha realizado aportes y donaciones voluntarias durante el año gravable ${new Date().getFullYear()}, por un valor total de <span class="font-black text-blue-600 underline underline-offset-4 tracking-tight uppercase">$ ${formatCurrency(total)}</span>.</p></div><div class="mb-12 px-8"><div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden"><div class="bg-blue-600/5 px-4 py-2 border-b border-slate-200"><h4 class="text-xs font-black text-blue-600 uppercase tracking-[0.1em]">Desglose de Aportaciones Anuales</h4></div><table class="w-full text-left text-sm whitespace-nowrap"><thead><tr class="text-slate-400 border-b border-slate-100"><th class="px-6 py-3 font-black uppercase text-[10px]">Concepto</th><th class="px-6 py-3 font-black uppercase text-[10px] text-right">Monto Acumulado</th></tr></thead><tbody class="divide-y divide-slate-100"><tr><td class="px-6 py-3 font-medium text-slate-700">Diezmos Anuales</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(diezmos)}</td></tr><tr><td class="px-6 py-3 font-medium text-slate-700">Ofrendas Especiales</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(ofrendas)}</td></tr><tr><td class="px-6 py-3 font-medium text-slate-700">Donaciones Extraordinarias</td><td class="px-6 py-3 font-bold text-right text-slate-900">$ ${formatCurrency(especiales)}</td></tr></tbody><tfoot class="bg-slate-100"><tr class="font-black"><td class="px-6 py-4 text-slate-900 uppercase tracking-wider">Total Certificado</td><td class="px-6 py-4 text-right text-lg text-blue-600">$ ${formatCurrency(total)}</td></tr></tfoot></table></div></div>
+<div class="grid grid-cols-2 gap-20 pt-16 px-12">
+  <div class="text-center relative">
+    ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4">
+      <p class="text-sm font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || '________________________'}</p>
+    </div>
+  </div>
+  <div class="text-center relative">
+    ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4">
+      <p class="text-sm font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || '________________________'}</p>
+    </div>
+  </div>
+</div>
+<footer class="mt-24 pt-8 border-t border-slate-100 flex justify-between items-center text-[9px] text-slate-400 uppercase font-bold tracking-[0.2em]"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">lock</span>Código: CERT-${new Date().getFullYear()}</div><div>Generado por Cifrix</div><div>Página 1 de 1</div></footer></div></body></html>`;
     }
     if (title === 'Caja General') {
       const cajaAcc = (accounts || []).find(a => a.name.toLowerCase().includes('caja')) || (accounts || []).find(a => a.code.startsWith('11')) || null;
@@ -398,13 +513,39 @@ ${equityRows}
       const totalCredit = entries.reduce((s, e) => s + e.credit, 0);
       const saldoActual = totalDebit - totalCredit;
       return `
-<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Caja General</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/></head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
-  <div class="flex items-center gap-4">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="size-16 object-contain" />` : ''}
-    <div><h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p></div>
+<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Caja General</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
+  <div class="flex items-center gap-6">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-20 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div>
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
+      <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
+      <p class="text-slate-400 text-[10px] mt-0.5">${address}</p>
+    </div>
   </div>
-  <div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div><h2 class="text-xl font-bold text-slate-900">${cajaAcc ? `${cajaAcc.code} - ${cajaAcc.name}` : 'Caja General'}</h2><p class="text-slate-500 text-sm">Generado el ${nowDate} ${nowTime}</p></div>
-</header><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-slate-50 p-4 rounded-xl border"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo Actual</p><p class="text-lg font-black text-blue-600">$ ${formatCurrency(saldoActual)}</p></div><div class="bg-slate-50 p-4 rounded-xl border"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Débitos / Créditos</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalDebit)} / $ ${formatCurrency(totalCredit)}</p></div></div><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Fecha</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Ref</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Descripción</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Débito</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Crédito</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Saldo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 uppercase tracking-wider" colspan="3">Totales del periodo</td><td class="px-4 py-4 text-right font-bold text-emerald-600">$ ${formatCurrency(totalDebit)}</td><td class="px-4 py-4 text-right font-bold text-red-600">$ ${formatCurrency(totalCredit)}</td><td class="px-4 py-4 text-right font-black text-blue-600">$ ${formatCurrency(saldoActual)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">Este reporte muestra únicamente movimientos conciliados y registrados en el libro auxiliar de la cuenta seleccionada.</p></div></body></html>`;
+  <div class="text-right">
+    <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
+    <h2 class="text-xl font-bold text-slate-900 uppercase">${cajaAcc ? cajaAcc.name : 'Caja General'}</h2>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+  </div>
+</header><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Saldo Actual</p><p class="text-lg font-black text-blue-600">$ ${formatCurrency(saldoActual)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Movimientos</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalDebit)} / $ ${formatCurrency(totalCredit)}</p></div></div><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th>Fecha</th><th>Ref</th><th>Descripción</th><th class="text-right">Débito</th><th class="text-right">Crédito</th><th class="text-right">Saldo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 uppercase tracking-wider" colspan="3">Totales del periodo</td><td class="px-4 py-4 text-right font-bold text-emerald-600">$ ${formatCurrency(totalDebit)}</td><td class="px-4 py-4 text-right font-bold text-red-600">$ ${formatCurrency(totalCredit)}</td><td class="px-4 py-4 text-right font-black text-blue-600">$ ${formatCurrency(saldoActual)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">Este reporte muestra únicamente movimientos conciliados y registrados en el libro auxiliar de la cuenta seleccionada.</p>
+<div class="grid grid-cols-2 gap-20 pt-10">
+  <div class="text-center relative">
+    ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C. ___________________'}</p>
+    </div>
+  </div>
+  <div class="text-center relative">
+    ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P. ___________________'}</p>
+    </div>
+  </div>
+</div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
     }
     if (title === 'Libro Auxiliar') {
       const targetAcc = (accounts || []).find(a => a.id === selectedAuxAccId) || (accounts || []).find(a => a.accepts_movement) || null;
@@ -425,13 +566,31 @@ ${equityRows}
       const firstTxDate = entries.length > 0 ? transactions?.find(t => t.id === entries[0].transaction_id)?.date || '' : '';
       const lastTxDate = entries.length > 0 ? transactions?.find(t => t.id === entries[entries.length - 1].transaction_id)?.date || '' : '';
       return `
-<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Libro Auxiliar</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/></head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-5xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-5xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
-  <div class="flex items-center gap-4">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="size-16 object-contain" />` : `<div class="size-14 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">account_balance_wallet</span></div>`}
-    <div><h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p><p class="text-slate-400 text-xs uppercase tracking-wider">Libro Auxiliar Contable</p></div>
+<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Libro Auxiliar</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-5xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-5xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
+  <div class="flex items-center gap-6">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-20 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">account_balance_wallet</span></div>`}
+    <div><h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p><p class="text-slate-400 text-[10px] mt-0.5">${address}</p></div>
   </div>
-  <div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div><h2 class="text-xl font-bold text-slate-900">${targetAcc ? `${targetAcc.code} - ${targetAcc.name}` : 'Cuenta'}</h2><p class="text-slate-500 text-sm">Periodo: ${firstTxDate ? formatDate(firstTxDate) : nowDate} al ${lastTxDate ? formatDate(lastTxDate) : nowDate}</p><p class="text-slate-400 text-xs mt-1 italic">Generado el ${nowDate} ${nowTime}</p></div>
-</header><div class="grid grid-cols-2 gap-6 mb-8"><div class="bg-blue-600/5 p-6 rounded-2xl border border-blue-600/20 flex justify-between items-center"><div><p class="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-1">Saldo Actual</p><p class="text-2xl font-black text-blue-600">$ ${formatCurrency(saldoActual)}</p></div><div class="size-12 rounded-full bg-blue-600/10 flex items-center justify-center"><span class="material-symbols-outlined text-blue-600">account_balance</span></div></div><div class="bg-slate-50 p-6 rounded-2xl border flex justify-between items-center"><div><p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Débitos / Créditos</p><p class="text-2xl font-black text-slate-900">$ ${formatCurrency(totalDebit)} / $ ${formatCurrency(totalCredit)}</p></div><div class="size-12 rounded-full bg-slate-200/50 flex items-center justify-center"><span class="material-symbols-outlined text-slate-500">summarize</span></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-sm">list_alt</span>Detalle de Movimientos</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Fecha</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Ref.</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Descripción</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Débito</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Crédito</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Saldo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-xs font-black text-slate-700 text-right uppercase tracking-wider" colspan="3">Totales del Periodo</td><td class="px-4 py-4 text-sm font-bold text-emerald-700 text-right">$ ${formatCurrency(totalDebit)}</td><td class="px-4 py-4 text-sm font-bold text-rose-700 text-right">$ ${formatCurrency(totalCredit)}</td><td class="px-4 py-4 text-lg font-black text-blue-600 text-right">$ ${formatCurrency(saldoActual)}</td></tr></tfoot></table></div><p class="mt-4 text-[10px] text-slate-400 italic">Este reporte corresponde al libro auxiliar de la cuenta seleccionada.</p></div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
+  <div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div><h2 class="text-xl font-bold text-slate-900 uppercase leading-tight">${targetAcc ? targetAcc.name : 'Libro Auxiliar'}</h2><p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p></div>
+</header><div class="grid grid-cols-2 gap-6 mb-8"><div class="bg-blue-600/5 p-6 rounded-2xl border border-blue-600/20 flex justify-between items-center"><div><p class="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-1">Saldo Actual</p><p class="text-2xl font-black text-blue-600">$ ${formatCurrency(saldoActual)}</p></div><div class="size-12 rounded-full bg-blue-600/10 flex items-center justify-center"><span class="material-symbols-outlined text-blue-600">account_balance</span></div></div><div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex justify-between items-center"><div><p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Movimientos</p><p class="text-2xl font-black text-slate-900">$ ${formatCurrency(totalDebit)} / $ ${formatCurrency(totalCredit)}</p></div><div class="size-12 rounded-full bg-slate-200/50 flex items-center justify-center"><span class="material-symbols-outlined text-slate-500">summarize</span></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-sm">list_alt</span>Detalle de Movimientos</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th>Fecha</th><th>Ref.</th><th>Descripción</th><th class="text-right">Débito</th><th class="text-right">Crédito</th><th class="text-right">Saldo</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-xs font-black text-slate-700 text-right uppercase tracking-wider" colspan="3">Totales del Periodo</td><td class="px-4 py-4 text-sm font-bold text-emerald-700 text-right">$ ${formatCurrency(totalDebit)}</td><td class="px-4 py-4 text-sm font-bold text-rose-700 text-right">$ ${formatCurrency(totalCredit)}</td><td class="px-4 py-4 text-right font-black text-blue-600">$ ${formatCurrency(saldoActual)}</td></tr></tfoot></table></div></div>
+<div class="grid grid-cols-2 gap-20 pt-10">
+  <div class="text-center relative">
+    ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C. ___________________'}</p>
+    </div>
+  </div>
+  <div class="text-center relative">
+    ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P. ___________________'}</p>
+    </div>
+  </div>
+</div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
     }
     if (title === 'Ejecución Presupuestaria') {
       const expByCat = new Map<string, number>();
@@ -451,7 +610,41 @@ ${equityRows}
       </tr>`).join('');
       const totalExec = Array.from(expByCat.values()).reduce((s, v) => s + v, 0);
       return `
-<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Ejecución Presupuestaria</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/></head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-5xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-5xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8"><div class="flex items-center gap-4"><div class="size-14 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div><div><h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p></div></div><div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Informe de Gestión</div><h2 class="text-xl font-bold text-slate-900">Ejecución Presupuestaria</h2><p class="text-slate-400 text-xs mt-1 italic">Generado el ${nowDate} ${nowTime}</p></div></header><div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Cumplimiento</h3><div class="grid grid-cols-4 gap-4"><div class="bg-slate-50 p-4 rounded-xl border"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Presupuestado</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalExec)}</p></div><div class="bg-slate-50 p-4 rounded-xl border"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Ejecutado</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalExec)}</p></div><div class="bg-slate-50 p-4 rounded-xl border"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Desviación Neta</p><p class="text-lg font-black text-amber-600">-$ 0</p></div><div class="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">% Cumplimiento Global</p><div class="flex items-end gap-2"><p class="text-2xl font-black text-blue-600 leading-none">100%</p><span class="text-[10px] text-blue-600/70 font-bold mb-0.5">YTD</span></div></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle por Centros de Costo</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase">Partida / Categoría</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Presupuestado</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Ejecutado</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Desviación</th><th class="px-4 py-3 text-[11px] font-black text-slate-500 uppercase text-center">% Ejec.</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 text-right uppercase tracking-wider">Totales de Ejecución</td><td class="px-4 py-4 text-sm font-black text-slate-900 text-right border-l border-slate-200">$ ${formatCurrency(totalExec)}</td><td class="px-4 py-4 text-sm font-black text-slate-900 text-right">$ ${formatCurrency(totalExec)}</td><td class="px-4 py-4 text-sm font-black text-blue-600 text-right">-$ 0</td><td class="px-4 py-4 text-lg font-black text-blue-600 text-center">100%</td></tr></tfoot></table></div></div></div></body></html>`;
+<!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Ejecución Presupuestaria</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-5xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-5xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200">
+<header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
+  <div class="flex items-center gap-6">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-20 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div>
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
+      <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
+      <p class="text-slate-400 text-[10px] mt-0.5">${address}</p>
+    </div>
+  </div>
+  <div class="text-right">
+    <div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
+    <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
+    <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${new Date().getFullYear()}</p>
+  </div>
+</header>
+<div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Cumplimiento</h3><div class="grid grid-cols-4 gap-4"><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Presupuestado</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalExec)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Total Ejecutado</p><p class="text-lg font-black text-slate-900">$ ${formatCurrency(totalExec)}</p></div><div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Desviación Neta</p><p class="text-lg font-black text-amber-600">-$ 0</p></div><div class="bg-blue-600/5 p-4 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">% Cumplimiento Global</p><div class="flex items-end gap-2"><p class="text-2xl font-black text-blue-600 leading-none">100%</p><span class="text-[10px] text-blue-600/70 font-bold mb-0.5">YTD</span></div></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle por Centros de Costo</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th>Partida / Categoría</th><th class="text-right">Presupuestado</th><th class="text-right">Ejecutado</th><th class="text-right">Desviación</th><th class="text-center">% Ejec.</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 text-right uppercase tracking-wider">Totales de Ejecución</td><td class="px-4 py-4 text-sm font-black text-slate-900 text-right border-l border-slate-200">$ ${formatCurrency(totalExec)}</td><td class="px-4 py-4 text-sm font-black text-slate-900 text-right">$ ${formatCurrency(totalExec)}</td><td class="px-4 py-4 text-sm font-black text-blue-600 text-right">-$ 0</td><td class="px-4 py-4 text-lg font-black text-blue-600 text-center">100%</td></tr></tfoot></table></div></div>
+<div class="grid grid-cols-2 gap-20 pt-10">
+  <div class="text-center relative">
+    ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C. ___________________'}</p>
+    </div>
+  </div>
+  <div class="text-center relative">
+    ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
+    <div class="border-t border-slate-400 pt-4 px-8">
+      <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || '________________________'}</p>
+      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp ? `T.P. ${org.settings.contador_tp}` : 'T.P. ___________________'}</p>
+    </div>
+  </div>
+</div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
     }
     return `<html><body>Reporte no implementado</body></html>`;
   };
