@@ -385,7 +385,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.text('Este balance ha sido generado automáticamente de acuerdo a los PCGA.', margin, y);
-    y += 45;
+    y += 70;
 
     // --- SECCIÓN DE FIRMAS ---
     const shadowY = y;

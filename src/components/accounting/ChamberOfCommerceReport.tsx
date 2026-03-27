@@ -193,7 +193,7 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
       margin: { left: margin, right: margin }
     });
 
-    y = (doc as any).lastAutoTable.finalY + 60;
+    y = (doc as any).lastAutoTable.finalY + 80;
 
     // --- SECCIÓN DE FIRMAS ---
     const shadowY = y;
