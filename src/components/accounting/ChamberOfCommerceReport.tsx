@@ -83,8 +83,8 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
     // 2. Logo (si existe)
     if (organization.settings?.logo_url) {
       try {
-        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 85, 85, undefined, 'FAST');
-        y += 95;
+        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 50, 50, undefined, 'FAST');
+        y += 60;
       } catch (e) {
         console.error('Error adding logo to PDF:', e);
         y += 10;

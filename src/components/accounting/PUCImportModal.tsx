@@ -80,8 +80,8 @@ export function PUCImportModal({ isOpen, onClose, organizationId, onSuccess }: P
       // Validating rows
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i];
-        const rawCode = String(row['Código']).trim();
-        const rawName = String(row['Nombre']).trim();
+        const rawCode = String(row['Código'] || '').trim();
+        const rawName = String(row['Nombre'] || '').trim();
         let rawClass = String(row['Clase'] || '').trim().toUpperCase();
         let rawNature = String(row['Naturaleza'] || '').trim().toUpperCase();
         const rawAccepts = String(row['Recibe Movimientos'] || '').trim().toUpperCase();
@@ -98,6 +98,23 @@ export function PUCImportModal({ isOpen, onClose, organizationId, onSuccess }: P
         if (rawClass === 'EGRESOS' || rawClass === 'GASTO' || rawClass === 'GASTOS' || rawClass === 'COSTO' || rawClass === 'COSTOS') rawClass = 'EGRESO';
         if (rawClass === 'PATRIMONIOS') rawClass = 'PATRIMONIO';
 
+        // Inferencia automática de Clase si está vacía
+        if (!rawClass && rawCode) {
+          const firstDigit = rawCode[0];
+          if (firstDigit === '1') rawClass = 'ACTIVO';
+          else if (firstDigit === '2') rawClass = 'PASIVO';
+          else if (firstDigit === '3') rawClass = 'PATRIMONIO';
+          else if (firstDigit === '4') rawClass = 'INGRESO';
+          else if (['5', '6', '7'].includes(firstDigit)) rawClass = 'EGRESO';
+        }
+
+        // Inferencia automática de Naturaleza si está vacía
+        if (!rawNature && rawCode) {
+          const firstDigit = rawCode[0];
+          if (['1', '5', '6', '7'].includes(firstDigit)) rawNature = 'DEBITO';
+          else if (['2', '3', '4'].includes(firstDigit)) rawNature = 'CREDITO';
+        }
+
         if (!validTypes.includes(rawClass)) {
           throw new Error(`Fila ${i+2} (Código ${rawCode}): Clase inválida '${rawClass}'. Debe ser ACTIVO, PASIVO, PATRIMONIO, INGRESO o EGRESO.`);
         }
@@ -105,7 +122,7 @@ export function PUCImportModal({ isOpen, onClose, organizationId, onSuccess }: P
           throw new Error(`Fila ${i+2} (Código ${rawCode}): Naturaleza inválida '${rawNature}'. Debe ser DEBITO o CREDITO.`);
         }
         
-        const acceptsMovement = rawAccepts === 'SI' || rawAccepts === 'SÍ';
+        const acceptsMovement = rawAccepts === 'SI' || rawAccepts === 'SÍ' || rawAccepts === 'YES' || rawAccepts === 'TRUE';
 
         newAccounts.push({
           code: rawCode,

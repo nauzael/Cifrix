@@ -172,10 +172,10 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
     if (organization?.settings?.logo_url) {
       try {
-        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 70, 70, undefined, 'FAST');
+        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 50, 50, undefined, 'FAST');
         // Place info text to the right of the logo
-        const textX = margin + 85;
-        let textY = y + 15;
+        const textX = margin + 65;
+        let textY = y + 12;
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
@@ -197,7 +197,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
         }
         doc.text(`Período: De 1 de enero a 31 de diciembre de ${selectedYear}`, textX, textY);
         
-        y += 85; // Fixed height after side-by-side header
+        y += 70; // Adjusted height after side-by-side header
       } catch (e) {
         console.error('Error adding logo to PDF:', e);
         // Fallback vertical layout
@@ -849,7 +849,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
           <header className="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
             <div className="flex items-center gap-4">
               {organization?.settings?.logo_url ? (
-                <img src={organization.settings.logo_url} className="h-28 w-auto object-contain" />
+                <img src={organization.settings.logo_url} className="h-16 w-auto object-contain" />
               ) : (
                 <div className="size-14 bg-blue-600 rounded-xl flex items-center justify-center text-white">
                   <Landmark className="size-8" />
