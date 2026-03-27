@@ -26,15 +26,21 @@ export function Invoicing() {
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const { profile } = useAuthStore();
+  
   useEffect(() => {
     const fetchOrg = async () => {
-      if (user) {
-        const orgs = await db.organizations.toArray();
-        if (orgs.length > 0) setOrgId(orgs[0].id);
+      // Prioritize profile organizationId, especially for Super Admins
+      const profileOrgId = profile?.organizationId;
+      const orgs = await db.organizations.toArray();
+      
+      if (orgs.length > 0) {
+        const targetOrg = orgs.find(o => o.id === profileOrgId) || orgs[0];
+        setOrgId(targetOrg.id);
       }
     };
     fetchOrg();
-  }, [user]);
+  }, [user, profile]);
 
   const invoices = useLiveQuery(
     () => orgId ? db.invoices.where('organization_id').equals(orgId).reverse().sortBy('date') : [],

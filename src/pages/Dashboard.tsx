@@ -169,15 +169,17 @@ export function Dashboard() {
     [orgId, startOfMonth, endOfMonth]
   );
 
-  const journalEntries = useLiveQuery(
-    () => orgId ? db.journal_entries.toArray() : [],
+  const accounts = useLiveQuery(
+    () => orgId ? db.accounts.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
-  const accounts = useLiveQuery(
-    () => orgId ? db.accounts.toArray() : [],
-    [orgId]
-  );
+  const journalEntries = useLiveQuery(async () => {
+    if (!orgId) return [];
+    const txs = await db.transactions.where('organization_id').equals(orgId).toArray();
+    const txIds = txs.map(t => t.id);
+    return db.journal_entries.where('transaction_id').anyOf(txIds).toArray();
+  }, [orgId]);
 
   // Auto-seed accounts if missing (con tiempo de gracia)
   useEffect(() => {

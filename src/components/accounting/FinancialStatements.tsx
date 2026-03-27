@@ -389,7 +389,9 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
     // --- SECCIÓN DE FIRMAS ---
     const shadowY = y;
-    const sigLineContentWidth = 150;
+    const sigLineContentWidth = 160;
+    const leftSigCenterX = margin + (sigLineContentWidth / 2);
+    const rightSigCenterX = pageWidth - margin - (sigLineContentWidth / 2);
     
     // Líneas de firma
     doc.setDrawColor(200);
@@ -399,21 +401,20 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     
     y += 12;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setTextColor(30, 41, 59);
-    doc.text('REPRESENTANTE LEGAL', margin, y);
-    doc.text('CONTADOR PÚBLICO', pageWidth - margin - sigLineContentWidth, y);
+    doc.text('REPRESENTANTE LEGAL', leftSigCenterX, y, { align: 'center' });
+    doc.text('CONTADOR PÚBLICO', rightSigCenterX, y, { align: 'center' });
     
     y += 14;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(71, 85, 105);
-    doc.text(organization?.settings?.rep_legal_name || '', margin, y);
-    doc.text(organization?.settings?.contador_name || '', pageWidth - margin - sigLineContentWidth, y);
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+    doc.text(organization?.settings?.rep_legal_name || '', leftSigCenterX, y, { align: 'center' });
+    doc.text(organization?.settings?.contador_name || '', rightSigCenterX, y, { align: 'center' });
     
     y += 12;
-    doc.text(organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.', margin, y);
-    doc.text(organization?.settings?.contador_tp || '', pageWidth - margin - sigLineContentWidth, y);
+    doc.text(organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.', leftSigCenterX, y, { align: 'center' });
 
     // Imágenes de firmas (si existen en settings)
     if (organization?.settings?.rep_legal_signature) {
@@ -972,18 +973,17 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
           </div>
 
           <div className="grid grid-cols-2 gap-20 pt-10">
-            <div className="text-center">
-              <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto flex flex-col items-center">
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Representante Legal</p>
-                <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.rep_legal_name || ''}</p>
-                <p className="text-xs text-slate-500">{organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.'}</p>
+            <div className="text-center relative">
+              <div className="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
+                <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase">REPRESENTANTE LEGAL</p>
+                <p className="text-xs text-slate-800 dark:text-slate-200 mt-1 font-bold whitespace-nowrap">{organization?.settings?.rep_legal_name || ''}</p>
+                <p className="text-[10px] text-slate-500">{organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.'}</p>
               </div>
             </div>
-            <div className="text-center">
-              <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto flex flex-col items-center">
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Contador Público</p>
-                <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.contador_name || ''}</p>
-                <p className="text-xs text-slate-500">{organization?.settings?.contador_tp || ''}</p>
+            <div className="text-center relative">
+              <div className="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
+                <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase">CONTADOR PÚBLICO</p>
+                <p className="text-xs text-slate-800 dark:text-slate-200 mt-1 font-bold whitespace-nowrap">{organization?.settings?.contador_name || ''}</p>
               </div>
             </div>
           </div>

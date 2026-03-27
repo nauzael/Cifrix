@@ -102,13 +102,14 @@ export function Accounting() {
         }
       }
 
-      // Fallback to first organization
-      if (user) {
-        let orgs = await db.organizations.toArray();
-        if (orgs.length > 0) {
-          setOrg(orgs[0]);
-          setOrgId(orgs[0].id);
-        }
+      // Prioritize profile organizationId, especially for Super Admins
+      const profileOrgId = profile?.organizationId;
+      const orgs = await db.organizations.toArray();
+      
+      if (orgs.length > 0) {
+        const targetOrg = orgs.find(o => o.id === profileOrgId) || orgs[0];
+        setOrg(targetOrg);
+        setOrgId(targetOrg.id);
       }
     };
     fetchOrg();
@@ -169,15 +170,17 @@ export function Accounting() {
 
   // Query Journal Entries (for all transactions displayed)
   // Optimization: In a real app, we might paginate or only fetch entries for visible transactions.
-  const journalEntries = useLiveQuery(
-    () => (orgId ? db.journal_entries.toArray() : []),
+  const accounts = useLiveQuery(
+    () => (orgId ? db.accounts.where('organization_id').equals(orgId).toArray() : []),
     [orgId]
   );
 
-  const accounts = useLiveQuery(
-    () => (orgId ? db.accounts.toArray() : []),
-    [orgId]
-  );
+  const journalEntries = useLiveQuery(async () => {
+    if (!orgId) return [];
+    const txs = await db.transactions.where('organization_id').equals(orgId).toArray();
+    const txIds = txs.map(t => t.id);
+    return db.journal_entries.where('transaction_id').anyOf(txIds).toArray();
+  }, [orgId]);
 
   // Helper to get entries for a transaction
   const getEntriesForTransaction = (txId: string) => {

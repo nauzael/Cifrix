@@ -24,6 +24,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  setOrganizationId: (orgId: string | null) => void;
   isOfflineMode: () => boolean; // Nueva función para detectar modo offline
 }
 
@@ -182,6 +183,35 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
 
       if (isSuperAdmin) {
         finalProfile.role = 'SUPER_ADMIN';
+        
+        // Super Admin Override from localStorage if present
+        const savedOrgId = localStorage.getItem('super_admin_active_org');
+        
+        if (savedOrgId) {
+          try {
+            const { data: targetOrg } = await supabase
+              .from('organizations')
+              .select('id, name, type, settings')
+              .eq('id', savedOrgId)
+              .maybeSingle();
+
+            if (targetOrg) {
+              finalProfile.organizationId = targetOrg.id;
+              finalProfile.organizationName = targetOrg.name;
+              finalProfile.organizationType = targetOrg.type;
+              const orgSettings = (targetOrg.settings as any) || {};
+              const orgModules = orgSettings.modules || {};
+              if (finalProfile.allowedModules) {
+                Object.keys(finalProfile.allowedModules).forEach(m => {
+                  if (orgModules[m] !== false) finalProfile.allowedModules![m] = true;
+                });
+              }
+            }
+          } catch (err) {
+            console.warn('Error loading super admin override org:', err);
+          }
+        }
+
         if (!finalProfile.organizationId) {
           try {
             const { data: anyOrg } = await supabase
@@ -317,6 +347,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     try {
+      localStorage.removeItem('super_admin_active_org');
       await supabase.auth.signOut();
     } catch (e) {
       console.error('Error signing out:', e);
@@ -329,6 +360,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (user) {
       const profile = await fetchUserProfile(user.id);
       set({ profile });
+    }
+  },
+
+  setOrganizationId: (orgId: string | null) => {
+    const profile = get().profile;
+    if (profile && profile.role === 'SUPER_ADMIN') {
+      if (orgId) {
+        localStorage.setItem('super_admin_active_org', orgId);
+      } else {
+        localStorage.removeItem('super_admin_active_org');
+      }
+      set({ profile: { ...profile, organizationId: orgId } });
     }
   },
 

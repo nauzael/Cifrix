@@ -162,6 +162,7 @@ export function SuperAdminDashboard() {
           if (error || !freshOrg) throw new Error('No se pudo obtener la información actualizada de la organización.');
 
           await db.clearAllData();
+          localStorage.setItem('super_admin_active_org', freshOrg.id);
 
           await db.organizations.add({
             id: freshOrg.id,

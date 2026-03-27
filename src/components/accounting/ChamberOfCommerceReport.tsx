@@ -197,7 +197,9 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
 
     // --- SECCIÓN DE FIRMAS ---
     const shadowY = y;
-    const sigLineContentWidth = 150;
+    const sigLineContentWidth = 160;
+    const leftSigCenterX = margin + (sigLineContentWidth / 2);
+    const rightSigCenterX = pageWidth - margin - (sigLineContentWidth / 2);
     
     doc.setDrawColor(200);
     doc.setLineWidth(0.5);
@@ -206,21 +208,20 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
     
     y += 12;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setTextColor(30, 41, 59);
-    doc.text('REPRESENTANTE LEGAL', margin, y);
-    doc.text('CONTADOR PÚBLICO', pageWidth - margin - sigLineContentWidth, y);
+    doc.text('REPRESENTANTE LEGAL', leftSigCenterX, y, { align: 'center' });
+    doc.text('CONTADOR PÚBLICO', rightSigCenterX, y, { align: 'center' });
     
     y += 14;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(71, 85, 105);
-    doc.text(organization?.settings?.rep_legal_name || '', margin, y);
-    doc.text(organization?.settings?.contador_name || '', pageWidth - margin - sigLineContentWidth, y);
+    doc.setFontSize(9);
+    doc.setTextColor(51, 65, 85);
+    doc.text(organization?.settings?.rep_legal_name || '', leftSigCenterX, y, { align: 'center' });
+    doc.text(organization?.settings?.contador_name || '', rightSigCenterX, y, { align: 'center' });
     
     y += 12;
-    doc.text(organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.', margin, y);
-    doc.text(organization?.settings?.contador_tp || '', pageWidth - margin - sigLineContentWidth, y);
+    doc.text(organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.', leftSigCenterX, y, { align: 'center' });
 
     if (organization?.settings?.rep_legal_signature) {
       try {

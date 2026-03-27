@@ -23,6 +23,7 @@ import { formatCurrency, formatDate } from '../lib/utils';
 import { useAuthStore } from '../store/authStore';
 
 export function Reports() {
+  const { user, profile } = useAuthStore();
   const [org, setOrg] = useState<Organization | null>(null);
   const [orgId, setOrgId] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
@@ -36,47 +37,51 @@ export function Reports() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   useEffect(() => {
-    const { profile } = useAuthStore.getState();
     const load = async () => {
-      if (profile?.organizationId) {
-        const current = await db.organizations.get(profile.organizationId);
-        if (current) {
-          setOrg(current);
-          setOrgId(current.id);
-          return;
-        }
+      // 1. Wait for profile if needed
+      let currentProfile = profile;
+      if (!currentProfile && user) {
+        // Breve espera para asegurar que el store se ha hidratado
+        await new Promise(resolve => setTimeout(resolve, 300));
+        currentProfile = useAuthStore.getState().profile;
       }
+
       const orgs = await db.organizations.toArray();
+      const profileOrgId = currentProfile?.organizationId;
+      
+      // 2. Select the best organization match
       if (orgs.length > 0) {
-        setOrg(orgs[0]);
-        setOrgId(orgs[0].id);
+        const targetOrg = orgs.find(o => o.id === profileOrgId) || orgs[0];
+        setOrg(targetOrg);
+        setOrgId(targetOrg.id);
       }
     };
     load();
-  }, []);
-
-  const journalEntries = useLiveQuery(
-    () => orgId ? db.journal_entries.toArray() : [],
-    [orgId]
-  );
+  }, [profile, user]);
 
   const accounts = useLiveQuery(
-    () => orgId ? db.accounts.toArray() : [],
+    () => orgId ? db.accounts.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
   const transactions = useLiveQuery(
-    () => orgId ? db.transactions.toArray() : [],
+    () => orgId ? db.transactions.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
+  const journalEntries = useLiveQuery(async () => {
+    if (!orgId || !transactions) return [];
+    const txIds = transactions.map(t => t.id);
+    return db.journal_entries.where('transaction_id').anyOf(txIds).toArray();
+  }, [orgId, transactions]);
+
   const contributions = useLiveQuery(
-    () => orgId ? db.contributions.toArray() : [],
+    () => orgId ? db.contributions.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
   const members = useLiveQuery(
-    () => orgId ? db.members.toArray() : [],
+    () => orgId ? db.members.where('organization_id').equals(orgId).toArray() : [],
     [orgId]
   );
 
@@ -283,13 +288,10 @@ ${equityRows}
 <tfoot class="bg-slate-50"><tr><td class="px-4 py-4 text-sm font-black text-slate-700 text-right uppercase tracking-wider" colspan="3">Ecuación Contable (A = P + PT)</td><td class="px-4 py-4 text-lg font-black text-blue-600 text-right">$ ${formatCurrency(totalAssets)}</td></tr></tfoot>
 </table>
 </div>
-<p class="mt-4 text-[10px] text-slate-400 italic">* Este balance ha sido generado automáticamente de acuerdo a los principios de contabilidad generalmente aceptados.</p>
-</div>
-
-<div class="grid grid-cols-2 gap-20 pt-10">
+<p class="mt-4 text-[10px] text-slate-400 italic">* Este balance ha sido generado automáticamente de acuerdo a los principios de contabilidad generalmente aceptados.</p><div class="grid grid-cols-2 gap-20 pt-10">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto flex flex-col items-center">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
       <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
       <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C.'}</p>
@@ -297,10 +299,9 @@ ${equityRows}
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div>
@@ -347,10 +348,9 @@ ${equityRows}
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
       <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
     </div>
   </div>
 </div>
@@ -390,24 +390,26 @@ ${equityRows}
     <h2 class="text-xl font-bold text-slate-900 uppercase">${title}</h2>
     <p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${selectedYear}</p>
   </div>
-</header><div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Liquidez</h3><div class="grid grid-cols-3 gap-4"><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Entradas</p><p class="text-xl font-black text-emerald-600">$ ${formatCurrency(totalIn)}</p></div><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Salidas</p><p class="text-xl font-black text-red-600">$ ${formatCurrency(totalOut)}</p></div><div class="bg-blue-600/5 p-5 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Saldo Neto</p><p class="text-xl font-black text-blue-600">$ ${formatCurrency(net)}</p></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Actividades</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase">Periodo</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Ingresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Egresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Saldo Neto</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-900 text-white"><tr><td class="px-6 py-4 text-sm font-black uppercase tracking-wider">Totales</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalIn)}</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalOut)}</td><td class="px-6 py-4 text-lg font-black text-right bg-white text-blue-600">$ ${formatCurrency(net)}</td></tr></tfoot></table></div></div><div class="grid grid-cols-2 gap-20 pt-10">
+</header><div class="mb-10"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Resumen de Liquidez</h3><div class="grid grid-cols-3 gap-4"><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Entradas</p><p class="text-xl font-black text-emerald-600">$ ${formatCurrency(totalIn)}</p></div><div class="bg-slate-50 p-5 rounded-xl border border-slate-100"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Salidas</p><p class="text-xl font-black text-red-600">$ ${formatCurrency(totalOut)}</p></div><div class="bg-blue-600/5 p-5 rounded-xl border border-blue-600/20"><p class="text-[10px] font-bold text-blue-600 uppercase mb-1">Saldo Neto</p><p class="text-xl font-black text-blue-600">$ ${formatCurrency(net)}</p></div></div></div><div class="mb-12"><h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Detalle de Actividades</h3><div class="border border-slate-200 rounded-xl overflow-hidden"><table class="report-table w-full text-left border-collapse"><thead><tr class="bg-slate-50 border-b border-slate-200"><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase">Periodo</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Ingresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Egresos</th><th class="px-6 py-3 text-[11px] font-black text-slate-500 uppercase text-right">Saldo Neto</th></tr></thead><tbody class="divide-y divide-slate-100">${rows}</tbody><tfoot class="bg-slate-900 text-white"><tr><td class="px-6 py-4 text-sm font-black uppercase tracking-wider">Totales</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalIn)}</td><td class="px-6 py-4 text-right">$ ${formatCurrency(totalOut)}</td><td class="px-6 py-4 text-lg font-black text-right bg-white text-blue-600">$ ${formatCurrency(net)}</td></tr></tfoot></table></div></div>
+<div class="grid grid-cols-2 gap-20 pt-10">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
       <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C.'}</p>
     </div>
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
     </div>
   </div>
-</div></div></body></html>`;
+</div>
+<footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer>
+</div></body></html>`;
     }
     if (title === 'Diezmos y Ofrendas') {
       const diezmos = (contributions || []).filter(c => c.category === 'DIEZMO').reduce((s, c) => s + c.amount, 0);
@@ -439,18 +441,17 @@ ${equityRows}
 <div class="grid grid-cols-2 gap-20 pt-10">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
       <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C.'}</p>
     </div>
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
     </div>
   </div>
 </div>
@@ -482,16 +483,17 @@ ${equityRows}
 <div class="grid grid-cols-2 gap-20 pt-16 px-12">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4">
-      <p class="text-sm font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || ''}</p>
+    <div class="border-t border-slate-400 pt-4 flex flex-col items-center">
+      <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
+      <p class="text-[10px] text-slate-500">C.C. ${org?.settings?.rep_legal_document || ''}</p>
     </div>
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4">
-      <p class="text-sm font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
+    <div class="border-t border-slate-400 pt-4 flex flex-col items-center">
+      <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
     </div>
   </div>
 </div>
@@ -532,18 +534,17 @@ ${equityRows}
 <div class="grid grid-cols-2 gap-20 pt-10">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
       <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C.'}</p>
     </div>
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
@@ -577,18 +578,17 @@ ${equityRows}
 <div class="grid grid-cols-2 gap-20 pt-10">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
       <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C.'}</p>
     </div>
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
@@ -631,18 +631,17 @@ ${equityRows}
 <div class="grid grid-cols-2 gap-20 pt-10">
   <div class="text-center relative">
     ${org?.settings?.rep_legal_signature ? `<img src="${org.settings.rep_legal_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">REPRESENTANTE LEGAL</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.rep_legal_name || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.rep_legal_name || ''}</p>
       <p class="text-[10px] text-slate-500">${org?.settings?.rep_legal_document ? `C.C. ${org.settings.rep_legal_document}` : 'C.C.'}</p>
     </div>
   </div>
   <div class="text-center relative">
     ${org?.settings?.contador_signature ? `<img src="${org.settings.contador_signature}" class="h-20 absolute -top-16 left-1/2 -translate-x-1/2 object-contain mix-blend-multiply" />` : ''}
-    <div class="border-t border-slate-400 pt-4 px-8">
+    <div class="border-t border-slate-400 pt-4 px-8 flex flex-col items-center text-center">
       <p class="text-[11px] font-black text-slate-900 uppercase">CONTADOR PÚBLICO</p>
-      <p class="text-xs text-slate-800 mt-1 font-bold">${org?.settings?.contador_name || ''}</p>
-      <p class="text-[10px] text-slate-500">${org?.settings?.contador_tp || ''}</p>
+      <p class="text-xs text-slate-800 mt-1 font-bold whitespace-nowrap">${org?.settings?.contador_name || ''}</p>
     </div>
   </div>
 </div><footer class="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest"><div>Página 1 de 1</div><div>Cifrix Contable</div></footer></div></body></html>`;
