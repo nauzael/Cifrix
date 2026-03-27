@@ -12,6 +12,7 @@ export class FinancialExportService {
             organizationName: string;
             period: string;
             normativo?: string;
+            logo_url?: string;
             signatures?: { 
               name: string; 
               role: string; 
@@ -22,44 +23,66 @@ export class FinancialExportService {
         }
     ) {
         const doc = new jsPDF();
-        let yPos = 20;
         const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const marginHeader = 20;
 
-        doc.setFontSize(24); // Mas presencia al nombre
+        // 1. Portada
+        if (options.logo_url) {
+            try {
+                doc.addImage(options.logo_url, 'PNG', (pageWidth / 2) - 40, 40, 80, 80);
+            } catch (e) {}
+        }
+        
+        let yPos = 140;
+
+        doc.setFontSize(22); // Mas presencia al nombre
         doc.setTextColor(30, 41, 59);
-        doc.text(options.organizationName.toUpperCase(), 105, 110, { align: 'center' });
+        doc.text(options.organizationName.toUpperCase(), pageWidth / 2, yPos, { align: 'center' });
+        yPos += 15;
         
         doc.setFontSize(16); // Un poco mas pequeño
-        doc.text(options.title, 105, 130, { align: 'center' });
+        doc.text(options.title, pageWidth / 2, yPos, { align: 'center' });
+        yPos += 12;
         
         doc.setFontSize(11); // Un poco mas pequeño
         doc.setTextColor(71, 85, 105);
-        doc.text(options.period, 105, 145, { align: 'center' });
+        doc.text(options.period, pageWidth / 2, yPos, { align: 'center' });
+        yPos += 15;
         
         if (options.normativo) {
             doc.setFontSize(10);
-            doc.text(`Bajo Normatividad: ${options.normativo}`, 105, 160, { align: 'center' });
+            doc.text(`Marco Normativo: ${options.normativo}`, pageWidth / 2, yPos, { align: 'center' });
         }
 
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setTextColor(148, 163, 184);
-        doc.text('Generado por Cifrix - Software Contable Inteligente', 105, 280, { align: 'center' });
+        doc.text('Generado automáticamente por Cifrix Contable', pageWidth / 2, pageHeight - 30, { align: 'center' });
 
         // 2. Páginas de Reportes
         for (const report of reportData) {
             doc.addPage();
             yPos = 20;
-            doc.setFontSize(16);
-            doc.setTextColor(30, 41, 59);
-            doc.text(report.organizationName, 20, yPos);
-            yPos += 8;
+
+            if (options.logo_url) {
+                try {
+                    doc.addImage(options.logo_url, 'PNG', marginHeader, yPos, 40, 40);
+                } catch (e) {}
+            }
+
+            const textX = options.logo_url ? marginHeader + 50 : marginHeader;
+
             doc.setFontSize(14);
-            doc.text(report.sections[0]?.title || 'REPORTE FINANCIERO', 20, yPos);
-            yPos += 6;
-            doc.setFontSize(10);
+            doc.setTextColor(30, 41, 59);
+            doc.text(report.organizationName.toUpperCase(), textX, yPos + 15);
+            
+            doc.setFontSize(12);
+            doc.text(report.sections[0]?.title || 'REPORTE FINANCIERO', textX, yPos + 25);
+            
+            doc.setFontSize(9);
             doc.setTextColor(100, 116, 139);
-            doc.text(report.period, 20, yPos);
-            yPos += 15;
+            doc.text(report.period, textX, yPos + 35);
+            yPos += 55;
 
             for (const section of report.sections) {
                 doc.setFontSize(12);
@@ -87,7 +110,7 @@ export class FinancialExportService {
                     head: [['Descripción', 'Saldo']],
                     body: tableData,
                     theme: 'striped',
-                    styles: { fontSize: 7.5 }, // Tipografia mas pequeña para mas elegancia
+                    styles: { fontSize: 8 }, // 8pt para uniformidad
                     margin: { left: 20, right: 20 },
                     didDrawPage: (data) => {
                         yPos = data.cursor?.y || yPos;

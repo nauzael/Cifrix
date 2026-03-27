@@ -124,19 +124,21 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
 
 
-  const buildPdf = () => {
+  const buildPdf = (type: 'balance' | 'pnl' = 'balance') => {
     const doc = new jsPDF('p', 'pt', 'letter');
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 40;
     let y = margin;
 
+    const title = type === 'balance' ? 'Balance General' : 'Estado de Resultados';
+
     // Set Document Metadata (Best Practice: Metadata)
     doc.setProperties({
-      title: 'Balance General - ' + (organization?.name || 'Organización'),
+      title: `${title} - ${organization?.name || 'Organización'}`,
       author: 'Cifrix Contable',
       subject: 'Estados Financieros',
       creator: 'Cifrix Application',
-      keywords: 'contabilidad, balance, reporte'
+      keywords: `contabilidad, ${type}, reporte`
     });
 
     if (organization?.settings?.logo_url) {
@@ -157,7 +159,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
     doc.setFontSize(12);
     doc.setTextColor(71, 85, 105); // Slate-600
-    doc.text('Balance General', margin, y);
+    doc.text(title, margin, y);
     y += 16;
 
     doc.setFont('helvetica', 'normal');
@@ -171,128 +173,218 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     doc.text(`Período: De 1 de enero a 31 de diciembre de ${currentYear}`, margin, y);
     y += 24;
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('Estado de Situación Financiera', margin, y);
-    y += 10;
+    if (type === 'balance') {
+      doc.setFontSize(11);
+      doc.text('Estado de Situación Financiera', margin, y);
+      y += 10;
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.text(`Total Activos: $ ${formatCurrency(totalAssets)}`, margin, y);
-    y += 16;
-    doc.text(`Total Pasivos: $ ${formatCurrency(totalLiabilities)}`, margin, y);
-    y += 16;
-    doc.text(`Patrimonio Neto: $ ${formatCurrency(totalEquity)}`, margin, y);
-    y += 24;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.text(`Total Activos: $ ${formatCurrency(totalAssets)}`, margin, y);
+      y += 16;
+      doc.text(`Total Pasivos: $ ${formatCurrency(totalLiabilities)}`, margin, y);
+      y += 16;
+      doc.text(`Patrimonio Neto: $ ${formatCurrency(totalEquity)}`, margin, y);
+      y += 24;
 
-    const head = [['Código', 'Nombre de la Cuenta', 'Tipo', 'Saldo']];
+      const head = [['Código', 'Nombre de la Cuenta', 'Tipo', 'Saldo']];
 
-    const assetsBody = allAssets.map(a => [
-      a.code,
-      a.name,
-      'Activo',
-      `$ ${formatCurrency(a.balance)}`
-    ]);
-
-    const liabilitiesBody = allLiabilities.map(a => [
-      a.code,
-      a.name,
-      'Pasivo',
-      `$ ${formatCurrency(a.balance)}`
-    ]);
-
-    const equityBody = [
-      ...equity.map(a => [
+      const assetsBody = allAssets.map(a => [
         a.code,
         a.name,
-        'Patrimonio',
+        'Activo',
         `$ ${formatCurrency(a.balance)}`
-      ]),
-      [
-        '',
-        'Resultado del Ejercicio (Utilidad/Pérdida)',
-        'Patrimonio',
-        `$ ${formatCurrency(netResult)}`
-      ]
-    ];
+      ]);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(30, 41, 59); // Slate-800
-    doc.text('1. Activos', margin, y);
-    y += 10;
-    autoTable(doc, {
-      startY: y,
-      head,
-      body: assetsBody,
-      theme: 'striped',
-      headStyles: {
-        fillColor: [37, 99, 235], // Blue-600
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 9,
-        halign: 'left'
-      },
-      bodyStyles: {
-        fontSize: 8,
-        textColor: [51, 65, 85] // Slate-700
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252] // Slate-50
-      },
-      columnStyles: {
-        3: { halign: 'right', fontStyle: 'bold' }
-      },
-      margin: { left: margin, right: margin }
-    });
-    y = (doc as any).lastAutoTable.finalY + 25;
+      const liabilitiesBody = allLiabilities.map(a => [
+        a.code,
+        a.name,
+        'Pasivo',
+        `$ ${formatCurrency(a.balance)}`
+      ]);
 
-    doc.text('2. Pasivos', margin, y);
-    y += 10;
-    autoTable(doc, {
-      startY: y,
-      head,
-      body: liabilitiesBody,
-      theme: 'striped',
-      headStyles: {
-        fillColor: [220, 38, 38], // Red-600
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 10
-      },
-      bodyStyles: { fontSize: 9 },
-      columnStyles: {
-        3: { halign: 'right', fontStyle: 'bold' }
+      const equityBody = [
+        ...equity.map(a => [
+          a.code,
+          a.name,
+          'Patrimonio',
+          `$ ${formatCurrency(a.balance)}`
+        ]),
+        [
+          '',
+          'Resultado del Ejercicio (Utilidad/Pérdida)',
+          'Patrimonio',
+          `$ ${formatCurrency(netResult)}`
+        ]
+      ];
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(30, 41, 59); // Slate-800
+      doc.text('1. Activos', margin, y);
+      y += 10;
+      autoTable(doc, {
+        startY: y,
+        head,
+        body: assetsBody,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [37, 99, 235], // Blue-600
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9,
+          halign: 'left'
+        },
+        bodyStyles: {
+          fontSize: 8,
+          textColor: [51, 65, 85] // Slate-700
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // Slate-50
+        },
+        columnStyles: {
+          3: { halign: 'right', fontStyle: 'bold' }
+        },
+        margin: { left: margin, right: margin }
+      });
+      y = (doc as any).lastAutoTable.finalY + 25;
+
+      doc.text('2. Pasivos', margin, y);
+      y += 10;
+      autoTable(doc, {
+        startY: y,
+        head,
+        body: liabilitiesBody,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [220, 38, 38], // Red-600
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: {
+          3: { halign: 'right', fontStyle: 'bold' }
+        }
+      });
+      y = (doc as any).lastAutoTable.finalY + 25;
+
+      doc.text('3. Patrimonio', margin, y);
+      y += 10;
+      autoTable(doc, {
+        startY: y,
+        head,
+        body: equityBody,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [217, 119, 6], // Amber-600
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: {
+          3: { halign: 'right', fontStyle: 'bold' }
+        },
+        styles: { fontSize: 8 },
+      });
+      y = (doc as any).lastAutoTable.finalY + 30;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('Ecuación Contable (A = P + PT)', margin, y);
+      doc.text(`$ ${formatCurrency(totalAssets)}`, pageWidth - margin, y, { align: 'right' });
+      y += 24;
+    } else {
+      // PnL PDF
+      doc.setFontSize(11);
+      doc.text('Resultados Operacionales', margin, y);
+      y += 10;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.text(`Total Ingresos: $ ${formatCurrency(totalIncome)}`, margin, y);
+      y += 16;
+      doc.text(`Total Gastos: $ ${formatCurrency(totalExpenses)}`, margin, y);
+      y += 16;
+      if (netResult >= 0) {
+        doc.setTextColor(5, 150, 105);
+      } else {
+        doc.setTextColor(220, 38, 38);
       }
-    });
-    y = (doc as any).lastAutoTable.finalY + 25;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Resultado Neto: $ ${formatCurrency(netResult)}`, margin, y);
+      y += 24;
 
-    doc.text('3. Patrimonio', margin, y);
-    y += 10;
-    autoTable(doc, {
-      startY: y,
-      head,
-      body: equityBody,
-      theme: 'striped',
-      headStyles: {
-        fillColor: [217, 119, 6], // Amber-600
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 10
-      },
-      bodyStyles: { fontSize: 9 },
-      columnStyles: {
-        3: { halign: 'right', fontStyle: 'bold' }
-      },
-      styles: { fontSize: 9 },
-    });
-    y = (doc as any).lastAutoTable.finalY + 30;
+      const head = [['Código', 'Nombre de la Cuenta', 'Clasificación', 'Saldo']];
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('Ecuación Contable (A = P + PT)', margin, y);
-    doc.text(`$ ${formatCurrency(totalAssets)}`, pageWidth - margin, y, { align: 'right' });
-    y += 24;
+      const incomeBody = income.map(a => [
+        a.code,
+        a.name,
+        'Ingresos',
+        `$ ${formatCurrency(a.balance)}`
+      ]);
+
+      const expensesBody = expenses.map(a => [
+        a.code,
+        a.name,
+        'Gastos/Costos',
+        `$ ${formatCurrency(a.balance)}`
+      ]);
+
+      doc.setFontSize(12);
+      doc.setTextColor(30, 41, 59);
+      doc.text('4. Ingresos', margin, y);
+      y += 10;
+      autoTable(doc, {
+        startY: y,
+        head,
+        body: incomeBody,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [5, 150, 105], // Emerald-600
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: {
+          3: { halign: 'right', fontStyle: 'bold' }
+        }
+      });
+      y = (doc as any).lastAutoTable.finalY + 25;
+
+      doc.text('5/6. Gastos y Costos', margin, y);
+      y += 10;
+      autoTable(doc, {
+        startY: y,
+        head,
+        body: expensesBody,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [220, 38, 38], // Red-600
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        bodyStyles: { fontSize: 8 },
+        columnStyles: {
+          3: { halign: 'right', fontStyle: 'bold' }
+        }
+      });
+      y = (doc as any).lastAutoTable.finalY + 30;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      if (netResult >= 0) {
+        doc.setTextColor(5, 150, 105);
+      } else {
+        doc.setTextColor(220, 38, 38);
+      }
+      doc.text('Utilidad/Pérdida del Ejercicio', margin, y);
+      doc.text(`$ ${formatCurrency(netResult)}`, pageWidth - margin, y, { align: 'right' });
+      y += 24;
+    }
 
     doc.setFontSize(9);
     doc.text('Este balance ha sido generado automáticamente de acuerdo a los PCGA.', margin, y);
@@ -439,16 +531,19 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             <span className="xs:hidden">RUES</span>
           </button>
         </div>
-        {statementType === 'balance' && (
+        {(statementType === 'balance' || statementType === 'pnl') && (
           <button
             onClick={() => {
-              const doc = buildPdf();
+              const doc = buildPdf(statementType);
               const blob = doc.output('blob');
               const url = URL.createObjectURL(blob);
               window.open(url, '_blank');
               setTimeout(() => URL.revokeObjectURL(url), 60_000);
             }}
-            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold hover:bg-blue-700 transition-colors"
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border shadow-sm
+              ${statementType === 'balance' 
+                ? 'bg-blue-600 text-white hover:bg-blue-700 border-blue-500' 
+                : 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-500'}`}
           >
             <Printer size={16} className="sm:size-[18px]" /> Vista previa / PDF
           </button>

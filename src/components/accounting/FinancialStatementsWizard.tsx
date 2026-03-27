@@ -240,6 +240,7 @@ export function FinancialStatementsWizard() {
                     title: `ESTADOS FINANCIEROS - AÑO ${year}`,
                     organizationName: currentOrganization.name,
                     period: `DEL 01 DE ENERO AL 31 DE DICIEMBRE DE ${year}`,
+                    logo_url: currentOrganization.settings?.logo_url,
                     normativo: normativo,
                     signatures: [
                       {
