@@ -197,7 +197,7 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
 
     // --- SECCIÓN DE FIRMAS ---
     const shadowY = y;
-    const sigLineContentWidth = 180;
+    const sigLineContentWidth = 150;
     
     doc.setDrawColor(200);
     doc.setLineWidth(0.5);
