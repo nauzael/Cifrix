@@ -411,12 +411,12 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(71, 85, 105);
-    doc.text(organization?.settings?.rep_legal_name || '________________________', margin, y);
-    doc.text(organization?.settings?.contador_name || '________________________', pageWidth - margin - sigLineContentWidth, y);
+    doc.text(organization?.settings?.rep_legal_name || '', margin, y);
+    doc.text(organization?.settings?.contador_name || '', pageWidth - margin - sigLineContentWidth, y);
     
     y += 12;
-    doc.text(organization?.settings?.rep_legal_document || 'C.C. ___________________', margin, y);
-    doc.text(organization?.settings?.contador_tp || 'T.P. ___________________', pageWidth - margin - sigLineContentWidth, y);
+    doc.text(organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.', margin, y);
+    doc.text(organization?.settings?.contador_tp ? `T.P. ${organization.settings.contador_tp}` : 'T.P.', pageWidth - margin - sigLineContentWidth, y);
 
     // Imágenes de firmas (si existen en settings)
     if (organization?.settings?.rep_legal_signature) {
@@ -963,22 +963,21 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
           <div className="grid grid-cols-2 gap-20 pt-10">
             <div className="text-center">
               <div className="border-t border-slate-400 pt-4 px-8">
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Tesorero General</p>
-                <p className="text-xs text-slate-500 mt-1">Nombre: ________________________</p>
-                <p className="text-xs text-slate-500">C.C. ___________________________</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Representante Legal</p>
+                <p className="text-xs text-slate-500 mt-1">{organization?.settings?.rep_legal_name || ''}</p>
+                <p className="text-xs text-slate-500">{organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.'}</p>
               </div>
             </div>
             <div className="text-center">
               <div className="border-t border-slate-400 pt-4 px-8">
                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Contador Público</p>
-                <p className="text-xs text-slate-500 mt-1">Nombre: ________________________</p>
-                <p className="text-xs text-slate-500">T.P. ___________________________</p>
+                <p className="text-xs text-slate-500 mt-1">{organization?.settings?.contador_name || ''}</p>
+                <p className="text-xs text-slate-500">{organization?.settings?.contador_tp ? `T.P. ${organization.settings.contador_tp}` : 'T.P.'}</p>
               </div>
             </div>
           </div>
           <footer className="mt-20 pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 uppercase font-bold tracking-widest">
             <div>Página 1 de 1</div>
-            <div>Código Interno: BG-{today.getFullYear()}</div>
             <div>Cifrix Contable</div>
           </footer>
         </div>

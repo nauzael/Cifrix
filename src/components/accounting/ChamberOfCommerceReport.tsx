@@ -215,12 +215,12 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(71, 85, 105);
-    doc.text(organization?.settings?.rep_legal_name || '________________________', margin, y);
-    doc.text(organization?.settings?.contador_name || '________________________', pageWidth - margin - sigLineContentWidth, y);
+    doc.text(organization?.settings?.rep_legal_name || '', margin, y);
+    doc.text(organization?.settings?.contador_name || '', pageWidth - margin - sigLineContentWidth, y);
     
     y += 12;
-    doc.text(organization?.settings?.rep_legal_document || 'C.C. ___________________', margin, y);
-    doc.text(organization?.settings?.contador_tp || 'T.P. ___________________', pageWidth - margin - sigLineContentWidth, y);
+    doc.text(organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.', margin, y);
+    doc.text(organization?.settings?.contador_tp ? `T.P. ${organization.settings.contador_tp}` : 'T.P.', pageWidth - margin - sigLineContentWidth, y);
 
     if (organization?.settings?.rep_legal_signature) {
       try {
