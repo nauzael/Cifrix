@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
 import { useAccountingStore } from '../../store/accountingStore';
 import { useAuthStore } from '../../store/authStore';
 import { closingProcessService } from '../../lib/accounting/closing-process';
-import { FileText, TrendingUp, Landmark, PieChart, Printer, X, Building2, Lock, Calendar } from 'lucide-react';
+import { FileText, TrendingUp, Landmark, PieChart, Printer, X, Building2, Lock } from 'lucide-react';
 import { formatCurrency } from '../../lib/utils';
 import { ChamberOfCommerceReport } from './ChamberOfCommerceReport';
 import jsPDF from 'jspdf';
@@ -20,39 +20,12 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
     setFinancialStatementType: setStatementType
   } = useAccountingStore();
   const accounts = useLiveQuery(() => db.accounts.where('organization_id').equals(organizationId).toArray(), [organizationId]);
+  const journalEntries = useLiveQuery(() => db.journal_entries.toArray());
   const organization = useLiveQuery(() => db.organizations.get(organizationId), [organizationId]);
   const { user } = useAuthStore();
-  
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isClosingProcess, setIsClosingProcess] = useState(false);
-
-  // Consulta optimizada para traer asientos con fechas de transacciones
-  const journalEntries = useLiveQuery(async () => {
-    const txs = await db.transactions.where('organization_id').equals(organizationId).toArray();
-    const txIds = txs.map(t => t.id);
-    const entries = await db.journal_entries.where('transaction_id').anyOf(txIds).toArray();
-    const txMap = new Map(txs.map(t => [t.id, t.date]));
-    return entries.map(e => ({ 
-      ...e, 
-      date: txMap.get(e.transaction_id) 
-    }));
-  }, [organizationId]);
-
-  // Derivar años disponibles de las transacciones
-  const availableYears = useMemo(() => {
-    if (!journalEntries) return [new Date().getFullYear()];
-    const years = journalEntries
-      .map(e => e.date ? new Date(e.date).getFullYear() : 0)
-      .filter(y => y > 0);
-    
-    const uniqueYears = Array.from(new Set(years)).sort((a, b) => b - a);
-    
-    // Asegurar que el año actual esté en la lista si no hay transacciones
-    if (uniqueYears.length === 0) return [new Date().getFullYear()];
-    return uniqueYears;
-  }, [journalEntries]);
 
   const today = new Date();
   const generatedAt = `${today.toLocaleDateString()} ${today.toLocaleTimeString()}`;
@@ -61,24 +34,12 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
   if (!organization) return <div className="p-8 text-center text-slate-500">Cargando organización...</div>;
 
   const calculateBalance = (accountId: string, code: string) => {
-    const firstDigit = (code || '')[0];
-    
-    const entries = (journalEntries || []).filter(e => {
-      if (!e.date || e.account_id !== accountId) return false;
-      const entryYear = new Date(e.date).getFullYear();
-      
-      if (['1', '2', '3'].includes(firstDigit)) {
-        // Cuentas de Balance: Acumulativo hasta el final del año seleccionado
-        return entryYear <= selectedYear;
-      } else {
-        // Cuentas de Resultado: Solo el año seleccionado
-        return entryYear === selectedYear;
-      }
-    });
-
+    const entries = journalEntries.filter(e => e.account_id === accountId);
     const totalDebit = entries.reduce((sum, e) => sum + e.debit, 0);
     const totalCredit = entries.reduce((sum, e) => sum + e.credit, 0);
 
+    const firstDigit = (code || '')[0];
+    
     // Naturaleza DÉBITO: Activos (1), Gastos (5), Costos (6)
     if (['1', '5', '6'].includes(firstDigit)) {
       return totalDebit - totalCredit;
@@ -208,7 +169,8 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
       doc.text(`NIT: ${organization.tax_id}`, margin, y);
       y += 14;
     }
-    doc.text(`Período: De 1 de enero a 31 de diciembre de ${selectedYear}`, margin, y);
+    const currentYear = today.getFullYear();
+    doc.text(`Período: De 1 de enero a 31 de diciembre de ${currentYear}`, margin, y);
     y += 24;
 
     if (type === 'balance') {
@@ -569,40 +531,23 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             <span className="xs:hidden">RUES</span>
           </button>
         </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 shadow-sm">
-            <Calendar className="size-4 text-blue-600" />
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="bg-transparent border-none text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 cursor-pointer"
-            >
-              {availableYears.map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
-
-          {(statementType === 'balance' || statementType === 'pnl') && (
-            <button
-              onClick={() => {
-                const doc = buildPdf(statementType);
-                const blob = doc.output('blob');
-                const url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
-                setTimeout(() => URL.revokeObjectURL(url), 60_000);
-              }}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border shadow-sm
-                ${statementType === 'balance' 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 border-blue-500' 
-                  : 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-500'}`}
-            >
-              <Printer size={16} className="sm:size-[18px]" />
-              <span className="hidden sm:inline">Vista previa / PDF</span>
-            </button>
-          )}
-        </div>
+        {(statementType === 'balance' || statementType === 'pnl') && (
+          <button
+            onClick={() => {
+              const doc = buildPdf(statementType);
+              const blob = doc.output('blob');
+              const url = URL.createObjectURL(blob);
+              window.open(url, '_blank');
+              setTimeout(() => URL.revokeObjectURL(url), 60_000);
+            }}
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all border shadow-sm
+              ${statementType === 'balance' 
+                ? 'bg-blue-600 text-white hover:bg-blue-700 border-blue-500' 
+                : 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-500'}`}
+          >
+            <Printer size={16} className="sm:size-[18px]" /> Vista previa / PDF
+          </button>
+        )}
         <button
             onClick={handleClosing}
             disabled={isClosingProcess}
@@ -910,7 +855,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
             <div className="text-right">
               <div className="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Balance General</h2>
-              <p className="text-slate-500 text-sm font-bold">A 31 de diciembre de {selectedYear}</p>
+              <p className="text-slate-500 text-sm">A corte de: {today.toLocaleDateString()}</p>
               <p className="text-slate-400 text-xs mt-1 italic">Generado el {generatedAt}</p>
             </div>
           </header>
@@ -1016,22 +961,18 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
           </div>
 
           <div className="grid grid-cols-2 gap-20 pt-10">
-            <div className="text-center flex flex-col items-center">
-              <div className="border-t border-slate-400 pt-4 px-4 w-[200px]">
+            <div className="text-center">
+              <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Representante Legal</p>
-                <div className="w-full flex justify-center">
-                  <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.rep_legal_name || ''}</p>
-                </div>
+                <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.rep_legal_name || ''}</p>
                 <p className="text-xs text-slate-500">{organization?.settings?.rep_legal_document ? `C.C. ${organization.settings.rep_legal_document}` : 'C.C.'}</p>
               </div>
             </div>
-            <div className="text-center flex flex-col items-center">
-              <div className="border-t border-slate-400 pt-4 px-4 w-[200px]">
+            <div className="text-center">
+              <div className="border-t border-slate-400 pt-4 px-8 max-w-[200px] mx-auto">
                 <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Contador Público</p>
-                <div className="w-full flex justify-center">
-                  <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.contador_name || ''}</p>
-                </div>
-                <p className="text-xs text-slate-500">{organization?.settings?.contador_tp || ''}</p>
+                <p className="text-xs text-slate-500 mt-1 whitespace-nowrap">{organization?.settings?.contador_name || ''}</p>
+                <p className="text-xs text-slate-500">{organization?.settings?.contador_tp ? `T.P. ${organization.settings.contador_tp}` : 'T.P.'}</p>
               </div>
             </div>
           </div>
