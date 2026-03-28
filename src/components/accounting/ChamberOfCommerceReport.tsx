@@ -80,36 +80,82 @@ export function ChamberOfCommerceReport({ organizationId }: ChamberOfCommerceRep
       creator: 'Cifrix Application'
     });
 
-    // 2. Logo (si existe)
+    // 2. Logo and Header Standardized
     if (organization.settings?.logo_url) {
       try {
-        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 50, 50, undefined, 'FAST');
-        y += 60;
+        const imgProps = doc.getImageProperties(organization.settings.logo_url);
+        const printableWidth = pageWidth - 2 * margin;
+        const targetWidth = printableWidth * 0.18;
+        const aspectRatio = imgProps.height / imgProps.width;
+        
+        let finalWidth = targetWidth;
+        let finalHeight = targetWidth * aspectRatio;
+        const maxHeight = 60;
+
+        if (finalHeight > maxHeight) {
+          finalHeight = maxHeight;
+          finalWidth = finalHeight / aspectRatio;
+        }
+
+        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, finalWidth, finalHeight, undefined, 'FAST');
+        
+        // Place info text to the right of the logo - consistent spacing
+        const textX = margin + targetWidth + 15;
+        let textY = y + 10;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(30, 41, 59);
+        doc.text(organization?.name || 'Organización', textX, textY);
+        textY += 18;
+
+        doc.setFontSize(11);
+        doc.setTextColor(71, 85, 105);
+        doc.text('REPORTE RUES', textX, textY);
+        textY += 15;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        if (organization?.tax_id) {
+          doc.text(`NIT: ${organization.tax_id}`, textX, textY);
+          textY += 12;
+        }
+        doc.text(`Período de Renovación: ${year}`, textX, textY);
+        
+        y = y + Math.max(finalHeight + 15, 60); 
       } catch (e) {
         console.error('Error adding logo to PDF:', e);
-        y += 10;
+        // Fallback vertical layout
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(organization?.name || 'Organización', margin, y);
+        y += 18;
+        doc.setFontSize(11);
+        doc.text('REPORTE RUES', margin, y);
+        y += 35;
       }
+    } else {
+      // 3. Encabezado Sin Logo
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(30, 41, 59); 
+      doc.text(organization.name.toUpperCase(), margin, y);
+      y += 20;
+
+      doc.setFontSize(11);
+      doc.setTextColor(71, 85, 105);
+      doc.text('REPORTE RUES', margin, y);
+      y += 15;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`NIT: ${organization.tax_id || ''}`, margin, y);
+      y += 12;
+      doc.text(`Período de Renovación: ${year}`, margin, y);
+      y += 30;
     }
-
-    // 3. Encabezado Estilo Cifrix (Igual a Balance General)
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(30, 41, 59); // Slate-800
-    doc.text(organization.name.toUpperCase(), margin, y);
-    y += 20;
-
-    doc.setFontSize(12);
-    doc.setTextColor(71, 85, 105); // Slate-600
-    doc.text('INFORMACIÓN FINANCIERA PARA CORTE RUES', margin, y);
-    y += 16;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139); // Slate-500
-    doc.text(`NIT: ${organization.tax_id || 'N/A'}`, margin, y);
-    y += 14;
-    doc.text(`Período: De 1 de enero a 31 de diciembre de ${year}`, margin, y);
-    y += 30;
 
     // 4. Tabla de Estado de Situación Financiera
     (autoTable as any)(doc, {

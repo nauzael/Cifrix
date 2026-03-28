@@ -172,10 +172,25 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
 
     if (organization?.settings?.logo_url) {
       try {
-        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, 50, 50, undefined, 'FAST');
-        // Place info text to the right of the logo
-        const textX = margin + 65;
-        let textY = y + 12;
+        const imgProps = doc.getImageProperties(organization.settings.logo_url);
+        const printableWidth = pageWidth - 2 * margin;
+        const targetWidth = printableWidth * 0.18;
+        const aspectRatio = imgProps.height / imgProps.width;
+        
+        let finalWidth = targetWidth;
+        let finalHeight = targetWidth * aspectRatio;
+        const maxHeight = 60;
+
+        if (finalHeight > maxHeight) {
+          finalHeight = maxHeight;
+          finalWidth = finalHeight / aspectRatio;
+        }
+
+        doc.addImage(organization.settings.logo_url, 'PNG', margin, y, finalWidth, finalHeight, undefined, 'FAST');
+        
+        // Place info text to the right of the logo - consistent spacing
+        const textX = margin + targetWidth + 15;
+        let textY = y + 10;
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
@@ -197,7 +212,7 @@ export function FinancialStatements({ organizationId }: FinancialStatementsProps
         }
         doc.text(`Período: De 1 de enero a 31 de diciembre de ${selectedYear}`, textX, textY);
         
-        y += 70; // Adjusted height after side-by-side header
+        y = y + Math.max(finalHeight + 15, 60); 
       } catch (e) {
         console.error('Error adding logo to PDF:', e);
         // Fallback vertical layout

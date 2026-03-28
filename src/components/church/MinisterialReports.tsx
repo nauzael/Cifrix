@@ -11,7 +11,8 @@ import {
   Calendar,
   Filter,
   PieChart,
-  UserCheck
+  UserCheck,
+  Loader2
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { 
@@ -26,6 +27,9 @@ import {
 } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 interface MinisterialReportsProps {
@@ -33,10 +37,120 @@ interface MinisterialReportsProps {
 }
 
 export function MinisterialReports({ organizationId }: MinisterialReportsProps) {
+  const [isExporting, setIsExporting] = useState(false);
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
+
+  const organization = useLiveQuery(() => db.organizations.get(organizationId), [organizationId]);
+
+  const generatePdf = async () => {
+    if (!stats || !organization) return;
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      let y = 20;
+
+      // 1. Fluid Logo Standardization (18% width)
+      if (organization.settings?.logo_url) {
+        try {
+          const imgProps = doc.getImageProperties(organization.settings.logo_url);
+          const printableWidth = pageWidth - 2 * margin;
+          const targetWidth = printableWidth * 0.18;
+          const aspectRatio = imgProps.height / imgProps.width;
+          
+          let finalWidth = targetWidth;
+          let finalHeight = targetWidth * aspectRatio;
+          const maxHeight = 60;
+
+          if (finalHeight > maxHeight) {
+            finalHeight = maxHeight;
+            finalWidth = finalHeight / aspectRatio;
+          }
+
+          doc.addImage(organization.settings.logo_url, 'PNG', margin, y, finalWidth, finalHeight, undefined, 'FAST');
+          
+          const textX = margin + targetWidth + 15;
+          let textY = y + 10;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(14);
+          doc.setTextColor(30, 41, 59);
+          doc.text(organization.name.toUpperCase(), textX, textY);
+          textY += 15;
+
+          doc.setFontSize(11);
+          doc.setTextColor(71, 85, 105);
+          doc.text('REPORTE MINISTERIAL DE INGRESOS', textX, textY);
+          textY += 12;
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(100, 116, 139);
+          doc.text(`NIT: ${organization.tax_id || ''}`, textX, textY);
+          textY += 10;
+          doc.text(`Periodo: ${dateRange.start} al ${dateRange.end}`, textX, textY);
+          
+          y = y + Math.max(finalHeight + 15, 60);
+        } catch (e) {
+          console.error('Error adding logo:', e);
+          y += 10;
+        }
+      } else {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('REPORTE MINISTERIAL', margin, y);
+        y += 20;
+      }
+
+      // Summary Table
+      (autoTable as any)(doc, {
+        startY: y,
+        margin: { left: margin, right: margin },
+        head: [['Concepto', 'Total']],
+        body: [
+          ['Ingresos Totales', `$ ${formatCurrency(stats.totalIncome)}`],
+          ['Diezmos', `$ ${formatCurrency(stats.byCategory.DIEZMO)}`],
+          ['Ofrendas', `$ ${formatCurrency(stats.byCategory.OFRENDA)}`],
+          ['Especiales', `$ ${formatCurrency(stats.byCategory.ESPECIAL)}`],
+          ['Membresía Activa', `${stats.activeMembers} Miembros`],
+        ],
+        theme: 'striped',
+        headStyles: { fillStyle: 'fill', fillColor: [59, 130, 246] }
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 20;
+
+      // Projects Progress
+      if (stats.projectProgress.length > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('AVANCE DE PROYECTOS', margin, y);
+        y += 10;
+
+        (autoTable as any)(doc, {
+          startY: y,
+          margin: { left: margin, right: margin },
+          head: [['Proyecto', 'Meta', 'Recaudado', '%']],
+          body: stats.projectProgress.map(p => [
+            p.name,
+            `$ ${formatCurrency(p.target_amount)}`,
+            `$ ${formatCurrency(p.raised)}`,
+            `${p.percent}%`
+          ]),
+          headStyles: { fillColor: [59, 130, 246] }
+        });
+      }
+
+      doc.save(`Reporte_Ministerial_${dateRange.start}_${dateRange.end}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const contributions = useLiveQuery(
     () => {
@@ -133,8 +247,13 @@ export function MinisterialReports({ organizationId }: MinisterialReportsProps) 
             />
           </div>
         </div>
-        <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
-          <Download size={16} /> Exportar PDF
+        <button 
+          onClick={generatePdf}
+          disabled={isExporting}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+        >
+          {isExporting ? <Loader2 className="size-4 animate-spin" /> : <Download size={16} />}
+          {isExporting ? 'Exportando...' : 'Exportar PDF'}
         </button>
       </div>
 

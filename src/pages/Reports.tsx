@@ -251,7 +251,9 @@ body {
 <div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200">
 <header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
 <div class="flex items-center gap-6">
-  ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-16 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+  <div class="w-[18%] flex items-center">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="max-w-full max-h-20 object-contain object-left" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+  </div>
   <div>
     <h1 class="text-base font-black tracking-tight text-slate-900 uppercase">${orgName}</h1>
     <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
@@ -322,7 +324,9 @@ ${equityRows}
 <div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200">
 <header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
   <div class="flex items-center gap-6">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-16 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div class="w-[18%] flex items-center">
+      ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="max-w-full max-h-20 object-contain object-left" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    </div>
     <div>
       <h1 class="text-base font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
       <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
@@ -378,7 +382,9 @@ ${equityRows}
       return `
 <!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Flujo de Caja</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
   <div class="flex items-center gap-6">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-16 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div class="w-[18%] flex items-center">
+      ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="max-w-full max-h-20 object-contain object-left" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    </div>
     <div>
       <h1 class="text-base font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
       <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
@@ -424,7 +430,9 @@ ${equityRows}
 <!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Diezmos y Ofrendas</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200">
 <header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
   <div class="flex items-center gap-6">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-16 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div class="w-[18%] flex items-center">
+      ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="max-w-full max-h-20 object-contain object-left" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    </div>
     <div>
       <h1 class="text-base font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
       <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
@@ -472,7 +480,9 @@ ${equityRows}
       return `
 <!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Certificado de Donación</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Descargar Certificado</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-16 border-[12px] border-blue-600/10 relative overflow-hidden">
 <header class="flex flex-col items-center text-center mb-12">
-  ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-20 object-contain mb-6" />` : `<div class="size-24 bg-blue-600 rounded-full flex items-center justify-center text-white mb-6 shadow-xl"><span class="material-symbols-outlined text-6xl">church</span></div>`}
+  <div class="w-[18%] mx-auto mb-6 flex justify-center">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="max-w-full max-h-20 object-contain" />` : `<div class="size-24 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-xl"><span class="material-symbols-outlined text-6xl">church</span></div>`}
+  </div>
   <div class="space-y-1">
     <h1 class="text-xl font-black tracking-tight text-slate-900 uppercase">${orgName}</h1>
     <p class="text-slate-600 font-bold text-base tracking-widest uppercase">NIT: ${taxId}</p>
@@ -518,7 +528,9 @@ ${equityRows}
       return `
 <!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Caja General</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-4xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-4xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
   <div class="flex items-center gap-6">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-16 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div class="w-[18%] flex items-center">
+      ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="max-w-full max-h-20 object-contain object-left" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    </div>
     <div>
       <h1 class="text-base font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
       <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>
@@ -570,7 +582,9 @@ ${equityRows}
       return `
 <!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Libro Auxiliar</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-5xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-5xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200"><header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
   <div class="flex items-center gap-6">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-16 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">account_balance_wallet</span></div>`}
+  <div class="w-[18%] flex items-center">
+    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="max-w-full max-h-20 object-contain object-left" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">account_balance_wallet</span></div>`}
+  </div>
     <div><h1 class="text-base font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1><p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p><p class="text-slate-400 text-[10px] mt-0.5">${address}</p></div>
   </div>
   <div class="text-right"><div class="bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase mb-2 inline-block">Reporte Oficial</div><h2 class="text-xl font-bold text-slate-900 uppercase leading-tight">${targetAcc ? targetAcc.name : 'Libro Auxiliar'}</h2><p class="text-slate-600 text-sm font-bold">Del 1 de enero al 31 de diciembre de ${selectedYear}</p></div>
@@ -614,7 +628,9 @@ ${equityRows}
 <!DOCTYPE html><html class="light" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Ejecución Presupuestaria</title><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><style type="text/tailwindcss">body{font-family:'Inter',sans-serif}</style>${printStyles}</head><body class="bg-slate-100 font-display min-h-screen py-10"><div class="max-w-5xl mx-auto mb-6 px-4 no-print flex justify-between items-center"><button class="flex items-center gap-2 text-slate-600 font-semibold" onclick="window.close()">Cerrar</button><button class="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg font-bold" onclick="window.print()">Imprimir / PDF</button></div><div class="pdf-container max-w-5xl mx-auto bg-white shadow-2xl min-h-[29.7cm] p-12 border border-slate-200">
 <header class="flex justify-between items-start border-b-2 border-slate-100 pb-8 mb-8">
   <div class="flex items-center gap-6">
-    ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="h-16 object-contain" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    <div class="w-[18%] flex items-center">
+      ${org?.settings?.logo_url ? `<img src="${org.settings.logo_url}" class="max-w-full max-h-20 object-contain object-left" />` : `<div class="size-16 bg-blue-600 rounded-xl flex items-center justify-center text-white"><span class="material-symbols-outlined text-4xl">church</span></div>`}
+    </div>
     <div>
       <h1 class="text-base font-black tracking-tight text-slate-900 uppercase leading-none mb-1">${orgName}</h1>
       <p class="text-slate-500 text-sm font-medium">NIT: ${taxId}</p>

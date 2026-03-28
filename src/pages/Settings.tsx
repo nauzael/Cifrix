@@ -372,6 +372,33 @@ export function Settings() {
                               </button>
                             )}
                           </div>
+
+                          {/* Preview Section */}
+                          <div className="mt-6 p-4 bg-muted/20 border border-border/50 rounded-2xl relative overflow-hidden group/preview">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+                              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Vista Previa en Reportes PDF / HTML</span>
+                            </div>
+                            
+                            <div className="bg-background border border-border shadow-sm rounded-xl p-4 flex gap-4 items-center">
+                              {/* Fluid Container Simulation (18%) */}
+                              <div className="w-[18%] flex items-center justify-center min-h-[40px] border border-dashed border-border/50 rounded-lg overflow-hidden bg-muted/5">
+                                {org?.settings?.logo_url ? (
+                                  <img src={org.settings.logo_url} className="max-w-full max-h-12 object-contain" alt="Preview" />
+                                ) : (
+                                  <span className="text-[8px] text-muted-foreground font-black uppercase text-center">18% Ancho</span>
+                                )}
+                              </div>
+                              <div className="flex-1 space-y-1.5">
+                                <div className="h-2.5 w-32 bg-foreground/10 rounded-full" />
+                                <div className="h-1.5 w-20 bg-muted-foreground/10 rounded-full" />
+                                <div className="h-1 w-40 bg-muted-foreground/5 rounded-full" />
+                              </div>
+                            </div>
+                            <p className="mt-3 text-[9px] text-muted-foreground font-medium italic">
+                              * El logo ocupará siempre el 18% del ancho del reporte, manteniendo su proporción original.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
