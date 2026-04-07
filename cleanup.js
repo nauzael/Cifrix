@@ -29,7 +29,7 @@ const incomeReturn = `                }
     }
 `;
 
-content = content.replace(/groups: \[\{ name: 'Gastos Operacionales', accounts: this\.mapToReportAccounts\(expenses\), total: totalExpenses \}\],\s*total: totalExpenses\s*/**/g, 
+content = content.replace(/groups: \[\{ name: 'Gastos Operacionales', accounts: this\.mapToReportAccounts\(expenses\), total: totalExpenses \}\],\s*total: totalExpenses\s*/g, 
 `groups: [{ name: 'Gastos Operacionales', accounts: this.mapToReportAccounts(expenses), total: totalExpenses }],
                     total: totalExpenses
                 }

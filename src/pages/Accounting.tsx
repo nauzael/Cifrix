@@ -13,6 +13,7 @@ import { BankReconciliation } from '../components/accounting/BankReconciliation'
 import { TransactionForm } from '../components/accounting/TransactionForm';
 import { TrialBalance } from '../components/accounting/TrialBalance';
 import { FinancialStatements } from '../components/accounting/FinancialStatements';
+import { ImportExcelModal } from '../components/accounting/ImportExcelModal';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Filter,
@@ -30,7 +31,8 @@ import {
   FileBarChart,
   Tags,
   Library,
-  Building2
+  Building2,
+  FileSpreadsheet
 } from 'lucide-react';
 import { formatCurrency, formatDate, cn } from '../lib/utils';
 import { toast } from '../store/toastStore';
@@ -49,6 +51,7 @@ export function Accounting() {
   const [orgId, setOrgId] = useState<string>('');
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Filters State
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -387,6 +390,16 @@ export function Accounting() {
                   <span className="lg:hidden xl:inline uppercase tracking-tighter">Nuevo</span>
                 </button>
               </div>
+
+              <div className="lg:col-span-1 relative z-10">
+                <button
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-xl text-sm font-black hover:bg-emerald-200 dark:hover:bg-emerald-900/30 active:scale-95 transition-all h-[42px]"
+                >
+                  <FileSpreadsheet className="size-5" />
+                  <span className="lg:hidden xl:inline uppercase tracking-tighter">Importar</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -508,6 +521,19 @@ export function Accounting() {
             }}
             onSuccess={() => {
               setSearchTerm(''); // Clear search to show the new entry
+            }}
+          />
+        )
+      }
+
+      {
+        isImportModalOpen && (
+          <ImportExcelModal
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            organizationId={orgId}
+            onSuccess={() => {
+              setSearchTerm('');
             }}
           />
         )

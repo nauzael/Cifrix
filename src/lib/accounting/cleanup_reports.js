@@ -94,29 +94,30 @@ const correctRUES = `    /**
 `;
 
 // Regex for the RUES blocks - handling variable indentation and slight variations
-const ruesRegex = /\\/\\*\\*\\s*\\* Genera los datos resumidos para la renovación de Cámara de Comercio \\(RUES\\)\\s*\\*\\/\\s*async getRUESData\\([\\s\\S]*?data: \\{[\\s\\S]*?utilidadNeta\\s*\\}\\s*\\};\\s*\\}\\s*\\}/g;
+const ruesRegex = /\/\*\*[\s\S]*?Genera los datos resumidos para la renovación de Cámara de Comercio \(RUES\)[\s\S]*?async getRUESData\([\s\S]*?data: \{[\s\S]*?utilidadNeta\s*\}\s*\};\s*\}\s*\}/g;
 
 // Also look for blocks that end prematurely with } } } if they were inserted in a way that didn't include the final return braces
-const ruesRegexShort = /\\/\\*\\*\\s*\\* Genera los datos resumidos para la renovación de Cámara de Comercio \\(RUES\\)\\s*\\*\\/\\s*async getRUESData\\([\\s\\S]*?\\n\\s*\\}\\s*\\}/g;
+const ruesRegexShort = /\/\*\*[\s\S]*?Genera los datos resumidos para la renovación de Cámara de Comercio \(RUES\)[\s\S]*?async getRUESData\([\s\S]*?\n\s*\}\s*\}/g;
 
 content = content.replace(ruesRegex, '');
 content = content.replace(ruesRegexShort, '');
 
 // Fix getBalanceSheet corruption specifically
-content = content.replace(/total: incomeExpenseBalance\\s*\\/\\*\\*[\\s\\S]*?summary: \\{/g, 
-'total: incomeExpenseBalance }\\n                    ],\\n                    total: totalEquity\\n                }\\n            ],\\n            summary: {');
+content = content.replace(/total: incomeExpenseBalance\s*\/\*\*[\s\S]*?summary: \{/g, 
+'total: incomeExpenseBalance }\n                    ],\n                    total: totalEquity\n                }\n            ],\n            summary: {');
 
 // Fix getIncomeStatement corruption
-content = content.replace(/total: totalExpenses\\s*/**/g, 'total: totalExpenses }\\n            ],\\n            summary: {\\n                netResult\\n            }\\n        };\\n    }\\n');
+content = content.replace(/total: totalExpenses\s*\/\*\*[\s\S]*?\*\//g, 'total: totalExpenses }\n            ],\n            summary: {\n                netResult\n            }\n        };\n    }\n');
 
 // Clear leftover artifacts of nested class openers or openers that should be closed
-content = content.replace(/^\\n}\\s*\\n}/gm, '}\\n');
+content = content.replace(/^\n\}\s*\n\}/gm, '}\n');
 
 // Clean up FinancialReportData interface and other interfaces from the top
-content = content.replace(/summary\\?: any;\\s*/**/g, 'summary?: any;\\n}\\n');
+content = content.replace(/summary\?: any;\s*\/\*\*[\s\S]*?\*\//g, 'summary?: any;\n}\n');
 
 // Finally, add the correctRUES at the end of FinancialReportsService class
-content = content.replace(/\\n}\\s*\\nexport const financialReportsService = new FinancialReportsService\\(\\);/, '\\n' + correctRUES + '\\n}\\n\\nexport const financialReportsService = new FinancialReportsService();');
+content = content.replace(/\n\}\s*\nexport const financialReportsService = new FinancialReportsService\(\);/, '\n' + correctRUES + '\n}\n\nexport const financialReportsService = new FinancialReportsService();');
 
 fs.writeFileSync(filePath, content);
 console.log('Cleanup complete');
+
