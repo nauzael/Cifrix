@@ -236,6 +236,57 @@ export function Accounting() {
     });
   };
 
+  const clearAllJournal = async () => {
+    const lockDate = org?.settings?.accounting?.lockDate;
+    if (lockDate) {
+      toast.error(`Los asientos están protegidos por fecha de cierre: ${lockDate}`);
+      return;
+    }
+
+    confirm({
+      title: 'Limpiar Libro Diario',
+      message: '¿Está seguro de eliminar TODOS los asientos del libro diario? Esta acción eliminará también todas las entradas contables asociadas. Esta acción no se puede deshacer.',
+      confirmText: 'SÍ, ELIMINAR TODO',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const txCount = await db.transactions.where('organization_id').equals(orgId).count();
+          const entryCount = await db.journal_entries.count();
+
+          if (txCount === 0) {
+            toast.info('No hay asientos para eliminar');
+            return;
+          }
+
+          await db.transaction('rw', [db.transactions, db.journal_entries, db.deleted_records, db.audit_logs], async () => {
+            // Delete all journal entries first
+            const allEntries = await db.journal_entries.toArray();
+            const entryIds = allEntries.map(e => e.id);
+            if (entryIds.length > 0) {
+              await db.journal_entries.bulkDelete(entryIds);
+            }
+
+            // Delete all transactions for this organization
+            const allTxs = await db.transactions.where('organization_id').equals(orgId).toArray();
+            const txIds = allTxs.map(t => t.id);
+            if (txIds.length > 0) {
+              await db.transactions.bulkDelete(txIds);
+            }
+          });
+
+          toast.success(`Se eliminaron ${txCount} asientos y ${entryCount} entradas contables`);
+
+          if (orgId) {
+            syncToSupabase(orgId);
+          }
+        } catch (error) {
+          console.error('Error clearing journal:', error);
+          toast.error('Error al limpiar el libro diario');
+        }
+      }
+    });
+  };
+
   return (
     <div className="space-y-4">
       {/* Header Section */}
@@ -261,6 +312,14 @@ export function Accounting() {
           >
             <CloudFog className="size-4" />
             <span className="hidden sm:inline">SINCRONIZAR</span>
+          </button>
+          <button
+            onClick={clearAllJournal}
+            className="flex items-center gap-2 px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/10 dark:text-red-400 rounded-lg text-xs font-bold transition-all border border-red-200 dark:border-red-500/20 shadow-sm"
+            title="Limpiar todo el libro diario"
+          >
+            <Trash2 className="size-4" />
+            <span className="hidden sm:inline">LIMPIAR</span>
           </button>
           <div className="flex items-center gap-1.5 bg-card p-1.5 rounded-xl border border-border shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide">
             {[
