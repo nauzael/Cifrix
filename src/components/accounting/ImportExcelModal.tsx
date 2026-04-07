@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, cn } from '../../lib/utils';
 import { logActivity } from '../../lib/audit';
+import { generateImportTemplate, downloadTemplate, fetchAccountsAndGenerateTemplate } from '../../lib/excel-template';
 
 interface RawRow {
   _rowIndex: number;
@@ -570,25 +571,63 @@ export function ImportExcelModal({ isOpen, onClose, organizationId, onSuccess }:
     >
       <div className="flex flex-col h-full">
         {!file ? (
-          <div 
-            className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer"
-            onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload size={48} className="mx-auto text-slate-300 mb-4" />
-            <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Arrastre su archivo Excel aquí
-            </h3>
-            <p className="text-sm text-slate-500 mb-4">o haga clic para seleccionar</p>
-            <p className="text-xs text-slate-400">Formatos soportados: .xlsx, .xls, .csv</p>
-            <input 
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-            />
+          <div className="space-y-6">
+            <div 
+              className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-12 text-center hover:border-blue-400 dark:hover:border-blue-500 transition-colors cursor-pointer"
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload size={48} className="mx-auto text-slate-300 mb-4" />
+              <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">
+                Arrastre su archivo Excel aquí
+              </h3>
+              <p className="text-sm text-slate-500 mb-4">o haga clic para seleccionar</p>
+              <p className="text-xs text-slate-400">Formatos soportados: .xlsx, .xls, .csv</p>
+              <input 
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+              />
+            </div>
+            
+            <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    ¿No tiene un archivo?
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Descargue nuestra plantilla prediseñada con las columnas correctas
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const blob = generateImportTemplate({});
+                      downloadTemplate(blob, 'plantilla_importacion_asientos.xlsx');
+                    }}
+                    className="px-4 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 flex items-center gap-2"
+                  >
+                    <Download size={14} />
+                    Plantilla Básica
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fetchAccountsAndGenerateTemplate(organizationId);
+                    }}
+                    className="px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 flex items-center gap-2"
+                  >
+                    <Download size={14} />
+                    Con Cuentas PUC
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <>
