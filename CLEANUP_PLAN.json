@@ -1,0 +1,179 @@
+{
+  "plan_id": "20260428-github-cleanup-docs",
+  "created": "2026-04-28",
+  "objective": "Limpiar repositorio Cifrix y crear documentación profesional para GitHub",
+  "status": "DOCUMENTATION_CREATED",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Cleanup & Security",
+      "description": "Configurar gitignore y limpiar archivos sensibles",
+      "tasks": [
+        {
+          "id": "cleanup-gitignore",
+          "name": "Mejorar .gitignore",
+          "description": "Crear .gitignore comprensivo que excluya archivos sensibles, builds, y artifacts",
+          "files": [".gitignore"],
+          "status": "PENDING",
+          "priority": "CRITICAL",
+          "details": {
+            "add_patterns": [
+              "# Local database",
+              ".lcm/",
+              "lcm.db*",
+              "",
+              "# Development scripts",
+              "scripts/debug*.js",
+              "scripts/test*.js",
+              "scripts/*.txt",
+              "",
+              "# Build artifacts",
+              "dev-dist/",
+              "__pycache__/",
+              "*.pyc",
+              "",
+              "# Agent configuration",
+              ".agent/",
+              ".agents/",
+              ".documentacion/",
+              ".trae/",
+              "",
+              "# Vercel sensitive",
+              ".vercel/project.json",
+              ".vercelignore",
+              "",
+              "# IDE/Editor",
+              ".idea/",
+              "*.sublime-*",
+              "",
+              "# OS files",
+              "Thumbs.db",
+              "*.swp",
+              "*.swo"
+            ]
+          }
+        },
+        {
+          "id": "cleanup-git-history",
+          "name": "Remover archivos del historial de git",
+          "description": "Usar git rm --cached para remover archivos sensibles sin eliminarlos localmente",
+          "commands": [
+            "git rm --cached -r .lcm/",
+            "git rm --cached .agent/ .agents/ .documentacion/ .trae/",
+            "git rm --cached scripts/debug*.js scripts/test*.js scripts/*.txt",
+            "git rm --cached ts_errors.txt",
+            "git rm --cached dev-dist/",
+            "git commit -m 'chore: remove sensitive and build files from git tracking'"
+          ],
+          "status": "PENDING",
+          "priority": "HIGH",
+          "note": "Ejecutar después de actualizar .gitignore"
+        },
+        {
+          "id": "verify-env-example",
+          "name": "Verificar .env.example",
+          "description": "Asegurar que .env.example tiene todos los placeholders necesarios",
+          "files": [".env.example"],
+          "status": "PENDING",
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Documentation",
+      "description": "Crear documentación profesional para GitHub",
+      "tasks": [
+        {
+          "id": "create-readme",
+          "name": "Crear README.md profesional",
+          "description": "Documentación completa del proyecto con descripción, características, instalación, etc.",
+          "files": ["README.md"],
+          "status": "PENDING",
+          "priority": "CRITICAL",
+          "sections": [
+            "📖 Introduction",
+            "✨ Features",
+            "🛠️ Tech Stack",
+            "📸 Screenshots",
+            "📋 Prerequisites",
+            "🚀 Installation",
+            "🔐 Environment Setup",
+            "💻 Development",
+            "🏗️ Architecture",
+            "📦 Main Modules",
+            "📱 Platforms",
+            "🤝 Contributing",
+            "📄 License"
+          ]
+        },
+        {
+          "id": "create-contributing",
+          "name": "Crear CONTRIBUTING.md",
+          "description": "Guía para contribuyentes con convenciones de código y proceso de PR",
+          "files": ["CONTRIBUTING.md"],
+          "status": "PENDING",
+          "priority": "HIGH",
+          "sections": [
+            "Getting Started",
+            "Development Setup",
+            "Code Conventions",
+            "Commit Messages",
+            "Pull Requests",
+            "Testing"
+          ]
+        },
+        {
+          "id": "create-screenshots-readme",
+          "name": "Crear estructura de screenshots",
+          "description": "Directorio con instrucciones para agregar screenshots",
+          "files": ["screenshots/README.md"],
+          "status": "PENDING",
+          "priority": "MEDIUM"
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Quality Assurance",
+      "description": "Validar cambios antes de merge",
+      "tasks": [
+        {
+          "id": "verify-gitignore",
+          "name": "Verificar .gitignore es válido",
+          "command": "git check-ignore -v $(git ls-files)",
+          "status": "PENDING",
+          "priority": "HIGH"
+        },
+        {
+          "id": "verify-no-sensitive",
+          "name": "Verificar no hay datos sensibles",
+          "command": "git log --all --full-history -p --grep='credentials|password|secret|key' -S 'password'",
+          "status": "PENDING",
+          "priority": "CRITICAL"
+        },
+        {
+          "id": "test-build",
+          "name": "Probar build después de cambios",
+          "commands": ["npm install", "npm run build"],
+          "status": "PENDING",
+          "priority": "MEDIUM"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_tasks": 9,
+    "critical_tasks": 3,
+    "high_priority_tasks": 3,
+    "estimated_time": "1-2 hours",
+    "files_to_create": ["README.md", "CONTRIBUTING.md", "screenshots/README.md"],
+    "files_to_modify": [".gitignore", ".env.example"],
+    "files_to_remove_from_git": [".lcm/", "scripts/debug*.js", "scripts/test*.js", "scripts/*.txt", ".agent/", ".agents/", ".documentacion/", ".trae/", "ts_errors.txt", "dev-dist/"]
+  },
+  "notes": {
+    "git_history_note": "El historial de git está limpio - no hay credenciales hardcodeadas, solo archivos que necesitan ser excluidos",
+    "vercel_note": "Mantener .vercel/ con .gitignore para settings locales, pero excluir project.json",
+    "scripts_note": "Mantener scripts/ en repo pero solo con análisis útiles (analyze_exogena.js, backfill-profiles.js). Debug scripts en local solamente"
+  }
+}
