@@ -1,0 +1,204 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "Cifrix",
+      "alternateName": "Cifrix - Sistema de Contabilidad Integral",
+      "url": "https://cifrix.com",
+      "image": "https://cifrix.com/logo.png",
+      "description": "Plataforma de contabilidad offline-first para Colombia con facturación electrónica, declaración de renta y módulo especializado para iglesias.",
+      "applicationCategory": "AccountingApplication",
+      "applicationSubCategory": "Financial Management",
+      "operatingSystem": "Web, PWA",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "COP",
+        "availability": "https://schema.org/InStock"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "156",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "review": [
+        {
+          "@type": "Review",
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5"
+          },
+          "author": {
+            "@type": "Person",
+            "name": "Carlos Mendoza"
+          },
+          "reviewBody": "Excelente software contable, funciona perfectamente sin internet y la sincronización es automática."
+        }
+      ],
+      "featureList": "Contabilidad, Facturación Electrónica, Declaración de Renta, Reportes Exógenos, Módulo Eclesiástico",
+      "softwareVersion": "1.0",
+      "downloadUrl": "https://cifrix.com/register",
+      "installUrl": "https://cifrix.com/register",
+      "screenshot": "https://cifrix.com/screenshot.png",
+      "softwareHelp": "https://cifrix.com/docs",
+      "author": {
+        "@type": "Organization",
+        "name": "Cifrix",
+        "url": "https://cifrix.com",
+        "logo": "https://cifrix.com/logo.png",
+        "sameAs": [
+          "https://twitter.com/cifrix",
+          "https://facebook.com/cifrix",
+          "https://linkedin.com/company/cifrix"
+        ]
+      },
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Contadores, Iglesias, PYMES",
+        "geographicArea": {
+          "@type": "Country",
+          "name": "Colombia"
+        }
+      },
+      "knowsAbout": [
+        "Contabilidad",
+        "Facturación Electrónica",
+        "Normas DIAN",
+        "PUC Colombiano",
+        "Reportes Exógenos",
+        "Declaración de Renta"
+      ]
+    },
+    {
+      "@type": "Organization",
+      "name": "Cifrix",
+      "url": "https://cifrix.com",
+      "logo": "https://cifrix.com/logo.png",
+      "description": "Software contable colombiano offline-first para contadores, iglesias y PYMES",
+      "foundingDate": "2024",
+      "founders": [
+        {
+          "@type": "Person",
+          "name": "Nauzael"
+        }
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "Colombia"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Soporte",
+        "email": "soporte@cifrix.com",
+        "availableLanguage": "Spanish"
+      },
+      "sameAs": [
+        "https://twitter.com/cifrix",
+        "https://facebook.com/cifrix",
+        "https://linkedin.com/company/cifrix",
+        "https://github.com/nauzael/Cifrix"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Necesito internet para usar Cifrix?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, no necesitas internet para usar Cifrix. Nuestro sistema es offline-first, lo que significa que puedes trabajar sin conexión a internet y sincronizar tus datos automáticamente cuando te conectes. Ideal para zonas con conexión intermitente."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cumple con las normas de la DIAN?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, Cifrix cumple con todas las normas y resoluciones de la DIAN. Nuestro sistema se actualiza constantemente para garantizar el cumplimiento de la facturación electrónica y demás obligaciones tributarias en Colombia."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Tiene plan gratuito?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, ofrecemos un plan gratuito para que conozcas Cifrix sin compromiso. El plan gratuito incluye funcionalidades básicas de contabilidad. También tenemos planes pagos con características avanzadas para negocios en crecimiento."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Puedo migrar mis datos de otro sistema?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, puedes migrar tus datos desde otros sistemas contables. Cifrix soporta importación de archivos CSV, Excel y formatos estándar de contabilidad. Nuestro equipo de soporte puede asistirte en el proceso de migración."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Es seguro mi información?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutamente. Tu información está protegida con encriptación de grado bancario. Realizamos copias de seguridad automáticas y cumplimos con estándares internacionales de seguridad de datos. Solo tú tienes acceso a tu información."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Tiene soporte técnico?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, ofrecemos soporte técnico especializado para todos nuestros usuarios. Nuestro equipo está disponible por chat, correo electrónico y teléfono. Además, contamos con una amplia base de conocimientos y tutoriales."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Puedo cancelar en cualquier momento?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, puedes cancelar tu suscripción en cualquier momento sin penalizaciones. No hay contratos forzosos ni compromisos a largo plazo. Tu decisión, tu control."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Funciona en móviles?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sí, Cifrix es completamente responsive y funciona en dispositivos móviles. Puedes acceder desde tu smartphone o tablet, tanto Android como iOS, a través del navegador o nuestra app móvil."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "name": "Cifrix",
+      "url": "https://cifrix.com",
+      "description": "Software contable colombiano que funciona sin internet",
+      "inLanguage": "es-CO",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://cifrix.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "WebPage",
+      "name": "Cifrix - Software Contable Colombiano",
+      "description": "Plataforma de contabilidad offline-first para Colombia con facturación electrónica y módulo para iglesias",
+      "url": "https://cifrix.com",
+      "inLanguage": "es-CO",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Cifrix"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://cifrix.com/og-image.jpg",
+        "width": 1200,
+        "height": 630
+      }
+    }
+  ]
+}

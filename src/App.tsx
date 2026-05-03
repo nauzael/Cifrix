@@ -12,6 +12,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { Onboarding } from './pages/Onboarding';
+import { LandingPage } from './pages/landing';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { SuperAdminLayout } from './components/superadmin/SuperAdminLayout';
 import { SuperAdminDashboard } from './pages/superadmin/SuperAdminDashboard';
@@ -38,13 +39,18 @@ function App() {
       <ToastContainer />
       <GlobalConfirmModal />
       <Routes>
+        {/* Landing Page - Public */}
+        <Route path="/" element={<LandingPage />} />
+
+        {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
+        {/* Protected App Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/" element={<Layout />}>
+          <Route path="/app" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="members" element={<Members />} />
             <Route path="diezmos" element={<Diezmos />} />
@@ -60,11 +66,11 @@ function App() {
           </Route>
         </Route>
 
+        {/* Super Admin Routes */}
         <Route path="/super-admin" element={<ProtectedRoute />}>
           <Route element={<SuperAdminLayout />}>
             <Route index element={<SuperAdminDashboard />} />
             <Route path="users" element={<UserManagement />} />
-
             <Route path="billing" element={<Billing />} />
             <Route path="communications" element={<Communications />} />
             <Route path="reports" element={<SuperAdminReports />} />

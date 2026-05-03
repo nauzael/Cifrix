@@ -1,0 +1,307 @@
+{
+  "plan_id": "20260502-cifrix-landing-page",
+  "plan_name": "Cifrix Landing Page - Spec-Driven Development",
+  "created_at": "2026-05-02",
+  "status": "ready",
+  
+  "overview": {
+    "product": "Cifrix - Sistema de Contabilidad Integral",
+    "target_audience": [
+      "Contadores independientes en Colombia",
+      "Iglesias y ministerios",
+      "Pequeñas y medianas empresas (PYMES)",
+      "Organizaciones sin ánimo de lucro"
+    ],
+    "value_proposition": "Contabilidad profesional para Colombia que funciona 100% sin internet, con sincronización automática cuando hay conexión y cumplimiento total de normas DIAN",
+    "key_differentiators": [
+      "Offline-first real (funciona 100% sin internet)",
+      "100% Colombiano (normas DIAN, PUC Colombiano)",
+      "Módulo especializado para iglesias",
+      "Tecnología moderna (React, PWA, Sync automático)",
+      "Costo accesible vs software tradicional"
+    ]
+  },
+
+  "specifications": {
+    "technical": "src/specs/landing/tech-spec.md",
+    "seo": "src/specs/landing/seo-spec.md",
+    "performance": "src/specs/landing/performance-spec.md",
+    "validation": "src/specs/landing/validation-metrics.md"
+  },
+
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Fundamentos",
+      "status": "completed",
+      "tasks": [
+        {
+          "id": "lp-001",
+          "name": "Crear especificaciones técnicas",
+          "status": "completed",
+          "agent": "gem-documentation-writer"
+        },
+        {
+          "id": "lp-002",
+          "name": "Crear especificaciones SEO",
+          "status": "completed",
+          "agent": "gem-documentation-writer"
+        },
+        {
+          "id": "lp-003",
+          "name": "Crear especificaciones de performance",
+          "status": "completed",
+          "agent": "gem-documentation-writer"
+        },
+        {
+          "id": "lp-004",
+          "name": "Crear documento de métricas de validación",
+          "status": "completed",
+          "agent": "gem-documentation-writer"
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Componentes Base",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "lp-005",
+          "name": "Implementar Hero Section",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-006",
+          "name": "Implementar Features Grid",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-007",
+          "name": "Implementar Navbar",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-008",
+          "name": "Implementar Footer",
+          "status": "pending",
+          "agent": "gem-implementer"
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Secciones Avanzadas",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "lp-009",
+          "name": "Implementar sección de Testimonios",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-010",
+          "name": "Implementar sección de Precios",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-011",
+          "name": "Implementar CTA Section",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-012",
+          "name": "Implementar sección Cómo Funciona",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-013",
+          "name": "Implementar FAQ Section",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-014",
+          "name": "Implementar módulo eclesiástico",
+          "status": "pending",
+          "agent": "gem-implementer"
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Integración y Validación",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "lp-015",
+          "name": "Integrar Landing Page principal",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-016",
+          "name": "Configurar rutas y navegación",
+          "status": "pending",
+          "agent": "gem-implementer"
+        },
+        {
+          "id": "lp-017",
+          "name": "Tests de performance y validación",
+          "status": "pending",
+          "agent": "gem-browser-tester"
+        },
+        {
+          "id": "lp-018",
+          "name": "Tests de SEO y validación",
+          "status": "pending",
+          "agent": "gem-reviewer"
+        }
+      ]
+    }
+  ],
+
+  "components": [
+    {
+      "name": "Hero",
+      "file": "src/pages/landing/sections/Hero.tsx",
+      "description": "Hero section con título impactante, subtítulo, CTAs y animaciones",
+      "status": "pending"
+    },
+    {
+      "name": "Features",
+      "file": "src/pages/landing/sections/Features.tsx",
+      "description": "Grid de características principales con iconos y descripciones",
+      "status": "pending"
+    },
+    {
+      "name": "ChurchModule",
+      "file": "src/pages/landing/sections/ChurchModule.tsx",
+      "description": "Sección destacada para módulo de iglesias",
+      "status": "pending"
+    },
+    {
+      "name": "HowItWorks",
+      "file": "src/pages/landing/sections/HowItWorks.tsx",
+      "description": "Sección de 3 pasos simples",
+      "status": "pending"
+    },
+    {
+      "name": "Testimonials",
+      "file": "src/pages/landing/sections/Testimonials.tsx",
+      "description": "Carrusel de testimonios con social proof",
+      "status": "pending"
+    },
+    {
+      "name": "Pricing",
+      "file": "src/pages/landing/sections/Pricing.tsx",
+      "description": "Tarjetas de precios con comparación de planes",
+      "status": "pending"
+    },
+    {
+      "name": "FAQ",
+      "file": "src/pages/landing/sections/FAQ.tsx",
+      "description": "Preguntas frecuentes con accordion",
+      "status": "pending"
+    },
+    {
+      "name": "CTA",
+      "file": "src/pages/landing/sections/CTA.tsx",
+      "description": "Sección de llamado a la acción final",
+      "status": "pending"
+    },
+    {
+      "name": "Navbar",
+      "file": "src/pages/landing/sections/Navbar.tsx",
+      "description": "Navbar responsive con logo, navegación y CTAs",
+      "status": "pending"
+    },
+    {
+      "name": "Footer",
+      "file": "src/pages/landing/sections/Footer.tsx",
+      "description": "Footer con links, contacto, redes sociales y legal",
+      "status": "pending"
+    }
+  ],
+
+  "success_criteria": {
+    "performance": {
+      "lighthouse_score": 90,
+      "lcp_seconds": 2.5,
+      "cls": 0.1,
+      "bundle_size_kb": 200
+    },
+    "seo": {
+      "lighthouse_score": 90,
+      "meta_tags_present": true,
+      "schema_valid": true
+    },
+    "accessibility": {
+      "lighthouse_score": 90,
+      "wcag_level": "AA"
+    },
+    "conversion": {
+      "target_rate_percent": 5
+    }
+  },
+
+  "technology_stack": {
+    "framework": "React 18",
+    "language": "TypeScript 5.8",
+    "styling": "Tailwind CSS 3.x",
+    "animations": "Framer Motion",
+    "icons": "Lucide React",
+    "build": "Vite 6"
+  },
+
+  "risks": [
+    {
+      "id": "R1",
+      "description": "Imágenes muy pesadas afectan performance",
+      "severity": "medium",
+      "mitigation": "Usar next-gen formats (WebP), lazy loading, responsive images"
+    },
+    {
+      "id": "R2",
+      "description": "Third-party scripts bloquean rendering",
+      "severity": "medium",
+      "mitigation": "Cargar scripts asíncronos, usar defer, critical CSS inline"
+    },
+    {
+      "id": "R3",
+      "description": "Contenido no optimizado para SEO",
+      "severity": "high",
+      "mitigation": "Seguir seo-spec.md al pie de la letra, validar con herramientas"
+    },
+    {
+      "id": "R4",
+      "description": "Accesibilidad no cumplida",
+      "severity": "high",
+      "mitigation": "Usar componentes accesibles, validar con axe-core, keyboard testing"
+    }
+  ],
+
+  "next_steps": [
+    "Revisar especificaciones en src/specs/landing/",
+    "Comenzar implementación de Wave 2 (Componentes Base)",
+    "Empezar con Hero.tsx y Features.tsx",
+    "Validar cada componente con los criterios de aceptación",
+    "Ejecutar tests de performance y SEO después de Wave 4"
+  ],
+
+  "metadata": {
+    "author": "AI Agent",
+    "created_date": "2026-05-02",
+    "last_updated": "2026-05-02",
+    "version": "1.0",
+    "plan_file": "docs/plan/landing-page/plan.yaml",
+    "readme": "docs/plan/landing-page/README.md"
+  }
+}

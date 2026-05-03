@@ -6,20 +6,29 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
-  build: {
-    sourcemap: 'hidden',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['framer-motion', 'lucide-react', 'chart.js', 'react-chartjs-2', 'recharts', '@radix-ui/react-slot'],
-          'vendor-db': ['@supabase/supabase-js', '@tanstack/react-query', 'dexie', 'dexie-react-hooks'],
-          'vendor-utils': ['zod', 'react-hook-form', 'uuid', 'node-forge'],
-          'vendor-pdf': ['jspdf', 'jspdf-autotable'],
-        }
-      }
-    }
-  },
+build: {
+sourcemap: 'hidden',
+rollupOptions: {
+output: {
+manualChunks: {
+// React core - critical path
+'reactor-core': ['react', 'react-dom', 'react-router-dom'],
+// UI libraries - lazy load donde sea posible
+'reactor-ui': ['framer-motion', 'lucide-react'],
+// Charting - lazy load
+'reactor-charts': ['chart.js', 'react-chartjs-2', 'recharts'],
+// UI primitives
+'reactor-ui-primitives': ['@radix-ui/react-slot'],
+// Database layer
+'reactor-db': ['@supabase/supabase-js', '@tanstack/react-query', 'dexie', 'dexie-react-hooks'],
+// Utilities
+'reactor-utils': ['zod', 'react-hook-form', 'uuid', 'node-forge'],
+// PDF generation - lazy load
+'reactor-pdf': ['jspdf', 'jspdf-autotable'],
+},
+},
+},
+},
   plugins: [
     react({
       babel: {

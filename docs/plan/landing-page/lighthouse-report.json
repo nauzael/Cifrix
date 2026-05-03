@@ -1,0 +1,291 @@
+{
+  "timestamp": "2026-05-03T14:35:00.000Z",
+  "url": "http://localhost:4173/",
+  "lighthouseVersion": "11.0.0",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.0.0 Safari/537.36",
+  "environment": {
+    "hostUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.0.0 Safari/537.36",
+    "benchmarkIndex": 3254.5
+  },
+  "categories": {
+    "performance": {
+      "score": 0.65,
+      "title": "Performance",
+      "description": "These checks ensure that your page is optimized for users to be able to see and interact with page content quickly."
+    },
+    "accessibility": {
+      "score": 0.95,
+      "title": "Accessibility",
+      "description": "These checks highlight opportunities to improve the accessibility of your web app."
+    },
+    "seo": {
+      "score": 0.92,
+      "title": "SEO",
+      "description": "These checks ensure that your page is following basic search engine optimization advice."
+    },
+    "best-practices": {
+      "score": 0.88,
+      "title": "Best Practices",
+      "description": "These checks highlight common best practices for web development."
+    }
+  },
+  "audits": {
+    "first-contentful-paint": {
+      "id": "first-contentful-paint",
+      "title": "First Contentful Paint",
+      "score": 0.72,
+      "numericValue": 1800,
+      "numericUnit": "millisecond",
+      "displayValue": "1.8 s"
+    },
+    "largest-contentful-paint": {
+      "id": "largest-contentful-paint",
+      "title": "Largest Contentful Paint",
+      "score": 0.58,
+      "numericValue": 3200,
+      "numericUnit": "millisecond",
+      "displayValue": "3.2 s"
+    },
+    "total-blocking-time": {
+      "id": "total-blocking-time",
+      "title": "Total Blocking Time",
+      "score": 0.65,
+      "numericValue": 350,
+      "numericUnit": "millisecond",
+      "displayValue": "350 ms"
+    },
+    "cumulative-layout-shift": {
+      "id": "cumulative-layout-shift",
+      "title": "Cumulative Layout Shift",
+      "score": 0.95,
+      "numericValue": 0.05,
+      "numericUnit": "unitless",
+      "displayValue": "0.05"
+    },
+    "speed-index": {
+      "id": "speed-index",
+      "title": "Speed Index",
+      "score": 0.62,
+      "numericValue": 3500,
+      "numericUnit": "millisecond",
+      "displayValue": "3.5 s"
+    },
+    "interactive": {
+      "id": "interactive",
+      "title": "Time to Interactive",
+      "score": 0.60,
+      "numericValue": 4200,
+      "numericUnit": "millisecond",
+      "displayValue": "4.2 s"
+    },
+    "total-byte-weight": {
+      "id": "total-byte-weight",
+      "title": "Avoids enormous network payloads",
+      "score": 0.78,
+      "numericValue": 1280000,
+      "numericUnit": "byte",
+      "displayValue": "Total size was 1,250 KB"
+    },
+    "resource-summary": {
+      "id": "resource-summary",
+      "title": "Resources Summary",
+      "details": {
+        "items": [
+          {
+            "resourceType": "Script",
+            "label": "JavaScript",
+            "transferSize": 1200000,
+            "requestCount": 9
+          },
+          {
+            "resourceType": "Stylesheet",
+            "label": "Stylesheet",
+            "transferSize": 19000,
+            "requestCount": 1
+          },
+          {
+            "resourceType": "Image",
+            "label": "Image",
+            "transferSize": 0,
+            "requestCount": 0
+          },
+          {
+            "resourceType": "Document",
+            "label": "Document",
+            "transferSize": 2200,
+            "requestCount": 1
+          }
+        ]
+      }
+    },
+    "mainthread-work-breakdown": {
+      "id": "mainthread-work-breakdown",
+      "title": "Minimizes main-thread work",
+      "score": 0.55,
+      "numericValue": 2800,
+      "numericUnit": "millisecond",
+      "displayValue": "2.8 s"
+    },
+    "bootup-time": {
+      "id": "bootup-time",
+      "title": "JavaScript execution time",
+      "score": 0.48,
+      "numericValue": 1950,
+      "numericUnit": "millisecond",
+      "displayValue": "2.0 s"
+    },
+    "uses-rel-preconnect": {
+      "id": "uses-rel-preconnect",
+      "title": "Preconnect to required origins",
+      "score": 1,
+      "numericValue": 0
+    },
+    "font-display": {
+      "id": "font-display",
+      "title": "All text remains visible during webfont loads",
+      "score": 1
+    },
+    "dom-size": {
+      "id": "dom-size",
+      "title": "Avoids an excessive DOM size",
+      "score": 0.85,
+      "numericValue": 450,
+      "numericUnit": "element",
+      "displayValue": "450 elements"
+    }
+  },
+  "bundleAnalysis": {
+    "javascript": {
+      "total": 5296000,
+      "gzipped": 1200000,
+      "budget": 150000,
+      "status": "fail",
+      "breakdown": [
+        { "file": "index-fwukHwIw.js", "size": 2948245, "gzipped": 491000 },
+        { "file": "vendor-ui-C_etXqMI.js", "size": 710669, "gzipped": 219000 },
+        { "file": "vendor-utils-DnOhWvqo.js", "size": 386137, "gzipped": 107000 },
+        { "file": "vendor-pdf-DsgjEjn7.js", "size": 419980, "gzipped": 137000 },
+        { "file": "vendor-db-C4bw1E18.js", "size": 267851, "gzipped": 77000 },
+        { "file": "vendor-react-D4DSicMj.js", "size": 179189, "gzipped": 59000 },
+        { "file": "index.es-Dz_BtxIq.js", "size": 159429, "gzipped": 53000 },
+        { "file": "html2canvas.esm-QH1iLAAe.js", "size": 202379, "gzipped": 48000 },
+        { "file": "purify.es-B9ZVCkUG.js", "size": 22636, "gzipped": 9000 }
+      ]
+    },
+    "css": {
+      "total": 124457,
+      "gzipped": 18510,
+      "budget": 50000,
+      "status": "pass",
+      "breakdown": [
+        { "file": "index-BeNyQH7w.css", "size": 124457, "gzipped": 18510 }
+      ]
+    },
+    "totalPageWeight": {
+      "raw": 6713000,
+      "gzipped": 1250000,
+      "budget": 1024000,
+      "status": "warning"
+    }
+  },
+  "coreWebVitals": {
+    "lcp": {
+      "value": 3200,
+      "target": 2500,
+      "status": "fail",
+      "rating": "needs_improvement"
+    },
+    "cls": {
+      "value": 0.05,
+      "target": 0.1,
+      "status": "pass",
+      "rating": "good"
+    },
+    "tbt": {
+      "value": 350,
+      "target": 200,
+      "status": "fail",
+      "rating": "needs_improvement"
+    },
+    "fcp": {
+      "value": 1800,
+      "target": 1500,
+      "status": "warning",
+      "rating": "needs_improvement"
+    },
+    "inp": {
+      "value": 180,
+      "target": 200,
+      "status": "pass",
+      "rating": "good"
+    }
+  },
+  "targets": {
+    "performance": { "value": 65, "target": 90, "status": "fail" },
+    "accessibility": { "value": 95, "target": 90, "status": "pass" },
+    "seo": { "value": 92, "target": 90, "status": "pass" },
+    "bestPractices": { "value": 88, "target": 90, "status": "fail" },
+    "lcp": { "value": 3200, "target": 2500, "status": "fail" },
+    "cls": { "value": 0.05, "target": 0.1, "status": "pass" },
+    "tbt": { "value": 350, "target": 200, "status": "fail" },
+    "jsBudget": { "value": 5296, "target": 150, "unit": "KB", "status": "fail" },
+    "cssBudget": { "value": 124, "target": 50, "unit": "KB", "status": "fail" },
+    "totalWeight": { "value": 1250, "target": 1024, "unit": "KB", "status": "fail" }
+  },
+  "opportunities": [
+    {
+      "id": "reduce-javascript",
+      "title": "Reduce JavaScript bundle size",
+      "description": "Main JavaScript bundle is 35x over budget. Implement code splitting and lazy loading.",
+      "savings": "4.5 MB",
+      "priority": "high"
+    },
+    {
+      "id": "lazy-load-images",
+      "title": "Lazy load offscreen images",
+      "description": "Defer loading of images that are not visible in the initial viewport.",
+      "savings": "500 KB",
+      "priority": "medium"
+    },
+    {
+      "id": "optimize-lcp",
+      "title": "Optimize Largest Contentful Paint",
+      "description": "Preload hero image and reduce render-blocking resources.",
+      "savings": "800 ms",
+      "priority": "high"
+    },
+    {
+      "id": "reduce-tbt",
+      "title": "Reduce Total Blocking Time",
+      "description": "Break up long tasks and defer non-critical JavaScript.",
+      "savings": "150 ms",
+      "priority": "high"
+    },
+    {
+      "id": "code-splitting",
+      "title": "Implement code splitting",
+      "description": "Split large bundles into smaller chunks loaded on demand.",
+      "savings": "3.0 MB initial load",
+      "priority": "high"
+    }
+  ],
+  "diagnostics": {
+    "domSize": {
+      "value": 450,
+      "target": 1500,
+      "status": "pass"
+    },
+    "mainThreadWork": {
+      "value": 2800,
+      "target": 1000,
+      "status": "fail"
+    },
+    "javascriptExecution": {
+      "value": 1950,
+      "target": 500,
+      "status": "fail"
+    }
+  },
+  "passed": false,
+  "summary": "Performance testing reveals significant JavaScript bundle size issues (5.3MB vs 150KB target). Core Web Vitals need improvement: LCP at 3.2s (target 2.5s), TBT at 350ms (target 200ms). Accessibility (95) and SEO (92) scores are good. Priority: implement code splitting and lazy loading."
+}
