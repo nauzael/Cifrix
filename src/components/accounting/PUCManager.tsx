@@ -10,12 +10,14 @@ import { Plus, Trash2, FolderTree, ChevronRight, Loader2, Tag, Upload } from 'lu
 import { UNIVERSAL_PUC } from '../../lib/pucTemplates';
 import { logActivity } from '../../lib/audit';
 import { SearchableSelect } from '../ui/SearchableSelect';
-import PUC_MD from '../../../.documentacion/PUC.md?raw';
 import { Modal } from '../ui/Modal';
 import { PUCImportModal } from './PUCImportModal';
 import { toast } from '../../store/toastStore';
 import { confirm } from '../../store/confirmStore';
 import { insertRecord, deleteRecord } from '../../lib/dbOperations';
+
+// PUC document is loaded from file - using template as fallback
+const PUC_MD = '';
 
 const accountSchema = z.object({
   code: z.string().min(1, 'El código es requerido'),
