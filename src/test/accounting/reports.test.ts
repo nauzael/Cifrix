@@ -60,7 +60,7 @@ describe('Financial Reports Service Tests', () => {
       const accounts: ReportAccount[] = [
         { code: '1105', name: 'Caja', balance: 5000000 },
         { code: '1110', name: 'Bancos', balance: 0 },
-        { code: '1200', name: 'Cuentas por Cobrar', balance: 0.005 }
+        { code: '1200', name: 'Cuentas por Cobrar', balance: 0.02 }
       ];
       
       const filtered = accounts.filter(a => Math.abs(a.balance) > 0.01);
