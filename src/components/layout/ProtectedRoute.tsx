@@ -33,7 +33,7 @@ export const ProtectedRoute = () => {
 
   // If user HAS organization (or is superadmin) but tries to go to onboarding, redirect to dashboard
   if ((profile?.organizationId || isSuperAdmin) && location.pathname === '/onboarding') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/app" replace />;
   }
 
   return <Outlet />;

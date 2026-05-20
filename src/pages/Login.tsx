@@ -198,7 +198,7 @@ export const Login: React.FC = () => {
       if (profile.role === 'SUPER_ADMIN') {
         navigate('/super-admin');
       } else {
-        navigate('/');
+        navigate('/app');
       }
     } catch (err: any) {
       throw err;
@@ -253,7 +253,7 @@ export const Login: React.FC = () => {
     ) {
       navigate('/super-admin');
     } else {
-      navigate('/');
+      navigate('/app');
     }
   };
 

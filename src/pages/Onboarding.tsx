@@ -44,7 +44,7 @@ export const Onboarding: React.FC = () => {
 
       await initialize();
       toast.success('Te has unido a la organización correctamente');
-      navigate('/');
+      navigate('/app');
 
     } catch (error: any) {
       console.error('Error joining organization:', error);
