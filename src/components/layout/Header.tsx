@@ -74,7 +74,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         <button
           className="touch-target p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-lg hidden sm:block transition-colors"
-          onClick={() => navigate('/support')}
+          onClick={() => navigate('/app/support')}
           title="Ayuda y Soporte"
         >
           <HelpCircle className="size-5" />

@@ -53,60 +53,60 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         id: string;
         hidden?: boolean;
     }> = [
-            { name: 'Inicio', href: '/', icon: LayoutDashboard, id: 'dashboard' },
+            { name: 'Inicio', href: '/app', icon: LayoutDashboard, id: 'dashboard' },
             {
                 name: 'Facturación',
-                href: '/invoicing',
+                href: '/app/invoicing',
                 icon: Receipt,
                 id: 'invoicing'
             },
             {
                 name: 'Contabilidad',
-                href: '/accounting',
+                href: '/app/accounting',
                 icon: Calculator,
                 id: 'accounting'
             },
             {
                 name: 'Miembros',
-                href: '/members',
+                href: '/app/members',
                 icon: Users,
                 id: 'members',
                 hidden: isCompany
             },
             {
                 name: 'Diezmos',
-                href: '/diezmos',
+                href: '/app/diezmos',
                 icon: Heart,
                 id: 'contributions',
                 hidden: isCompany
             },
             {
                 name: 'Impuesto Renta',
-                href: '/renta',
+                href: '/app/renta',
                 icon: FileSignature,
                 id: 'renta'
             },
             {
                 name: 'Reportes Exógenos',
-                href: '/exogenos',
+                href: '/app/exogenos',
                 icon: FileDown,
                 id: 'exogenos'
             },
             {
                 name: 'Estados Financieros',
-                href: '/financial-statements',
+                href: '/app/financial-statements',
                 icon: FileText,
                 id: 'financial_statements'
             },
             {
                 name: 'Reportes',
-                href: '/reports',
+                href: '/app/reports',
                 icon: BarChart3,
                 id: 'reports'
             },
             {
                 name: 'Configuración',
-                href: '/settings',
+                href: '/app/settings',
                 icon: Settings,
                 id: 'settings'
             },
